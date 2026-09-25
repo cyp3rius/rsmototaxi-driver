@@ -73,15 +73,33 @@ body {
 }
 
 a {
-  color: inherit;
   text-decoration: none;
+  color: inherit;
+}
+
+/* Bottom nav active must beat Tailwind preflight `a { color: inherit }` */
+.rs-bottom-nav a.rs-nav-idle {
+  color: var(--text-secondary) !important;
+}
+.rs-bottom-nav a.rs-nav-active {
+  color: var(--accent) !important;
+}
+.rs-bottom-nav a.rs-nav-active svg {
+  color: var(--accent) !important;
+  stroke: var(--accent) !important;
+}
+.rs-bottom-nav a.rs-nav-idle svg {
+  color: var(--text-secondary) !important;
+  stroke: var(--text-secondary) !important;
 }
 
 button,
 input,
 textarea,
 select {
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .display-xl {
@@ -345,6 +363,23 @@ select {
 
 ::view-transition-old(driver-hello),
 ::view-transition-new(driver-hello) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Morph already landed on header coords — keep VT soft */
+  height: 100%;
+  object-fit: none;
+}
+::view-transition-group(driver-hello) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-old(driver-plate),
+::view-transition-new(driver-plate) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  height: 100%;
+}
+::view-transition-group(driver-plate) {
   animation-duration: 0.45s;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }

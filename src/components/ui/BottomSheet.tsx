@@ -22,6 +22,7 @@ export function BottomSheet({
   className,
   titleClassName,
   expanded,
+  zClassName = 'z-50',
 }: {
   open: boolean
   onClose: () => void
@@ -31,6 +32,8 @@ export function BottomSheet({
   className?: string
   titleClassName?: string
   expanded?: boolean
+  /** Stack sheets: default z-50; use z-[55]+ for sheets above another sheet. */
+  zClassName?: string
 }) {
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
@@ -162,7 +165,7 @@ export function BottomSheet({
       : 1
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className={cn('fixed inset-0', zClassName)}>
       <button
         type="button"
         aria-label="Zamknij"

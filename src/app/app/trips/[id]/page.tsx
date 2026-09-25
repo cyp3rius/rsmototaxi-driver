@@ -2,7 +2,7 @@
 
 import { ChevronDown, ChevronUp, Lock, Plane, Receipt } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
@@ -10,68 +10,139 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { ReceiptSheet, receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
+import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
-import { Toast } from '@/components/ui/Toast'
+import { useStartShift } from '@/components/ui/StartShiftProvider'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
-import { formatElapsed, formatMoneyShort, formatTime } from '@/lib/format'
-import { readTripMeta, tripTypeLabel } from '@/lib/tripMeta'
+import { formatElapsedHms, formatMoneyShort, formatTime } from '@/lib/format'
+import {
+  buildTripDetailRows,
+  isTripPrepaid,
+  resolveTripRequest,
+  tripDetailTitle,
+  tripDropoffLabel,
+  tripPaymentLabel,
+  tripPickupLabel,
+  tripRouteSubtitle,
+  tripStatusChipLabel,
+  tripTypeLabel,
+  tripWhenLabel,
+} from '@/lib/tripMeta'
 
 export default function TripDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const { me, refreshMe } = useAuth()
+  const toast = useToast()
+  const { openStartShift } = useStartShift()
   const [trip, setTrip] = useState<Record<string, unknown> | null>(null)
   const [receiptOpen, setReceiptOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
+  const [priceDraft, setPriceDraft] = useState('')
+  const [distanceDraft, setDistanceDraft] = useState('')
 
   useEffect(() => {
     void omClient.getTrips({ id: params.id }).then((res) => {
       const found = res.items[0] ?? null
       setTrip(found)
-      if (found && String(found.status) === 'in_progress') {
-        router.replace('/app/trips/live')
+      if (found) {
+        const request = resolveTripRequest(found)
+        setPriceDraft(
+          found.revenueAmount != null && found.revenueAmount !== ''
+            ? String(found.revenueAmount)
+            : '',
+        )
+        setDistanceDraft(
+          request.distanceKm != null && request.distanceKm !== ''
+            ? String(request.distanceKm)
+            : found.distanceKm != null
+              ? String(found.distanceKm)
+              : '',
+        )
+        const status = String(found.status || '')
+        if (status === 'completed' || status === 'paid' || status === 'pending_authorization') {
+          setMoreOpen(true)
+        }
+        // Pure live trips (no destination yet) keep the dedicated live screen
+        if (status === 'in_progress') {
+          const hasRoute = Boolean(tripPickupLabel(found) && tripDropoffLabel(found))
+          if (!hasRoute) router.replace('/app/trips/live')
+        }
       }
     })
   }, [params.id, router])
 
   const status = String(trip?.status || '')
-  const isLive = status === 'in_progress'
+  const isLiveStyle = status === 'in_progress' && !tripDropoffLabel(trip)
+  const isInProgress = status === 'in_progress'
+  const isScheduled = status === 'scheduled'
+  const isCompleted =
+    status === 'completed' || status === 'paid' || status === 'pending_authorization'
   const onShift = me?.dashboardState === 'C'
-  const meta = readTripMeta(trip)
   const platform = Boolean(trip?.platform)
+  const prepaid = isTripPrepaid(trip)
+  const request = useMemo(() => resolveTripRequest(trip), [trip])
 
   useEffect(() => {
-    if (!isLive) return
+    if (!isInProgress) return
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
-  }, [isLive])
+  }, [isInProgress])
 
   const liveTimer = !trip?.startedAt
-    ? '0:00'
-    : formatElapsed(now - new Date(String(trip.startedAt)).getTime())
+    ? '0:00:00'
+    : formatElapsedHms(now - new Date(String(trip.startedAt)).getTime())
 
   const shiftTimer = !me?.todayAssignment?.shiftStart
     ? null
-    : formatElapsed(now - new Date(me.todayAssignment.shiftStart).getTime())
+    : formatElapsedHms(now - new Date(me.todayAssignment.shiftStart).getTime())
+
+  async function persistCommercial(next?: { revenueAmount?: number | null; distanceKm?: number | null }) {
+    if (!trip || platform) return
+    const revenueAmount =
+      next?.revenueAmount !== undefined
+        ? next.revenueAmount
+        : priceDraft
+          ? Number(priceDraft.replace(',', '.'))
+          : null
+    const distanceKm =
+      next?.distanceKm !== undefined
+        ? next.distanceKm
+        : distanceDraft
+          ? Number(distanceDraft.replace(',', '.'))
+          : null
+    await omClient.updateTrip({
+      id: trip.id,
+      revenueAmount: Number.isFinite(revenueAmount as number) ? revenueAmount : null,
+      distanceKm: Number.isFinite(distanceKm as number) ? distanceKm : null,
+      metadata: {
+        ...(typeof trip.metadata === 'object' && trip.metadata ? trip.metadata : {}),
+        tripRequest: {
+          ...request,
+          distanceKm: Number.isFinite(distanceKm as number) ? distanceKm : request.distanceKm,
+        },
+      },
+    })
+  }
 
   async function setStatus(next: string) {
     if (!trip) return
     setBusy(true)
     try {
+      if (isScheduled) await persistCommercial()
       await omClient.updateTrip({ id: trip.id, status: next })
       await refreshMe()
       const res = await omClient.getTrips({ id: params.id })
       setTrip(res.items[0] ?? null)
-      setToast(next === 'in_progress' ? 'Kurs rozpoczęty' : 'Kurs zakończony')
+      toast.success(next === 'in_progress' ? 'Kurs rozpoczęty' : 'Kurs zakończony')
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Błąd aktualizacji')
+      toast.error(err instanceof Error ? err.message : 'Błąd aktualizacji')
     } finally {
       setBusy(false)
-      window.setTimeout(() => setToast(null), 3000)
     }
   }
 
@@ -92,37 +163,59 @@ export default function TripDetailPage() {
       const res = await omClient.getTrips({ id: params.id })
       setTrip(res.items[0] ?? null)
       setReceiptOpen(false)
-      setToast('Paragon dodany')
+      setMoreOpen(true)
+      toast.success('Paragon dodany')
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Upload nieudany')
+      toast.error(err instanceof Error ? err.message : 'Upload nieudany')
     } finally {
       setBusy(false)
-      window.setTimeout(() => setToast(null), 3000)
     }
   }
 
   const receiptStatus = trip ? receiptUiStatusFromRecord(trip) : null
-  const detailTitle = platform
-    ? String(trip?.platform || 'Platforma')
-    : isLive
-      ? 'Kurs live'
-      : status === 'scheduled'
-        ? 'Kurs zaplanowany'
-        : 'Szczegóły kursu'
+  const detailTitle = tripDetailTitle(trip)
+  const statusLabel = tripStatusChipLabel(status)
+  const whenLabel = tripWhenLabel(trip)
+  const from = tripPickupLabel(trip)
+  const to = tripDropoffLabel(trip)
+  const fromSub = request.fromNote || null
+  const toSub = tripRouteSubtitle(trip, 'to')
+  const payment = tripPaymentLabel(trip)
+  const detailRows = trip ? buildTripDetailRows(trip) : []
+  const showActionBar =
+    !platform &&
+    ((isScheduled && onShift) || (isScheduled && !onShift) || (isInProgress && !isLiveStyle))
+  const heroTime =
+    isCompleted && trip?.endedAt
+      ? `${formatTime(String(trip.startedAt || ''))}–${formatTime(String(trip.endedAt))}`
+      : isInProgress
+        ? formatTime(String(trip?.startedAt || ''))
+        : formatTime(String(trip?.startedAt || ''))
+
+  const statusTone =
+    isCompleted
+      ? 'success'
+      : isInProgress
+        ? 'accent'
+        : isScheduled
+          ? 'neutral'
+          : 'neutral'
 
   return (
-    <AppShell hideNav={isLive}>
+    <AppShell hideNav={isLiveStyle}>
       <PageHeader title={detailTitle} onBack={() => router.back()} />
 
       {!trip ? (
         <p className="px-5 text-[var(--text-secondary)]">Ładowanie…</p>
       ) : (
-        <div className="space-y-3 px-5 pb-36">
-          {isLive && onShift ? (
+        <div className={`space-y-3 px-5 ${showActionBar ? 'pb-36' : 'pb-28'}`}>
+          {isInProgress && onShift ? (
             <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
               <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />
               <span className="text-[15px] font-semibold text-[var(--success)]">Na zmianie</span>
-              {shiftTimer ? <span className="text-[17px] font-semibold tabular-nums">{shiftTimer}</span> : null}
+              {shiftTimer ? (
+                <span className="text-[17px] font-semibold tabular-nums">{shiftTimer}</span>
+              ) : null}
               <span className="flex-1" />
               {me?.todayAssignment?.resourcePlate ? (
                 <PlateBadge plate={me.todayAssignment.resourcePlate} size="sm" />
@@ -137,29 +230,50 @@ export default function TripDetailPage() {
             </div>
           ) : null}
 
-          {isLive ? (
+          {isLiveStyle ? (
             <SurfaceCard className="rounded-[26px]" padding="lg">
               <p className="text-[15px] font-semibold text-[var(--accent)]">Kurs live w trakcie</p>
-              <p className="mt-1.5 font-[family-name:var(--font-display)] text-[64px] font-semibold leading-none tabular-nums" style={{ fontStretch: '112%' }}>
+              <p
+                className="mt-1.5 font-[family-name:var(--font-display)] text-[64px] font-semibold leading-none tabular-nums"
+                style={{ fontStretch: '112%' }}
+              >
                 {liveTimer}
               </p>
-              <p className="mt-6 text-[15px] text-[var(--text-secondary)]">Skąd · od {formatTime(String(trip.startedAt || ''))}</p>
-              <p className="text-[19px] font-semibold leading-[26px]">{meta.tripRequest?.from || 'Lokalizacja GPS'}</p>
-              <p className="mt-4 text-[15px] leading-5 text-[var(--text-secondary)]">
-                Po zakończeniu uzupełnisz trasę i szczegóły kursu. Nie zamykaj aplikacji: GPS działa tylko przy otwartym ekranie.
+              <p className="mt-6 text-[15px] text-[var(--text-secondary)]">
+                Skąd · od {formatTime(String(trip.startedAt || ''))}
+              </p>
+              <p className="text-[19px] font-semibold leading-[26px]">
+                {from || 'Lokalizacja GPS'}
               </p>
             </SurfaceCard>
           ) : (
-            <SurfaceCard padding="lg">
+            <SurfaceCard className="rounded-[22px]" padding="lg">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[15px] font-semibold text-[var(--accent)]">
-                  {status === 'scheduled' ? 'Zaplanowany' : status === 'completed' || status === 'pending_authorization' ? 'Zakończony' : tripTypeLabel(trip.tripType)}
+                <StatusChip
+                  tone={statusTone === 'success' ? 'success' : statusTone === 'accent' ? 'accent' : 'neutral'}
+                  pulse={isInProgress ? true : undefined}
+                  className={
+                    isScheduled
+                      ? '!bg-[var(--bg-surface-raised)] !text-[var(--text-primary)]'
+                      : undefined
+                  }
+                >
+                  {isInProgress && trip.startedAt
+                    ? `W trakcie · od ${formatTime(String(trip.startedAt))}`
+                    : statusLabel || tripTypeLabel(trip.tripType)}
+                </StatusChip>
+                <span className="text-[15px] text-[var(--text-secondary)]">
+                  {whenLabel || formatMoneyShort(trip.revenueAmount)}
                 </span>
-                <span className="text-[15px] text-[var(--text-secondary)]">{formatMoneyShort(trip.revenueAmount)}</span>
               </div>
-              <p className="mt-2 font-[family-name:var(--font-display)] text-[52px] font-semibold leading-[1.05] tabular-nums" style={{ fontStretch: '112%' }}>
-                {formatTime(String(trip.startedAt || ''))}
+
+              <p
+                className="mt-2 font-[family-name:var(--font-display)] text-[52px] font-semibold leading-[1.05] tabular-nums"
+                style={{ fontStretch: '112%' }}
+              >
+                {isInProgress ? liveTimer : heroTime}
               </p>
+
               <div className="mt-3.5 grid grid-cols-[14px_1fr] gap-x-3">
                 <span className="flex flex-col items-center pt-1.5">
                   <span className="size-2.5 rounded-full border-2 border-[var(--accent)]" />
@@ -168,48 +282,137 @@ export default function TripDetailPage() {
                 </span>
                 <span className="flex flex-col gap-3.5">
                   <span>
-                    <span className="block text-[17px] font-semibold">{meta.tripRequest?.from || '—'}</span>
-                    {meta.tripRequest?.fromNote ? (
-                      <span className="block text-[15px] text-[var(--text-secondary)]">{meta.tripRequest.fromNote}</span>
+                    <span className="block text-[17px] font-semibold">{from || '—'}</span>
+                    {fromSub ? (
+                      <span className="block text-[15px] text-[var(--text-secondary)]">{fromSub}</span>
                     ) : null}
                   </span>
                   <span>
-                    <span className="block text-[17px] font-semibold">{meta.tripRequest?.to || '—'}</span>
-                    {meta.tripRequest?.toNote ? (
-                      <span className="block text-[15px] text-[var(--text-secondary)]">{meta.tripRequest.toNote}</span>
+                    <span className="block text-[17px] font-semibold">{to || '—'}</span>
+                    {toSub ? (
+                      <span className="block text-[15px] text-[var(--text-secondary)]">{toSub}</span>
                     ) : null}
                   </span>
                 </span>
               </div>
-              {meta.tripRequest?.flightNumber ? (
+
+              <div className="mt-3.5 flex flex-wrap gap-1.5">
+                {prepaid ? <StatusChip tone="success">Przedpłata</StatusChip> : null}
+                {request.meetAndGreet ? <StatusChip tone="neutral">Tabliczka</StatusChip> : null}
+                {request.childSeat || Number(request.childSeats) > 0 ? (
+                  <StatusChip tone="neutral">Fotelik</StatusChip>
+                ) : null}
+                {request.englishSpeakingDriver ? (
+                  <StatusChip tone="neutral">Kierowca EN</StatusChip>
+                ) : null}
+                {isCompleted ? (
+                  <>
+                    <StatusChip tone="neutral">
+                      {platform ? String(trip.platform) : tripTypeLabel(trip.tripType)}
+                    </StatusChip>
+                    {payment ? <StatusChip tone="neutral">{payment}</StatusChip> : null}
+                    <StatusChip tone="neutral" className="!text-[var(--text-primary)]">
+                      {formatMoneyShort(trip.revenueAmount)}
+                    </StatusChip>
+                  </>
+                ) : null}
+              </div>
+
+              {request.flightNumber ? (
                 <div className="mt-3.5 flex items-center gap-2.5 rounded-[14px] bg-[var(--bg-surface-raised)] px-3 py-2.5 text-[15px]">
                   <Plane size={20} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
                   <span>
-                    <b className="font-semibold">{meta.tripRequest.flightNumber}</b>
-                    {meta.tripRequest.flightOrigin ? ` z ${meta.tripRequest.flightOrigin}` : ''}
+                    <b className="font-semibold">{request.flightNumber}</b>
+                    {request.flightOrigin ? ` z ${request.flightOrigin}` : ''}
+                    {request.estimatedArrival
+                      ? ` · planowo ${formatTime(request.estimatedArrival)}`
+                      : ''}
                   </span>
                 </div>
               ) : null}
             </SurfaceCard>
           )}
 
-          {receiptStatus === 'missing' && status !== 'scheduled' && !platform ? (
-            <div className="flex min-h-16 items-center gap-3 rounded-[18px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] tint-warning px-4 py-2">
+          {isScheduled && !platform ? (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
+                <label className="block">
+                  <span className="mb-2 block text-[15px] font-medium text-[var(--text-secondary)]">
+                    Cena
+                  </span>
+                  <div
+                    className={`flex h-14 items-center gap-2 rounded-[14px] px-3.5 text-[20px] font-semibold tabular-nums ${
+                      prepaid
+                        ? 'bg-[var(--bg-surface-raised)] text-[var(--text-secondary)]'
+                        : 'border border-[var(--separator)] bg-[var(--bg-surface-raised)]'
+                    }`}
+                  >
+                    {prepaid ? <Lock size={16} strokeWidth={2} /> : null}
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      disabled={prepaid || busy}
+                      value={priceDraft}
+                      onChange={(e) => setPriceDraft(e.target.value)}
+                      onBlur={() => void persistCommercial().catch(() => undefined)}
+                      className="w-full bg-transparent outline-none disabled:cursor-not-allowed"
+                      aria-label="Cena"
+                    />
+                    <span className="text-[16px] font-medium text-[var(--text-secondary)]">zł</span>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-[15px] font-medium">Dystans</span>
+                  <div className="flex h-14 items-center justify-between gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-3.5 text-[20px] font-semibold tabular-nums">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      disabled={busy}
+                      value={distanceDraft}
+                      onChange={(e) => setDistanceDraft(e.target.value)}
+                      onBlur={() => void persistCommercial().catch(() => undefined)}
+                      className="w-full bg-transparent outline-none"
+                      aria-label="Dystans"
+                    />
+                    <span className="text-[16px] font-medium text-[var(--text-secondary)]">km</span>
+                  </div>
+                </label>
+              </div>
+              {prepaid ? (
+                <p className="-mt-1 text-[15px] leading-5 text-[var(--text-secondary)]">
+                  Przedpłata online: można zmienić tylko dystans.
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
+          {isInProgress && !isLiveStyle && !platform ? (
+            <div className="rounded-[18px] border border-[color-mix(in_srgb,var(--accent)_30%,transparent)] px-4 py-4 text-[16px] leading-[23px] tint-accent">
+              Kurs trwa. Zakończ, gdy pasażer wysiądzie. Zmieni się tylko godzina końca.
+            </div>
+          ) : null}
+
+          {receiptStatus === 'missing' && isCompleted && !platform ? (
+            <div className="flex min-h-16 items-center gap-3 rounded-[18px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] tint-warning px-2 py-2 pl-4">
               <Receipt size={22} className="text-[var(--warning)]" strokeWidth={1.8} />
               <span className="flex-1 text-[16px] font-semibold">Brak paragonu</span>
-              <Button size="md" className="!h-12 !w-auto px-4" onClick={() => setReceiptOpen(true)}>
+              <Button
+                size="md"
+                className="!h-12 !w-auto px-4"
+                onClick={() => setReceiptOpen(true)}
+              >
                 Dodaj paragon
               </Button>
             </div>
           ) : null}
 
-          {receiptStatus && receiptStatus !== 'missing' && !platform ? (
+          {receiptStatus && receiptStatus !== 'missing' && isCompleted && !platform ? (
             <button type="button" onClick={() => setReceiptOpen(true)} className="text-left">
               <ReceiptStatusBadge status={receiptStatus} />
             </button>
           ) : null}
 
-          {!platform ? (
+          {!platform && (isScheduled || isInProgress) ? (
             <button
               type="button"
               onClick={() => setMoreOpen((v) => !v)}
@@ -220,38 +423,32 @@ export default function TripDetailPage() {
             </button>
           ) : null}
 
-          {moreOpen || platform ? (
-            <SurfaceCard className="overflow-hidden !p-0">
-              {[
-                ['Typ', platform ? String(trip.platform) : tripTypeLabel(trip.tripType)],
-                ['Status', status],
-                ['Start', formatTime(String(trip.startedAt || ''))],
-                ['Koniec', trip.endedAt ? formatTime(String(trip.endedAt)) : '—'],
-                ['Kwota', formatMoneyShort(trip.revenueAmount)],
-                [
-                  'Paragon',
-                  receiptStatus === 'missing'
-                    ? 'Brak paragonu'
-                    : receiptStatus === 'processing'
-                      ? 'Przetwarzanie'
-                      : receiptStatus === 'needs_review'
-                        ? 'Do sprawdzenia'
-                        : receiptStatus === 'verified'
-                          ? 'Zweryfikowany'
-                          : receiptStatus === 'offline'
-                            ? 'Czeka na synchronizację'
-                            : 'nie dotyczy',
-                ],
-              ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-3 border-b border-[var(--separator)] px-4 py-3 text-[15px] last:border-0">
-                  <span className="text-[var(--text-secondary)]">{k}</span>
-                  <span className="text-right font-medium">{v}</span>
-                </div>
-              ))}
-            </SurfaceCard>
+          {(moreOpen || platform || isCompleted) && !isLiveStyle ? (
+            <div className="overflow-hidden rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)]">
+              {isCompleted && !platform ? (
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen((v) => !v)}
+                  className="flex min-h-[52px] w-full items-center justify-between border-b border-[var(--separator)] px-4 text-[16px] font-semibold"
+                >
+                  Więcej szczegółów
+                  {moreOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                </button>
+              ) : null}
+              {(moreOpen || platform) &&
+                detailRows.map((row) => (
+                  <div
+                    key={row.k}
+                    className="flex justify-between gap-3 border-b border-[var(--separator)] px-4 py-2.5 text-[15px] last:border-0"
+                  >
+                    <span className="text-[var(--text-secondary)]">{row.k}</span>
+                    <span className="text-right font-medium">{row.v}</span>
+                  </div>
+                ))}
+            </div>
           ) : null}
 
-          {status === 'scheduled' && !platform ? (
+          {isScheduled && !platform ? (
             <button
               type="button"
               onClick={() => setReceiptOpen(true)}
@@ -269,16 +466,30 @@ export default function TripDetailPage() {
         </div>
       )}
 
-      {!platform ? (
+      {showActionBar ? (
         <ActionBar>
-          {status === 'scheduled' && onShift ? (
-            <SlideToConfirm label="Przesuń, aby rozpocząć" onConfirm={() => setStatus('in_progress')} disabled={busy} />
+          {isScheduled && onShift ? (
+            <SlideToConfirm
+              label="Przesuń, aby rozpocząć"
+              onConfirm={() => setStatus('in_progress')}
+              disabled={busy}
+            />
           ) : null}
-          {status === 'scheduled' && !onShift ? (
-            <Button onClick={() => router.push('/app/shifts?start=1')}>Rozpocznij zmianę, żeby ruszyć</Button>
+          {isScheduled && !onShift ? (
+            <Button
+              onClick={() => openStartShift()}
+              variant="secondary"
+              className="!h-16 border border-[var(--separator)] bg-[var(--bg-surface)]"
+            >
+              Rozpocznij zmianę, żeby ruszyć
+            </Button>
           ) : null}
-          {isLive ? (
-            <SlideToConfirm label="Przesuń, aby zakończyć" onConfirm={() => setStatus('completed')} disabled={busy} />
+          {isInProgress && !isLiveStyle ? (
+            <SlideToConfirm
+              label="Przesuń, aby zakończyć"
+              onConfirm={() => setStatus('completed')}
+              disabled={busy}
+            />
           ) : null}
         </ActionBar>
       ) : null}
@@ -288,15 +499,28 @@ export default function TripDetailPage() {
         onClose={() => setReceiptOpen(false)}
         busy={busy}
         onUpload={uploadReceipt}
-        status={receiptStatus}
-        initialDocumentNumber={String(trip?.receiptDocumentNumber || '')}
+        status={receiptStatus === 'missing' ? null : receiptStatus}
+        initialDocumentNumber={
+          typeof trip?.receiptDocumentNumber === 'string'
+            ? trip.receiptDocumentNumber
+            : typeof (trip?.metadata as { receiptDocumentNumber?: string } | null)?.receiptDocumentNumber ===
+                'string'
+              ? String(
+                  (trip?.metadata as { receiptDocumentNumber?: string }).receiptDocumentNumber,
+                )
+              : ''
+        }
         subtitle={
           status === 'scheduled'
             ? 'Dodanie paragonu oznaczy kurs jako zakończony.'
             : 'Zrób zdjęcie lub wybierz plik (obraz albo PDF).'
         }
+        reviewHint={
+          Array.isArray(trip?.warnings) && trip.warnings.length
+            ? 'Sprawdź wynik rozpoznania: porównaj kwotę na paragonie z kwotą kursu.'
+            : null
+        }
       />
-      <Toast message={toast} />
     </AppShell>
   )
 }

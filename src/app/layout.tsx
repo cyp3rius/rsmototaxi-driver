@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/om/AuthProvider'
 import { SplashGate } from '@/components/shell/SplashGate'
 import { ClientBoot } from '@/components/shell/ClientBoot'
+import { ToastProvider } from '@/components/ui/toast/ToastProvider'
 
 const archivo = Archivo({
   subsets: ['latin', 'latin-ext'],
@@ -73,9 +74,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="pl" className={`${archivo.variable} h-full bg-[#020407]`}>
       <body className="mx-auto min-h-dvh max-w-[430px] bg-[var(--bg-base)] antialiased shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <AuthProvider>
-          <ClientBoot>
-            <SplashGate>{children}</SplashGate>
-          </ClientBoot>
+          <ToastProvider>
+            <ClientBoot>
+              <SplashGate>{children}</SplashGate>
+            </ClientBoot>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

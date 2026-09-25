@@ -24,11 +24,13 @@ export type DriverMe = {
     defaultResourceLabel: string | null
     defaultResourceName: string | null
     defaultResourcePlate: string | null
+    defaultResourceColor: string | null
     defaultResourceIds: Array<{
       id: string
       label: string
       name: string | null
       plate: string | null
+      color: string | null
       available: boolean
     }>
     availableDefaultResourceIds: Array<{
@@ -36,6 +38,7 @@ export type DriverMe = {
       label: string
       name: string | null
       plate: string | null
+      color: string | null
       available: boolean
     }>
     externalAppEnabled: boolean
@@ -46,6 +49,7 @@ export type DriverMe = {
     resourceLabel: string | null
     resourceName: string | null
     resourcePlate: string | null
+    resourceColor: string | null
     assignmentDate: string
     status: string
     plannedShiftStart: string | null
@@ -186,10 +190,24 @@ class OmClient {
     return this.requestJson('taxi_fleet/driver-app/v2/trips', { method: 'PUT', body })
   }
 
-  async getAssignments() {
-    return this.requestJson<{ items?: Record<string, unknown>[] } | Record<string, unknown>[]>(
-      'taxi_fleet/driver-app/v2/assignments',
-    )
+  async getAssignments(params?: {
+    page?: number
+    pageSize?: number
+    dateFrom?: string
+    dateTo?: string
+  }) {
+    const q = new URLSearchParams()
+    if (params?.page) q.set('page', String(params.page))
+    if (params?.pageSize) q.set('pageSize', String(params.pageSize))
+    if (params?.dateFrom) q.set('dateFrom', params.dateFrom)
+    if (params?.dateTo) q.set('dateTo', params.dateTo)
+    const qs = q.toString()
+    return this.requestJson<{
+      items?: Record<string, unknown>[]
+      total?: number
+      page?: number
+      pageSize?: number
+    }>(`taxi_fleet/driver-app/v2/assignments${qs ? `?${qs}` : ''}`)
   }
 
   async startAssignmentShift(assignmentId: string, body: Record<string, unknown>) {

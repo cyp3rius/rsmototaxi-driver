@@ -41,7 +41,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-[var(--separator)]"
+      className="rs-bottom-nav fixed inset-x-0 bottom-0 z-40 border-t border-[var(--separator)]"
       style={{
         paddingBottom: 'var(--safe-bottom)',
         background: 'color-mix(in srgb, var(--bg-surface) 92%, transparent)',
@@ -59,15 +59,15 @@ export function BottomNav() {
             <li key={tab.href} className="min-w-0">
               <Link
                 href={tab.href}
+                aria-current={active ? 'page' : undefined}
+                data-active={active ? 'true' : undefined}
                 className={cn(
-                  'relative flex h-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5 transition-colors',
-                  active
-                    ? 'font-semibold text-[var(--accent)]'
-                    : 'font-medium text-[var(--text-secondary)]',
+                  'relative flex h-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5',
+                  active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
                 )}
               >
                 <span className="relative">
-                  <Icon size={24} strokeWidth={active ? 2.1 : 1.8} />
+                  <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
                   {showBadge ? (
                     <span
                       className="absolute -right-1.5 top-0 size-[9px] rounded-full border-2 border-[var(--bg-surface)] bg-[var(--warning)]"

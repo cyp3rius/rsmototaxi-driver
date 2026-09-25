@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { useAuth } from '@/lib/om/AuthProvider'
@@ -10,6 +10,8 @@ import {
   driverFirstName,
   isAppScopedTrip,
   polishCourseWord,
+  tripDropoffLabel,
+  tripPickupLabel,
 } from '@/lib/tripMeta'
 import { isReturnVisit, markWowSeen, navigateWithViewTransition } from '@/lib/viewTransition'
 
@@ -24,9 +26,23 @@ const back = (x: number) => {
 }
 const lerp = (a: number, b: number, x: number) => a + (b - a) * x
 
-/** Path A total timeline (ms) from design handoff seqRoute */
+/** Design handoff seqRoute / seqGreet (390×844 frame) */
 const ROUTE_LEN = 7400
-const MORPH_DONE = 5350
+const GREET_LEN = 6800
+/** Greeting block origin Y — brief G0 */
+const G0 = 332
+/** Left gutter — brief left: 32 */
+const G_LEFT = 32
+
+function readSafeTop() {
+  if (typeof document === 'undefined') return 0
+  const probe = document.createElement('div')
+  probe.style.cssText = 'position:absolute;visibility:hidden;padding-top:var(--safe-top)'
+  document.body.appendChild(probe)
+  const v = parseFloat(getComputedStyle(probe).paddingTop) || 0
+  probe.remove()
+  return v
+}
 
 function contextLine(
   me: NonNullable<ReturnType<typeof useAuth>['me']>,
@@ -70,9 +86,8 @@ function contextLine(
 }
 
 /**
- * Wow loading 5.3–5.4:
- * A (first): Zabierzów→Balice stroke (eio) → ring/back → glow → Witaj → morph to dash header
- * B (return): greeting + real progress + plate
+ * Wow 5.3–5.4 — positions/easings 1:1 with DriverScreen.dc.html seqRoute / seqGreet.
+ * Morph target = dashboard header (safeTop+17), not a % of viewport.
  */
 export function WowLoadingScreen() {
   const router = useRouter()
@@ -87,14 +102,21 @@ export function WowLoadingScreen() {
   const [nextTripLabel, setNextTripLabel] = useState<string | null>(null)
   const [skip, setSkip] = useState(false)
   const [dataReady, setDataReady] = useState(false)
-  const [bHello, setBHello] = useState(false)
+  const [safeTop, setSafeTop] = useState(0)
   const finished = useRef(false)
+  const rootRef = useRef<HTMLElement>(null)
 
   const name = driverFirstName(me?.member)
   const plate = me?.todayAssignment?.resourcePlate || me?.profile?.defaultResourcePlate
   const ctx = me
     ? contextLine(me, missingCount, nextTripLabel)
     : { primary: 'Przygotowujemy Twój dzień.', secondary: null }
+
+  // Brief: tgtTop = deviceTop + 17; plate toY = deviceTop + 222
+  const headerTop = safeTop + 17
+  const plateTargetTop = safeTop + 222
+  const morphDone = concept === 'A' ? 5350 : 4550
+  const helloAt = concept === 'A' ? 2700 : 100
 
   const finish = useCallback(() => {
     if (finished.current) return
@@ -105,9 +127,13 @@ export function WowLoadingScreen() {
     })
   }, [returning, router])
 
-  // Path A: continuous rAF clock (brief easings: eo / eio / back)
+  useLayoutEffect(() => {
+    setSafeTop(readSafeTop())
+  }, [])
+
+  // Shared rAF clock for A and B
   useEffect(() => {
-    if (concept !== 'A' || error) return
+    if (error) return
     const t0 = performance.now()
     let raf = 0
     let last = 0
@@ -120,9 +146,8 @@ export function WowLoadingScreen() {
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
-  }, [concept, error])
+  }, [error])
 
-  // Data load (parallel with animation)
   useEffect(() => {
     if (!ready) return
     if (!session) {
@@ -146,7 +171,6 @@ export function WowLoadingScreen() {
           if (cached) {
             setDataReady(true)
             setProgress(100)
-            if (concept === 'B') setBHello(true)
             return
           }
           setError('offline')
@@ -167,8 +191,7 @@ export function WowLoadingScreen() {
         if (!payload) throw new Error('empty')
 
         if (missing) {
-          const scoped = missing.items.filter(isAppScopedTrip)
-          setMissingCount(scoped.length || 0)
+          setMissingCount(missing.items.filter(isAppScopedTrip).length)
         }
         if (trips) {
           const next = trips.items.find(
@@ -181,24 +204,19 @@ export function WowLoadingScreen() {
                   minute: '2-digit',
                 })
               : null
-            const meta =
-              next.metadata && typeof next.metadata === 'object'
-                ? (next.metadata as { tripRequest?: { from?: string; to?: string } })
-                : null
-            const place = meta?.tripRequest?.from || meta?.tripRequest?.to
+            const place = tripPickupLabel(next) || tripDropoffLabel(next)
             if (time && place) setNextTripLabel(`Pierwszy kurs o ${time}, ${place}.`)
             else if (time) setNextTripLabel(`Pierwszy kurs o ${time}.`)
           }
         }
-        setProgress(100)
-        setDataReady(true)
-
-        if (concept === 'B') {
-          const elapsed = Date.now() - started
-          window.setTimeout(() => {
-            if (!cancelled) setBHello(true)
-          }, Math.max(0, 600 - elapsed))
-        }
+        // Progress bar (B) tracks real load — snap to 100
+        const elapsed = Date.now() - started
+        const minBar = concept === 'B' ? 1700 : 0
+        window.setTimeout(() => {
+          if (cancelled) return
+          setProgress(100)
+          setDataReady(true)
+        }, Math.max(0, minBar - elapsed))
       } catch {
         if (!cancelled) setError(navigator.onLine ? 'timeout' : 'offline')
       }
@@ -216,27 +234,54 @@ export function WowLoadingScreen() {
     }
   }, [ready, session, me, refreshMe, router, concept])
 
-  // Path A: finish after morph + data (or skip once greeting visible)
   useEffect(() => {
-    if (concept !== 'A' || error || !dataReady) return
-    const helloVisible = t >= 2700
-    if (skip && helloVisible) {
+    if (error || !dataReady) return
+    if (skip && t >= helloAt) {
       finish()
       return
     }
-    if (t >= MORPH_DONE) finish()
-  }, [concept, error, dataReady, t, skip, finish])
+    if (t >= morphDone) finish()
+  }, [error, dataReady, t, skip, helloAt, morphDone, finish])
 
-  // Path B: hold then finish
-  useEffect(() => {
-    if (concept !== 'B' || error || !dataReady || !bHello) return
-    const hold = skip ? 0 : 900
-    const timer = window.setTimeout(() => finish(), hold)
-    return () => window.clearTimeout(timer)
-  }, [concept, error, dataReady, bHello, skip, finish])
+  // —— Timeline (A = seqRoute, B = seqGreet) ——
+  const isRoute = concept === 'A'
+  const L = isRoute ? ROUTE_LEN : GREET_LEN
+  const tt = Math.min(t, L)
 
-  // —— Path A derived styles (1:1 with DriverScreen seqRoute) ——
-  const tt = Math.min(t, ROUTE_LEN)
+  const morphStart = isRoute ? 4500 : 3700
+  const morphEnd = isRoute ? 5150 : 4350
+  const m = eo(seg(tt, morphStart, morphEnd))
+  const mRaw = seg(tt, morphStart, morphEnd)
+
+  const w1s = isRoute ? 2700 : 100
+  const w2s = isRoute ? 2820 : 220
+  const w3s = isRoute ? 2980 : 1750
+  const w1 = eo(seg(tt, w1s, w1s + 450))
+  const w2 = eo(seg(tt, w2s, w2s + 450))
+  const w3 = eo(seg(tt, w3s, w3s + 450))
+
+  // Greeting morph: absolute top G0 → headerTop (brief), scale 1 → 0.5
+  const greetTop = lerp(G0, headerTop, m)
+  const greetScale = lerp(1, 0.5, m)
+  const greetOp = 1 - seg(mRaw, 0.7, 1)
+  const greetMarginL = lerp(0, -12, m)
+  // Name joins "Witaj," on one line during morph (brief translate 176, -46)
+  const nameTx = lerp(0, 176, m)
+  const nameTy = 8 * (1 - w2) + lerp(0, -46, m)
+  const ctxOp = w3 * (1 - clamp(mRaw * 3))
+  const ctxTy = 8 * (1 - w3) - 20 * m
+  // Hand VT to phantom header once morph is near destination (avoids landing too low)
+  const vtOnHeader = mRaw >= 0.55
+  const vtOnPlate = !isRoute && mRaw >= 0.75
+
+  // Phantom dashboard under morph (brief dashOp / hdrOp)
+  const dashInStart = isRoute ? 4700 : 3900
+  const dashInEnd = isRoute ? 5350 : 4550
+  const dashOp = eo(seg(tt, dashInStart, dashInEnd))
+  const dashY = 36 * (1 - dashOp)
+  const hdrOp = seg(mRaw, 0.55, 1)
+
+  // Path A map
   const mapIn = eo(seg(tt, 0, 400))
   const mapFade = 1 - eio(seg(tt, 2300, 2800))
   const draw = eio(seg(tt, 200, 1500))
@@ -253,25 +298,25 @@ export function WowLoadingScreen() {
     gp > 0 ? eo(seg(tt, 2150, 2350)) * (1 - eio(seg(tt, 2600, 3400))) * 0.9 : 0
   const mapOp = mapIn * mapFade
 
-  const w1 = eo(seg(tt, 2700, 3150))
-  const w2 = eo(seg(tt, 2820, 3270))
-  const w3 = eo(seg(tt, 2980, 3430))
-  const m = eo(seg(tt, 4500, 5150))
-  const mRaw = seg(tt, 4500, 5150)
-  const greetScale = lerp(1, 0.5, m)
-  const greetOp = 1 - seg(mRaw, 0.7, 1)
-  const ctxOp = w3 * (1 - clamp(mRaw * 3))
-  const greetY = lerp(0, -120, m)
+  // Path B progress + plate
+  const bar = eio(seg(tt, 350, 1700))
+  const barOp = eo(seg(tt, 300, 450)) * (1 - seg(tt, 1700, 1900))
+  const plateOp = eo(seg(tt, 1900, 2350))
+  const plateFromY = G0 + 112 + 26 + 18
+  const plateTop = lerp(plateFromY, plateTargetTop, m) + 8 * (1 - plateOp)
+  const plateLeft = lerp(G_LEFT, 40, m)
+  const plateFade = plateOp * (1 - seg(mRaw, 0.85, 1))
+  // Prefer real load progress once available; else timeline bar
+  const barWidth = dataReady ? Math.max(bar, progress / 100) : bar
 
-  const showMap = mapOp > 0.02 && concept === 'A'
-  const showHello = (w1 > 0.02 || m > 0) && concept === 'A'
-  const showSlow =
-    concept === 'A' && tt > 2000 && tt < 2700 && (slowHint || tt > 2000)
+  const showMap = isRoute && mapOp > 0.02
+  const showHello = w1 > 0.02 || m > 0
+  const showSlow = isRoute && tt > 2000 && tt < 2700
 
   if (error) {
     return (
       <main
-        className="flex min-h-dvh flex-col justify-center px-5 pb-16 max-[390px]:px-5 sm:px-6"
+        className="flex min-h-dvh flex-col justify-center px-5 pb-16"
         style={{ paddingTop: 'var(--safe-top)' }}
       >
         <span className="flex size-16 items-center justify-center rounded-[20px] tint-warning text-[var(--warning)]">
@@ -307,19 +352,69 @@ export function WowLoadingScreen() {
 
   return (
     <main
-      className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden bg-[var(--bg-base)] px-5 text-center max-[390px]:px-5 sm:px-6"
-      style={{ paddingTop: 'var(--safe-top)', paddingBottom: 'var(--safe-bottom)' }}
+      ref={rootRef}
+      className="relative min-h-dvh overflow-hidden bg-[var(--bg-base)]"
       onClick={() => {
-        if (concept === 'A' && t >= 2700) setSkip(true)
-        if (concept === 'B' && bHello) setSkip(true)
+        if (t >= helloAt) setSkip(true)
       }}
     >
-      {concept === 'A' ? (
+      {/* Phantom dashboard fades in under morph — lands greeting on real header coords */}
+      <div
+        className="pointer-events-none absolute inset-0 flex flex-col"
+        style={{
+          paddingTop: headerTop - 17 + 4,
+          opacity: dashOp,
+          transform: `translateY(${dashY}px)`,
+        }}
+        aria-hidden
+      >
+        <div className="flex items-start justify-between gap-3 px-5 py-2.5">
+          <div className="min-w-0">
+            <div
+              className="display-dash-hdr"
+              style={{
+                opacity: hdrOp,
+                viewTransitionName: vtOnHeader ? 'driver-hello' : undefined,
+              }}
+            >
+              Witaj, <span className="text-[var(--accent)]">{name}</span>
+            </div>
+            <div className="mt-0.5 text-[15px] capitalize text-[var(--text-secondary)]" style={{ opacity: hdrOp }}>
+              {(me?.today ? new Date(`${me.today}T12:00:00`) : new Date()).toLocaleDateString('pl-PL', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+              })}
+            </div>
+          </div>
+        </div>
+        {!isRoute && plate ? (
+          <div className="px-5 pt-3" style={{ opacity: Math.max(hdrOp, vtOnPlate ? 1 : 0) }}>
+            <div className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
+              <div className="flex justify-between text-[15px] text-[var(--text-secondary)] opacity-40">
+                <span>Czas zmiany</span>
+                <span />
+              </div>
+              <div className="numeric-xl mt-1.5 opacity-0">00:00:00</div>
+              <div className="mt-[18px]">
+                <span style={{ viewTransitionName: vtOnPlate ? 'driver-plate' : undefined, opacity: vtOnPlate ? 1 : 0 }}>
+                  <PlateBadge plate={plate} />
+                </span>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {/* —— Path A: map + glow —— */}
+      {isRoute ? (
         <>
-          {/* Glow bloom from Balice endpoint */}
           <div
-            className="pointer-events-none absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+            className="pointer-events-none absolute rounded-full"
             style={{
+              // Balice endpoint ≈ screen (298, 409) on 390 frame
+              left: 298 - glowSize / 2,
+              top: 300 + (104 / 220) * 231 - glowSize / 2,
               width: glowSize,
               height: glowSize,
               opacity: glowOp,
@@ -327,191 +422,180 @@ export function WowLoadingScreen() {
                 'radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent) 0%, color-mix(in srgb, var(--accent) 18%, transparent) 30%, transparent 65%)',
             }}
           />
-
           {showMap ? (
-            <div className="relative w-full max-w-[336px]" style={{ opacity: mapOp }}>
-              <svg viewBox="0 0 320 220" className="w-full overflow-visible" aria-hidden>
-                <g fill="none" stroke="var(--separator)" strokeWidth="1.2">
-                  <path d="M10 150 C 60 120, 90 170, 140 140 S 230 100, 310 130" />
-                  <path d="M20 70 C 80 60, 120 95, 170 80 S 250 40, 300 60" />
-                  <path d="M40 200 C 100 185, 160 205, 220 190 S 280 170, 310 185" />
-                  <path d="M150 10 C 145 60, 170 110, 160 210" />
-                  <path d="M240 20 C 230 70, 250 120, 235 210" />
-                </g>
-                <g fill="var(--text-tertiary)">
-                  <circle cx="36" cy="40" r="1.6" />
-                  <circle cx="92" cy="176" r="1.6" />
-                  <circle cx="212" cy="36" r="1.6" />
-                  <circle cx="272" cy="168" r="1.6" />
-                  <circle cx="128" cy="58" r="1.6" />
-                  <circle cx="290" cy="98" r="1.6" />
-                </g>
-                {/* pathLength=1 so dasharray/offset are unitless 0–1 — finishes completely */}
-                <path
-                  d="M62 132 C 95 132, 110 96, 150 100 S 215 128, 258 104"
-                  pathLength={1}
-                  fill="none"
-                  stroke="var(--accent)"
-                  strokeWidth={3}
-                  strokeLinecap="round"
-                  strokeDasharray={1}
-                  strokeDashoffset={1 - draw}
-                  style={{
-                    filter:
-                      'drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent))',
-                  }}
-                />
-                <circle cx="62" cy="132" r="5" fill="var(--accent)" />
-                <circle
-                  cx="258"
-                  cy="104"
-                  r={ringR}
-                  fill="none"
-                  stroke="var(--accent)"
-                  strokeWidth={2}
-                  opacity={ringOp}
-                />
-                <circle
-                  cx="258"
-                  cy="104"
-                  r="5"
-                  fill="var(--accent)"
-                  style={{
-                    transformOrigin: '258px 104px',
-                    transform: `scale(${endScale})`,
-                  }}
-                />
-                <text
-                  x="62"
-                  y="158"
-                  textAnchor="middle"
-                  fontSize={15}
-                  fill="var(--text-secondary)"
-                  opacity={lab1}
-                >
-                  Zabierzów
-                </text>
-                <text
-                  x="258"
-                  y="86"
-                  textAnchor="middle"
-                  fontSize={15}
-                  fill="var(--text-secondary)"
-                  opacity={lab2}
-                >
-                  Balice
-                </text>
-              </svg>
-            </div>
+            <svg
+              viewBox="0 0 320 220"
+              className="pointer-events-none absolute overflow-visible"
+              style={{ left: 27, top: 300, width: 336, height: 231, opacity: mapOp }}
+              aria-hidden
+            >
+              <g fill="none" stroke="var(--separator)" strokeWidth="1.2">
+                <path d="M10 150 C 60 120, 90 170, 140 140 S 230 100, 310 130" />
+                <path d="M20 70 C 80 60, 120 95, 170 80 S 250 40, 300 60" />
+                <path d="M40 200 C 100 185, 160 205, 220 190 S 280 170, 310 185" />
+                <path d="M150 10 C 145 60, 170 110, 160 210" />
+                <path d="M240 20 C 230 70, 250 120, 235 210" />
+              </g>
+              <g fill="var(--text-tertiary)">
+                <circle cx="36" cy="40" r="1.6" />
+                <circle cx="92" cy="176" r="1.6" />
+                <circle cx="212" cy="36" r="1.6" />
+                <circle cx="272" cy="168" r="1.6" />
+                <circle cx="128" cy="58" r="1.6" />
+                <circle cx="290" cy="98" r="1.6" />
+              </g>
+              <path
+                d="M62 132 C 95 132, 110 96, 150 100 S 215 128, 258 104"
+                pathLength={1}
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeDasharray={1}
+                strokeDashoffset={1 - draw}
+                style={{
+                  filter: 'drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent))',
+                }}
+              />
+              <circle cx="62" cy="132" r="5" fill="var(--accent)" />
+              <circle
+                cx="258"
+                cy="104"
+                r={ringR}
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth={2}
+                opacity={ringOp}
+              />
+              <circle
+                cx="258"
+                cy="104"
+                r="5"
+                fill="var(--accent)"
+                style={{ transformBox: 'fill-box', transformOrigin: 'center', transform: `scale(${endScale})` }}
+              />
+              <text x="62" y="158" textAnchor="middle" fontSize={15} fill="var(--text-secondary)" opacity={lab1}>
+                Zabierzów
+              </text>
+              <text x="258" y="86" textAnchor="middle" fontSize={15} fill="var(--text-secondary)" opacity={lab2}>
+                Balice
+              </text>
+            </svg>
           ) : null}
-
           {showSlow ? (
             <p
-              className="absolute bottom-[22%] left-0 right-0 text-[17px] text-[var(--text-secondary)]"
-              style={{ opacity: eo(seg(tt, 2000, 2300)) * (1 - seg(tt, 2550, 2750)) }}
+              className="absolute left-0 right-0 text-center text-[17px] text-[var(--text-secondary)]"
+              style={{
+                top: 300 + 231 + 24,
+                opacity: eo(seg(tt, 2000, 2300)) * (1 - seg(tt, 2550, 2750)),
+              }}
             >
               {slowHint === 'still' ? 'Wciąż ładujemy zlecenia…' : 'Przygotowujemy Twój dzień'}
             </p>
-          ) : null}
-
-          {showHello ? (
-            <div
-              className="absolute inset-x-0 px-8 text-left"
-              style={{
-                top: '38%',
-                transform: `translateY(${greetY}px) scale(${greetScale})`,
-                transformOrigin: '32px 0',
-                opacity: greetOp,
-                marginLeft: lerp(0, -4, m),
-              }}
-            >
-              <div style={{ viewTransitionName: 'driver-hello' }}>
-                <div
-                  className="display-hello text-[var(--text-primary)]"
-                  style={{
-                    opacity: w1,
-                    transform: `translateY(${8 * (1 - w1)}px)`,
-                  }}
-                >
-                  Witaj,
-                </div>
-                <div
-                  className="display-hello text-[var(--accent)]"
-                  style={{
-                    opacity: w2,
-                    transform: `translateY(${8 * (1 - w2)}px)`,
-                  }}
-                >
-                  {name}
-                </div>
-              </div>
-              <div
-                className="mt-7"
-                style={{
-                  opacity: ctxOp,
-                  transform: `translateY(${8 * (1 - w3) - 20 * m}px)`,
-                }}
-              >
-                <p className="text-[18px] leading-[26px] text-[var(--text-primary)]">{ctx.primary}</p>
-                {ctx.secondary ? (
-                  <p className="mt-1 text-[17px] leading-[25px] text-[var(--text-secondary)]">
-                    {ctx.secondary}
-                  </p>
-                ) : null}
-              </div>
-              {w3 > 0.6 && m < 0.15 ? (
-                <p className="mt-10 text-center text-[14px] text-[var(--text-tertiary)]">
-                  Dotknij, aby pominąć
-                </p>
-              ) : null}
-            </div>
           ) : null}
         </>
       ) : null}
 
-      {concept === 'B' ? (
-        <div className="flex w-full max-w-sm flex-col items-center px-2">
-          <h1 className="display-hello text-left" style={{ viewTransitionName: 'driver-hello' }}>
-            Witaj, <span className="text-[var(--accent)]">{name}</span>
-          </h1>
-          {dataReady && bHello ? (
-            <>
-              <p
-                className="mt-3 text-[17px] text-[var(--text-secondary)]"
-                style={{
-                  opacity: 1,
-                  transform: 'translateY(0)',
-                  transition: 'opacity 450ms cubic-bezier(0.22, 1, 0.36, 1), transform 450ms cubic-bezier(0.22, 1, 0.36, 1)',
-                }}
-              >
-                {ctx.primary}
-              </p>
-              {ctx.secondary ? (
-                <p className="mt-1.5 text-[15px] text-[var(--text-tertiary)]">{ctx.secondary}</p>
-              ) : null}
-            </>
-          ) : (
-            <p className="mt-3 text-[17px] text-[var(--text-secondary)]">
-              {slowHint === 'still' ? 'Wciąż ładujemy zlecenia…' : 'Przygotowujemy Twój dzień'}
-            </p>
-          )}
-
-          <div className="mt-10 h-[3px] w-[140px] overflow-hidden rounded-sm bg-[var(--separator)]">
-            <div
-              className="h-full rounded-sm bg-[var(--accent)] transition-[width] duration-200"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          {plate ? (
-            <div className={`mt-8 ${progress >= 100 ? 'plate-fly' : 'opacity-90'}`}>
-              <PlateBadge plate={plate} />
-            </div>
-          ) : null}
-          {bHello ? (
-            <p className="mt-8 text-[14px] text-[var(--text-tertiary)]">Dotknij, aby pominąć</p>
-          ) : null}
+      {/* —— Path B: progress track (left-aligned under greeting) —— */}
+      {!isRoute ? (
+        <div
+          className="absolute overflow-hidden rounded-sm bg-[var(--separator)]"
+          style={{
+            left: G_LEFT,
+            top: G0 + 124,
+            width: 140,
+            height: 3,
+            opacity: barOp,
+          }}
+        >
+          <div
+            className="h-full rounded-sm bg-[var(--accent)]"
+            style={{ width: `${Math.min(1, barWidth) * 100}%` }}
+          />
         </div>
+      ) : null}
+
+      {/* —— Shared greeting: left-aligned, morphs into header —— */}
+      {showHello ? (
+        <div
+          className="absolute text-left"
+          style={{
+            left: G_LEFT,
+            top: greetTop,
+            marginLeft: greetMarginL,
+            transform: `scale(${greetScale})`,
+            transformOrigin: '0 0',
+            opacity: greetOp,
+            width: `calc(100% - ${G_LEFT * 2}px)`,
+          }}
+        >
+          <div style={{ viewTransitionName: vtOnHeader ? undefined : 'driver-hello' }}>
+            <div
+              className="display-hello text-[var(--text-primary)]"
+              style={{
+                opacity: w1,
+                transform: `translateY(${8 * (1 - w1)}px)`,
+              }}
+            >
+              Witaj,
+            </div>
+            <div
+              className="display-hello text-[var(--accent)]"
+              style={{
+                opacity: w2,
+                transform: `translate(${nameTx}px, ${nameTy}px)`,
+              }}
+            >
+              {name}
+            </div>
+          </div>
+          <div
+            className="mt-7"
+            style={{
+              opacity: ctxOp,
+              transform: `translateY(${ctxTy}px)`,
+            }}
+          >
+            {!isRoute && !dataReady ? (
+              <p className="text-[18px] leading-[26px] text-[var(--text-secondary)]">
+                {slowHint === 'still' ? 'Wciąż ładujemy zlecenia…' : 'Przygotowujemy Twój dzień'}
+              </p>
+            ) : (
+              <>
+                <p className="text-[18px] leading-[26px] text-[var(--text-primary)]">{ctx.primary}</p>
+                {ctx.secondary && isRoute ? (
+                  <p className="mt-1 text-[17px] leading-[25px] text-[var(--text-secondary)]">
+                    {ctx.secondary}
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* —— Path B: plate flies into shift-card slot —— */}
+      {!isRoute && plate ? (
+        <div
+          className="absolute"
+          style={{
+            left: plateLeft,
+            top: plateTop,
+            opacity: plateFade,
+            viewTransitionName: vtOnPlate ? undefined : 'driver-plate',
+          }}
+        >
+          <PlateBadge plate={plate} />
+        </div>
+      ) : null}
+
+      {showHello && w3 > 0.55 && m < 0.12 ? (
+        <p
+          className="absolute bottom-10 left-0 right-0 text-center text-[14px] text-[var(--text-tertiary)]"
+          style={{ paddingBottom: 'var(--safe-bottom)' }}
+        >
+          Dotknij, aby pominąć
+        </p>
       ) : null}
     </main>
   )

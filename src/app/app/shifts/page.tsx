@@ -1,19 +1,22 @@
 'use client'
 
-import Image from 'next/image'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useMemo, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
-import { ActionBar } from '@/components/ui/ActionBar'
-import { Button } from '@/components/ui/Button'
+import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PlateBadge } from '@/components/ui/PlateBadge'
+import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
-import { Toast } from '@/components/ui/Toast'
+import { useStartShift } from '@/components/ui/StartShiftProvider'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { useAuth } from '@/lib/om/AuthProvider'
-import { formatTime } from '@/lib/format'
+import { formatTime, endOfDayIso, startOfDayIso } from '@/lib/format'
+import { isAppScopedTrip, tripRouteLabel } from '@/lib/tripMeta'
+
+type Assignment = Record<string, unknown>
 
 function startOfWeek(d = new Date()) {
   const x = new Date(d)
@@ -23,52 +26,184 @@ function startOfWeek(d = new Date()) {
   return x
 }
 
+function endOfWeek(d = new Date()) {
+  const s = startOfWeek(d)
+  return new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6, 23, 59, 59, 999)
+}
+
+function toDateKey(raw: unknown) {
+  const s = String(raw || '')
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function formatShiftDate(raw: unknown) {
+  const key = toDateKey(raw)
+  if (!key) return '—'
+  const d = new Date(`${key}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return key
+  const label = d.toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
+function vehicleLine(item: Assignment) {
+  const plate = typeof item.resourcePlate === 'string' ? item.resourcePlate.trim() : ''
+  const name = String(item.resourceName || item.resourceLabel || '').trim()
+  const cleaned =
+    plate && name.includes(plate)
+      ? name.replace(plate, '').replace(/[·•|,]+/g, ' ').trim()
+      : name
+  if (cleaned && plate) return `${cleaned} · ${plate}`
+  return cleaned || plate || '—'
+}
+
+function shiftChip(item: Assignment): {
+  label: string
+  tone: 'success' | 'neutral' | 'accent'
+} {
+  if (item.shiftStart && !item.shiftEnd) return { label: 'Na zmianie', tone: 'success' }
+  if (item.shiftEnd) {
+    if (!item.plannedShiftStart) return { label: 'Ad hoc', tone: 'accent' }
+    return { label: 'Zakończona', tone: 'neutral' }
+  }
+  return { label: 'Zaplanowana', tone: 'neutral' }
+}
+
+function planRange(item: Assignment) {
+  const start = item.plannedShiftStart || item.shiftStart
+  const end = item.plannedShiftEnd || item.shiftEnd
+  return `${formatTime(String(start || ''))}–${formatTime(String(end || ''))}`
+}
+
+function metaLine(item: Assignment) {
+  const parts: string[] = []
+  if (item.shiftStart && !item.shiftEnd) {
+    parts.push(`Start ${formatTime(String(item.shiftStart))}`)
+  } else if (item.shiftStart && item.shiftEnd) {
+    parts.push(
+      `Rzeczywiście ${formatTime(String(item.shiftStart))}–${formatTime(String(item.shiftEnd))}`,
+    )
+  }
+  const plate = typeof item.resourcePlate === 'string' ? item.resourcePlate.trim() : ''
+  if (plate) parts.push(plate)
+  else {
+    const name = String(item.resourceName || item.resourceLabel || '').trim()
+    if (name) parts.push(name)
+  }
+  if (item.gpsDistanceKm != null && Number(item.gpsDistanceKm) > 0) {
+    parts.push(
+      `${Number(item.gpsDistanceKm).toLocaleString('pl-PL', { maximumFractionDigits: 1 })} km`,
+    )
+  }
+  return parts.join(' · ')
+}
+
 function ShiftsInner() {
   const router = useRouter()
   const search = useSearchParams()
   const { me, refreshMe } = useAuth()
-  const [toast, setToast] = useState<string | null>(null)
+  const toast = useToast()
+  const { openStartShift } = useStartShift()
+  const [scope, setScope] = useState<'week' | 'all'>('week')
+  const [items, setItems] = useState<Assignment[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [loading, setLoading] = useState(true)
   const [busy, setBusy] = useState(false)
-  const [assignments, setAssignments] = useState<Record<string, unknown>[]>([])
-  const [historyScope, setHistoryScope] = useState<'week' | 'all'>('week')
-  const startMode = search.get('start') === '1'
+  const [endOpen, setEndOpen] = useState(false)
+  const [missingTrips, setMissingTrips] = useState<Array<{ id: string; label: string }>>([])
 
-  const allVehicles = me?.profile?.defaultResourceIds || []
-  const available = me?.profile?.availableDefaultResourceIds?.length
-    ? me.profile.availableDefaultResourceIds
-    : allVehicles.filter((v) => v.available)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const effectiveSelectedId = selectedId ?? available[0]?.id ?? null
+  const pageSize = 20
+
+  const load = useCallback(
+    async (nextPage: number, replace: boolean) => {
+      const params: {
+        page: number
+        pageSize: number
+        dateFrom?: string
+        dateTo?: string
+      } = { page: nextPage, pageSize }
+      if (scope === 'week') {
+        params.dateFrom = toDateKey(startOfWeek().toISOString())
+        params.dateTo = toDateKey(endOfWeek().toISOString())
+      }
+      const res = await omClient.getAssignments(params)
+      const payload = res as { items?: Assignment[]; total?: number }
+      const list = payload.items || (Array.isArray(res) ? (res as Assignment[]) : [])
+      setTotal(typeof payload.total === 'number' ? payload.total : list.length)
+      setPage(nextPage)
+      setItems((prev) => (replace ? list : [...prev, ...list]))
+    },
+    [scope],
+  )
 
   useEffect(() => {
-    void omClient.getAssignments().then((res) => {
-      const items = Array.isArray(res)
-        ? res
-        : ((res as { items?: Record<string, unknown>[] }).items || [])
-      setAssignments(items)
-    })
-  }, [])
+    setLoading(true)
+    void load(1, true).finally(() => setLoading(false))
+  }, [load])
 
-  async function startShift() {
-    if (!effectiveSelectedId || busy) return
-    setBusy(true)
-    try {
-      if (me?.todayAssignment?.id && !me.todayAssignment.shiftStart) {
-        await omClient.startAssignmentShift(me.todayAssignment.id, {
-          action: 'start',
-          resourceId: effectiveSelectedId,
-        })
-      } else {
-        await omClient.startAdHocAssignment({ resourceId: effectiveSelectedId })
-      }
-      await refreshMe()
-      const plate = available.find((v) => v.id === effectiveSelectedId)?.plate
-      setToast(plate ? `Zmiana rozpoczęta · ${plate}` : 'Zmiana rozpoczęta')
-      window.setTimeout(() => router.replace('/app'), 800)
-    } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się rozpocząć zmiany')
-      setBusy(false)
+  useEffect(() => {
+    if (search.get('start') === '1') {
+      openStartShift()
+      router.replace('/app/shifts', { scroll: false })
     }
+  }, [search, openStartShift, router])
+
+  const todayKey = me?.today || toDateKey(new Date().toISOString())
+
+  const groups = useMemo(() => {
+    const today: Assignment[] = []
+    const upcoming: Assignment[] = []
+    const earlier: Assignment[] = []
+    for (const item of items) {
+      const key = toDateKey(item.assignmentDate || item.shiftStart || item.plannedShiftStart)
+      const active = Boolean(item.shiftStart && !item.shiftEnd)
+      if (active || key === todayKey) today.push(item)
+      else if (key > todayKey) upcoming.push(item)
+      else earlier.push(item)
+    }
+    today.sort((a, b) => {
+      const aActive = a.shiftStart && !a.shiftEnd ? 0 : 1
+      const bActive = b.shiftStart && !b.shiftEnd ? 0 : 1
+      return aActive - bActive
+    })
+    upcoming.sort((a, b) =>
+      toDateKey(a.assignmentDate).localeCompare(toDateKey(b.assignmentDate)),
+    )
+    const out: Array<{ title: string; items: Assignment[] }> = []
+    if (today.length) out.push({ title: 'Dziś', items: today })
+    if (upcoming.length) out.push({ title: 'Nadchodzące', items: upcoming })
+    if (earlier.length) out.push({ title: 'Wcześniej', items: earlier })
+    return out
+  }, [items, todayKey])
+
+  async function openEndShift() {
+    try {
+      const res = await omClient.getTrips({
+        pageSize: 50,
+        missingReceipt: true,
+        startedFrom: startOfDayIso(),
+        startedTo: endOfDayIso(),
+      })
+      setMissingTrips(
+        res.items.filter(isAppScopedTrip).map((t) => ({
+          id: String(t.id),
+          label: tripRouteLabel(t) || 'Kurs',
+        })),
+      )
+    } catch {
+      setMissingTrips([])
+    }
+    setEndOpen(true)
   }
 
   async function endShift() {
@@ -77,184 +212,131 @@ function ShiftsInner() {
     try {
       await omClient.startAssignmentShift(me.todayAssignment.id, { action: 'end' })
       await refreshMe()
-      setToast('Zmiana zakończona')
+      setEndOpen(false)
+      toast.success('Zmiana zakończona')
+      await load(1, true)
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się zakończyć zmiany')
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zakończyć zmiany')
     } finally {
       setBusy(false)
-      window.setTimeout(() => setToast(null), 3000)
     }
   }
 
-  const showStart =
-    startMode ||
-    me?.dashboardState === 'A' ||
-    me?.dashboardState === 'B' ||
-    me?.dashboardState === 'D'
-  const onShift = me?.dashboardState === 'C'
-  const planned = Boolean(me?.todayAssignment && !me.todayAssignment.shiftStart)
-
-  const filteredAssignments = useMemo(() => {
-    if (historyScope === 'all') return assignments
-    const from = startOfWeek().getTime()
-    return assignments.filter((item) => {
-      const raw = String(item.assignmentDate || item.shiftStart || item.plannedShiftStart || '')
-      const t = new Date(raw).getTime()
-      return Number.isFinite(t) && t >= from
-    })
-  }, [assignments, historyScope])
+  const canShowMore = items.length < total
 
   return (
     <AppShell>
       <PageHeader title="Zmiany" />
-      <div className="space-y-3 px-5 pb-36">
-        {onShift && me?.todayAssignment ? (
-          <SurfaceCard padding="lg">
-            <p className="text-[15px] font-semibold text-[var(--success)]">Zmiana w toku</p>
-            <p className="mt-2 text-[17px] font-semibold">
-              {me.todayAssignment.resourceName || me.todayAssignment.resourceLabel || '—'}
-            </p>
-            {me.todayAssignment.resourcePlate ? (
-              <div className="mt-3">
-                <PlateBadge plate={me.todayAssignment.resourcePlate} />
-              </div>
-            ) : null}
-            <p className="mt-3 text-[15px] text-[var(--text-secondary)]">
-              od {formatTime(me.todayAssignment.shiftStart)}
-            </p>
-            <Button className="mt-4" variant="danger" size="md" loading={busy} onClick={() => void endShift()}>
-              Zakończ zmianę
-            </Button>
-          </SurfaceCard>
-        ) : null}
-
-        {showStart && !onShift ? (
-          <section className="space-y-3">
-            <h2 className="text-[17px] font-semibold">
-              {planned ? 'Potwierdź pojazd i rozpocznij' : 'Wybierz auto'}
-            </h2>
-            {planned && me?.todayAssignment ? (
-              <SurfaceCard padding="lg" className="overflow-hidden !p-0">
-                <div className="relative h-36 bg-[var(--bg-surface-raised)]">
-                  <Image
-                    src="/brand/fleet-hero-green.webp"
-                    alt=""
-                    fill
-                    className="object-cover"
-                    style={{ objectPosition: '50% 40%' }}
-                  />
-                </div>
-                <div className="p-5">
-                  <p className="text-[15px] text-[var(--text-secondary)]">Zaplanowana zmiana</p>
-                  <p className="mt-1 font-[family-name:var(--font-display)] text-[28px] font-semibold tabular-nums" style={{ fontStretch: '112%' }}>
-                    {formatTime(me.todayAssignment.plannedShiftStart)}–{formatTime(me.todayAssignment.plannedShiftEnd)}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    {me.todayAssignment.resourcePlate ? (
-                      <PlateBadge plate={me.todayAssignment.resourcePlate} />
-                    ) : (
-                      <span />
-                    )}
-                    <span className="text-[15px] text-[var(--text-secondary)]">
-                      {me.todayAssignment.resourceName || me.todayAssignment.resourceLabel}
-                    </span>
-                  </div>
-                </div>
-              </SurfaceCard>
-            ) : null}
-
-            {available.length === 0 ? (
-              <p className="text-[15px] text-[var(--text-secondary)]">Brak dostępnych pojazdów.</p>
-            ) : (
-              available.map((vehicle, index) => (
-                <button
-                  key={vehicle.id}
-                  type="button"
-                  onClick={() => setSelectedId(vehicle.id)}
-                  className={`w-full rounded-[20px] border p-4 text-left ${
-                    effectiveSelectedId === vehicle.id
-                      ? 'border-[var(--accent)] tint-accent-soft'
-                      : 'border-[var(--separator)] bg-[var(--bg-surface)]'
-                  } ${index === 0 && !planned ? 'min-h-[96px]' : ''}`}
-                >
-                  <p className="font-semibold">{vehicle.name || vehicle.label}</p>
-                  {vehicle.plate ? (
-                    <div className="mt-2">
-                      <PlateBadge plate={vehicle.plate} />
-                    </div>
-                  ) : null}
-                </button>
-              ))
-            )}
-
-            {allVehicles.filter((v) => !v.available).length ? (
-              <div className="pt-2">
-                <p className="mb-2 text-[15px] text-[var(--text-secondary)]">Zajęte</p>
-                {allVehicles
-                  .filter((v) => !v.available)
-                  .map((vehicle) => (
-                    <div
-                      key={vehicle.id}
-                      className="flex h-[52px] items-center justify-between border-b border-[var(--separator)] opacity-60"
-                    >
-                      <span className="font-[family-name:var(--font-display)] text-[17px] font-semibold tracking-[0.04em]" style={{ fontStretch: '112%' }}>
-                        {vehicle.plate || vehicle.label}
-                      </span>
-                      <span className="text-[15px] text-[var(--text-secondary)]">Zajęte</span>
-                    </div>
-                  ))}
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {assignments.length > 0 ? (
-          <section className="pt-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-[17px] font-semibold">Historia</h2>
-            </div>
-            <SegmentedControl
-              value={historyScope}
-              onChange={setHistoryScope}
-              options={[
-                { id: 'week', label: 'Ten tydzień' },
-                { id: 'all', label: 'Wszystkie' },
-              ]}
-            />
-            <ul className="mt-3 space-y-3">
-              {(historyScope === 'all' ? filteredAssignments.slice(0, 30) : filteredAssignments).map((item) => (
-                <li key={String(item.id)}>
-                  <SurfaceCard>
-                    <p className="text-[15px] text-[var(--text-secondary)]">
-                      {String(item.assignmentDate || '')}
-                    </p>
-                    <p className="mt-1 text-[17px] font-semibold">
-                      {String(item.resourceName || item.resourceLabel || 'Zmiana')}
-                    </p>
-                    <p className="mt-1 text-[15px] text-[var(--text-secondary)]">
-                      {formatTime(String(item.shiftStart || item.plannedShiftStart || ''))}–
-                      {formatTime(String(item.shiftEnd || item.plannedShiftEnd || ''))}
-                    </p>
-                  </SurfaceCard>
-                </li>
-              ))}
-            </ul>
-            {filteredAssignments.length === 0 ? (
-              <p className="mt-3 text-[15px] text-[var(--text-secondary)]">Brak zmian w tym zakresie.</p>
-            ) : null}
-          </section>
-        ) : null}
+      <div className="px-5">
+        <SegmentedControl
+          value={scope}
+          onChange={(v) => setScope(v)}
+          options={[
+            { id: 'week', label: 'Ten tydzień' },
+            { id: 'all', label: 'Wszystkie' },
+          ]}
+        />
       </div>
 
-      {showStart && !onShift ? (
-        <ActionBar>
-          <Button loading={busy} disabled={!effectiveSelectedId} onClick={() => void startShift()}>
-            {planned ? 'Rozpocznij zmianę' : 'Potwierdź i rozpocznij'}
-          </Button>
-        </ActionBar>
-      ) : null}
+      <PullToRefresh
+        onRefresh={async () => {
+          setLoading(true)
+          try {
+            await Promise.all([refreshMe(), load(1, true)])
+          } finally {
+            setLoading(false)
+          }
+        }}
+      >
+        <div className="px-5 pb-28 pt-4">
+          {loading && items.length === 0 ? (
+            <p className="text-[var(--text-secondary)]">Ładowanie…</p>
+          ) : groups.length === 0 ? (
+            <p className="text-[var(--text-secondary)]">Brak zmian w tym zakresie.</p>
+          ) : (
+            <div className="space-y-1">
+              {groups.map((group) => (
+                <div key={group.title}>
+                  <p className="px-1 pb-0 pt-3 text-[15px] font-[600] text-[var(--text-secondary)]">
+                    {group.title}
+                  </p>
+                  <ul className="mt-2 space-y-3">
+                    {group.items.map((item) => {
+                      const chip = shiftChip(item)
+                      const active = Boolean(item.shiftStart && !item.shiftEnd)
+                      const meta = metaLine(item)
+                      return (
+                        <li key={String(item.id)}>
+                          <SurfaceCard
+                            className={
+                              active
+                                ? 'flex flex-col gap-1.5 !border-2 !border-[var(--success)]'
+                                : 'flex flex-col gap-1.5'
+                            }
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[17px] font-[600]">
+                                {formatShiftDate(item.assignmentDate)}
+                              </span>
+                              <StatusChip tone={chip.tone === 'success' ? 'success' : chip.tone === 'accent' ? 'accent' : 'neutral'}>
+                                {chip.label}
+                              </StatusChip>
+                            </div>
+                            <p
+                              className="font-[family-name:var(--font-display)] text-[24px] font-[600] tabular-nums"
+                              style={{ fontStretch: '112%' }}
+                            >
+                              {planRange(item)}
+                            </p>
+                            {meta ? (
+                              <p className="text-[15px] text-[var(--text-secondary)]">{meta}</p>
+                            ) : (
+                              <p className="text-[15px] text-[var(--text-secondary)]">
+                                {vehicleLine(item)}
+                              </p>
+                            )}
+                            {active ? (
+                              <button
+                                type="button"
+                                disabled={busy || Boolean(me?.impersonation?.active)}
+                                onClick={() => void openEndShift()}
+                                className="mt-1 flex h-14 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--danger)_40%,transparent)] text-[17px] font-[600] text-[var(--danger)] disabled:opacity-[0.38]"
+                              >
+                                Zakończ zmianę
+                              </button>
+                            ) : null}
+                          </SurfaceCard>
+                        </li>
+                      )
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
 
-      <Toast message={toast} />
+          {canShowMore ? (
+            <button
+              type="button"
+              className="mt-4 flex h-14 w-full items-center justify-center rounded-full border border-[var(--separator)] text-[17px] font-[500]"
+              onClick={() => void load(page + 1, false)}
+            >
+              Pokaż więcej
+            </button>
+          ) : null}
+        </div>
+      </PullToRefresh>
+
+      <EndShiftSheet
+        open={endOpen}
+        onClose={() => setEndOpen(false)}
+        onConfirm={() => void endShift()}
+        busy={busy}
+        shiftStart={me?.todayAssignment?.shiftStart}
+        plate={me?.todayAssignment?.resourcePlate}
+        gpsKm={me?.todayAssignment?.gpsDistanceKm}
+        missingReceiptTrips={missingTrips}
+      />
     </AppShell>
   )
 }

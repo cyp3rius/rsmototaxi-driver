@@ -19,10 +19,10 @@ export function SegmentedControl<T extends string>({
             type="button"
             onClick={() => onChange(opt.id)}
             className={cn(
-              'h-11 rounded-[10px] text-[15px] font-semibold transition',
+              'h-11 rounded-[10px] text-[15px] transition',
               active
-                ? 'bg-[var(--bg-surface)] text-[var(--text-primary)] shadow-sm'
-                : 'text-[var(--text-secondary)]',
+                ? 'bg-[var(--bg-surface)] font-[600] text-[var(--text-primary)] shadow-sm'
+                : 'font-[500] text-[var(--text-secondary)]',
             )}
           >
             {opt.label}

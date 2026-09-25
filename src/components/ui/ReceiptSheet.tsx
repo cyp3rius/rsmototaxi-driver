@@ -1,11 +1,11 @@
 'use client'
 
-import { Camera, FileUp, Trash2 } from 'lucide-react'
+import { Camera, FileText, Trash2 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { TextField } from '@/components/ui/TextField'
 import { Button } from '@/components/ui/Button'
 import { StatusChip } from '@/components/ui/StatusChip'
+import { cn } from '@/lib/cn'
 
 export type ReceiptUiStatus =
   | 'missing'
@@ -36,7 +36,9 @@ export function ReceiptStatusBadge({ status }: { status: ReceiptUiStatus }) {
         <StatusChip tone="danger" pulse={false}>
           Do sprawdzenia
         </StatusChip>
-        <p className="text-[14px] text-[var(--text-secondary)]">Sprawdź wynik rozpoznania</p>
+        <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
+          Sprawdź wynik rozpoznania
+        </p>
       </div>
     )
   }
@@ -54,7 +56,9 @@ export function ReceiptStatusBadge({ status }: { status: ReceiptUiStatus }) {
   )
 }
 
-export function receiptUiStatusFromRecord(record: Record<string, unknown> | null | undefined): ReceiptUiStatus {
+export function receiptUiStatusFromRecord(
+  record: Record<string, unknown> | null | undefined,
+): ReceiptUiStatus {
   if (!record) return 'missing'
   if (record._pendingSync) return 'offline'
   if (record.receiptAttachmentId) {
@@ -77,6 +81,7 @@ export function ReceiptSheet({
   subtitle = 'Zrób zdjęcie lub wybierz plik (obraz albo PDF).',
   initialDocumentNumber = '',
   status = null,
+  reviewHint,
 }: {
   open: boolean
   onClose: () => void
@@ -85,6 +90,8 @@ export function ReceiptSheet({
   subtitle?: string
   initialDocumentNumber?: string
   status?: ReceiptUiStatus
+  /** Optional OCR mismatch / review copy under the number field. */
+  reviewHint?: string | null
 }) {
   const [docNumber, setDocNumber] = useState(initialDocumentNumber)
   const [preview, setPreview] = useState<string | null>(null)
@@ -93,16 +100,26 @@ export function ReceiptSheet({
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      setPreview((prev) => {
+        if (prev) URL.revokeObjectURL(prev)
+        return null
+      })
+      setFile(null)
+      setDocNumber('')
+      if (cameraRef.current) cameraRef.current.value = ''
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
     queueMicrotask(() => setDocNumber(initialDocumentNumber))
   }, [open, initialDocumentNumber])
 
   function pick(next: File | null) {
     if (!next) return
+    if (preview) URL.revokeObjectURL(preview)
     setFile(next)
     if (next.type.startsWith('image/')) {
-      const url = URL.createObjectURL(next)
-      setPreview(url)
+      setPreview(URL.createObjectURL(next))
     } else {
       setPreview(null)
     }
@@ -112,6 +129,8 @@ export function ReceiptSheet({
     if (preview) URL.revokeObjectURL(preview)
     setPreview(null)
     setFile(null)
+    if (cameraRef.current) cameraRef.current.value = ''
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function submit() {
@@ -121,28 +140,73 @@ export function ReceiptSheet({
     setDocNumber('')
   }
 
+  const hasFile = Boolean(file)
+  const isReview = status === 'needs_review'
+  const isProcessing = status === 'processing'
+  const showPreviewChrome = hasFile || (status && status !== 'missing')
+  const ctaLabel = isReview ? 'Zatwierdź paragon' : 'Zapisz paragon'
+
   return (
-    <BottomSheet open={open} onClose={onClose} title="Dodaj paragon" subtitle={subtitle}>
-      <div className="space-y-4">
-        {status && status !== 'missing' ? <ReceiptStatusBadge status={status} /> : null}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => cameraRef.current?.click()}
-            className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold"
-          >
-            <Camera size={20} strokeWidth={1.9} />
-            Zrób zdjęcie
-          </button>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold"
-          >
-            <FileUp size={20} strokeWidth={1.9} />
-            Wybierz plik
-          </button>
-        </div>
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title={showPreviewChrome ? undefined : 'Dodaj paragon'}
+      titleClassName="!text-[26px] !leading-8"
+    >
+      <div className="flex flex-col gap-4">
+        {!showPreviewChrome && subtitle ? (
+          <p className="-mt-2 text-[16px] leading-[22px] text-[var(--text-secondary)]">{subtitle}</p>
+        ) : null}
+
+        {showPreviewChrome ? (
+          <div className="flex items-center justify-between gap-3">
+            <h2
+              className="font-[family-name:var(--font-display)] text-[26px] font-semibold leading-8"
+              style={{ fontStretch: '115%' }}
+            >
+              Paragon
+            </h2>
+            {status === 'needs_review' ? (
+              <StatusChip tone="danger" pulse={false}>
+                Do sprawdzenia
+              </StatusChip>
+            ) : status === 'verified' ? (
+              <StatusChip tone="success" pulse={false}>
+                Zweryfikowany
+              </StatusChip>
+            ) : status === 'offline' ? (
+              <StatusChip tone="neutral" pulse={false}>
+                Czeka na synchronizację
+              </StatusChip>
+            ) : (
+              <StatusChip tone="accent" pulse>
+                Przetwarzanie
+              </StatusChip>
+            )}
+          </div>
+        ) : null}
+
+        {!hasFile ? (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => cameraRef.current?.click()}
+              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold active:scale-[0.98]"
+            >
+              <Camera size={20} strokeWidth={1.9} />
+              Zrób zdjęcie
+            </button>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold active:scale-[0.98]"
+            >
+              <FileText size={20} strokeWidth={1.9} />
+              Wybierz plik
+            </button>
+          </div>
+        ) : null}
+
         <input
           ref={cameraRef}
           type="file"
@@ -154,40 +218,85 @@ export function ReceiptSheet({
         <input
           ref={fileRef}
           type="file"
-          accept="image/*,application/pdf"
+          accept="image/*,.pdf,application/pdf"
           className="hidden"
           onChange={(e) => pick(e.target.files?.[0] ?? null)}
         />
+
         {preview ? (
-          <div className="relative">
+          <div className="relative overflow-hidden rounded-[18px] border border-[var(--separator)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="Podgląd paragonu" className="max-h-48 w-full rounded-[14px] object-cover" />
+            <img
+              src={preview}
+              alt="Podgląd paragonu"
+              className="max-h-[200px] w-full object-cover"
+            />
+          </div>
+        ) : file ? (
+          <div className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4">
+            <FileText size={28} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
+            <p className="min-w-0 truncate text-[15px] font-medium">{file.name}</p>
+          </div>
+        ) : null}
+
+        <label className="block">
+          <span className="mb-2 block text-[15px] font-medium leading-5">
+            Numer paragonu / faktury
+          </span>
+          <input
+            type="text"
+            value={docNumber}
+            onChange={(e) => setDocNumber(e.target.value)}
+            placeholder={
+              isProcessing || (!docNumber && hasFile)
+                ? 'Uzupełni się po rozpoznaniu'
+                : 'OCR uzupełni — możesz poprawić'
+            }
+            className={cn(
+              'h-14 w-full rounded-[14px] border bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none transition',
+              isReview
+                ? 'border-[var(--danger)] text-[var(--text-primary)]'
+                : 'border-transparent focus:border-[var(--accent)]',
+              !docNumber ? 'placeholder:text-[var(--text-tertiary)]' : '',
+            )}
+          />
+          {isReview && reviewHint ? (
+            <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
+              {reviewHint}
+            </span>
+          ) : hasFile && (isProcessing || !docNumber) ? (
+            <span className="mt-2 block text-[15px] leading-5 text-[var(--text-secondary)]">
+              Numer uzupełni się po rozpoznaniu. Możesz zamknąć, kurs zapisze się już teraz.
+            </span>
+          ) : null}
+        </label>
+
+        {!hasFile && typeof navigator !== 'undefined' && !navigator.onLine ? (
+          <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
+            Bez sieci paragon zapisze się w telefonie i wyśle po połączeniu.
+          </p>
+        ) : null}
+
+        <div className="mt-2 flex flex-col gap-1">
+          <Button
+            size="lg"
+            loading={busy}
+            disabled={!file}
+            onClick={() => void submit()}
+          >
+            {ctaLabel}
+          </Button>
+          {hasFile ? (
             <button
               type="button"
               onClick={clearFile}
-              className="absolute right-2 top-2 inline-flex h-10 items-center gap-1 rounded-full bg-[var(--bg-surface)] px-3 text-[15px] font-semibold shadow"
+              className="flex h-[52px] items-center justify-center gap-2 text-[16px] font-semibold text-[var(--danger)]"
             >
-              <Trash2 size={16} />
-              Usuń
+              <Trash2 size={18} strokeWidth={2} />
+              Usuń zdjęcie
             </button>
-          </div>
-        ) : file ? (
-          <div className="flex items-center justify-between gap-2 rounded-[14px] bg-[var(--bg-surface-raised)] px-4 py-3">
-            <p className="truncate text-[15px]">{file.name}</p>
-            <button type="button" onClick={clearFile} className="text-[15px] font-semibold text-[var(--danger)]">
-              Usuń
-            </button>
-          </div>
-        ) : null}
-        <TextField
-          label="Numer paragonu / faktury"
-          value={docNumber}
-          onChange={(e) => setDocNumber(e.target.value)}
-          placeholder="OCR uzupełni — możesz poprawić"
-        />
-        <Button size="md" loading={busy} disabled={!file} onClick={() => void submit()}>
-          Zapisz paragon
-        </Button>
+          ) : null}
+        </div>
       </div>
     </BottomSheet>
   )

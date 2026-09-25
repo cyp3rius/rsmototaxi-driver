@@ -1,36 +1,36 @@
 'use client'
 
-import { Camera, Ellipsis, FileUp, Fuel, ParkingSquare, Wrench, X, ArrowUpDown } from 'lucide-react'
+import { Camera, File, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
+import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { SelectTile } from '@/components/ui/SelectTile'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
+import { formatTime } from '@/lib/format'
 import { COST_TYPE_OPTIONS } from '@/lib/tripMeta'
-
-const icons = {
-  fuel: Fuel,
-  road: ArrowUpDown,
-  parking: ParkingSquare,
-  wrench: Wrench,
-  ellipsis: Ellipsis,
-} as const
 
 export default function NewExpensePage() {
   const router = useRouter()
   const [costType, setCostType] = useState<(typeof COST_TYPE_OPTIONS)[number]['id']>('fuel')
   const [amount, setAmount] = useState('')
   const [vat, setVat] = useState<number | null>(null)
+  const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
+  const toast = useToast()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const cameraRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const whenLabel = useMemo(() => {
+    const now = new Date()
+    return `Dziś, ${formatTime(now.toISOString())}`
+  }, [])
 
   function pick(next: File | null) {
     if (!next) return
@@ -41,11 +41,16 @@ export default function NewExpensePage() {
 
   async function save() {
     if (!file) {
-      setToast('Paragon jest wymagany')
+      toast.warning('Paragon jest wymagany')
       return
     }
     if (!amount.trim()) {
-      setToast('Podaj kwotę brutto')
+      toast.warning('Podaj kwotę brutto')
+      return
+    }
+    const parsedAmount = Number(amount.replace(',', '.'))
+    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      toast.warning('Podaj poprawną kwotę')
       return
     }
     setBusy(true)
@@ -55,15 +60,16 @@ export default function NewExpensePage() {
       const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
       await omClient.createExpense({
         costType,
-        amountGross: Number(amount.replace(',', '.')),
-        vatRate: vat,
+        amount: parsedAmount,
+        vatRatePercent: vat,
         receiptAttachmentId: uploaded.id,
         occurredAt: new Date().toISOString(),
+        notes: notes.trim() || null,
       })
-      setToast('Koszt zapisany')
+      toast.success('Koszt zapisany')
       window.setTimeout(() => router.replace('/app/expenses'), 600)
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się zapisać')
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zapisać')
       setBusy(false)
     }
   }
@@ -78,39 +84,36 @@ export default function NewExpensePage() {
 
       <div className="space-y-4 px-5 pb-36 pt-4">
         <div className="grid grid-cols-3 gap-2">
-          {COST_TYPE_OPTIONS.map((opt) => {
-            const Icon = icons[opt.icon] || Ellipsis
-            return (
-              <SelectTile
-                key={opt.id}
-                selected={costType === opt.id}
-                onClick={() => setCostType(opt.id)}
-                label={opt.label}
-                icon={<Icon size={22} strokeWidth={1.8} />}
-              />
-            )
-          })}
+          {COST_TYPE_OPTIONS.map((opt) => (
+            <SelectTile
+              key={opt.id}
+              selected={costType === opt.id}
+              onClick={() => setCostType(opt.id)}
+              label={opt.label}
+              icon={<CostTypeIcon type={opt.id} />}
+            />
+          ))}
         </div>
 
         <div>
-          <p className="mb-2 text-[15px] font-medium">Kwota brutto</p>
+          <p className="mb-2 text-[15px] font-[500]">Kwota brutto</p>
           <div className="flex h-16 items-center justify-between rounded-[14px] border-[1.5px] border-[var(--accent)] bg-[var(--bg-surface)] px-4 shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_22%,transparent)]">
             <input
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0,00"
-              className="w-full bg-transparent font-[family-name:var(--font-display)] text-[30px] font-semibold tabular-nums outline-none"
+              className="w-full bg-transparent font-[family-name:var(--font-display)] text-[30px] font-[600] tabular-nums outline-none"
               style={{ fontStretch: '110%' }}
             />
-            <span className="text-[18px] font-medium text-[var(--text-secondary)]">zł</span>
+            <span className="text-[18px] font-[500] text-[var(--text-secondary)]">zł</span>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
           <div>
-            <p className="mb-2 text-[15px] font-medium">
-              VAT <span className="font-normal text-[var(--text-secondary)]">opcjonalnie</span>
+            <p className="mb-2 text-[15px] font-[500]">
+              VAT <span className="font-[400] text-[var(--text-secondary)]">opcjonalnie</span>
             </p>
             <div className="grid grid-cols-2 gap-1.5">
               {[8, 23].map((rate) => (
@@ -118,10 +121,10 @@ export default function NewExpensePage() {
                   key={rate}
                   type="button"
                   onClick={() => setVat((v) => (v === rate ? null : rate))}
-                  className={`flex h-14 items-center justify-center rounded-[14px] text-[16px] font-semibold ${
+                  className={`flex h-14 items-center justify-center rounded-[14px] text-[16px] ${
                     vat === rate
-                      ? 'border-2 border-[var(--accent)] tint-accent-soft'
-                      : 'border border-[var(--separator)]'
+                      ? 'border-2 border-[var(--accent)] font-[600] tint-accent-soft'
+                      : 'border border-[var(--separator)] font-[500]'
                   }`}
                 >
                   {rate}%
@@ -130,22 +133,22 @@ export default function NewExpensePage() {
             </div>
           </div>
           <div>
-            <p className="mb-2 text-[15px] font-medium">Kiedy</p>
+            <p className="mb-2 text-[15px] font-[500]">Kiedy</p>
             <div className="flex h-14 items-center rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-3.5 text-[16px]">
-              Dziś
+              {whenLabel}
             </div>
           </div>
         </div>
 
         <div>
-          <p className="mb-2 text-[15px] font-medium">
-            Paragon <span className="font-normal text-[var(--text-secondary)]">(wymagany)</span>
+          <p className="mb-2 text-[15px] font-[500]">
+            Paragon <span className="font-[400] text-[var(--text-secondary)]">(wymagany)</span>
           </p>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] text-[16px] font-semibold"
+              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
             >
               <Camera size={20} strokeWidth={1.9} />
               Zrób zdjęcie
@@ -153,14 +156,27 @@ export default function NewExpensePage() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] text-[16px] font-semibold"
+              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
             >
-              <FileUp size={20} strokeWidth={1.9} />
+              <File size={20} strokeWidth={1.9} />
               Wybierz plik
             </button>
           </div>
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => pick(e.target.files?.[0] ?? null)} />
-          <input ref={fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={(e) => pick(e.target.files?.[0] ?? null)} />
+          <input
+            ref={cameraRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={(e) => pick(e.target.files?.[0] ?? null)}
+          />
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*,application/pdf"
+            className="hidden"
+            onChange={(e) => pick(e.target.files?.[0] ?? null)}
+          />
           {preview ? (
             <div className="relative mt-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -180,6 +196,18 @@ export default function NewExpensePage() {
             <p className="mt-3 rounded-[14px] bg-[var(--bg-surface-raised)] px-4 py-3 text-[15px]">{file.name}</p>
           ) : null}
         </div>
+
+        <div>
+          <p className="mb-2 text-[15px] font-[500]">Notatki</p>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Np. tankowanie przed kursem do Zakopanego"
+            rows={3}
+            maxLength={5000}
+            className="min-h-20 w-full resize-none rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4 py-3.5 text-[16px] outline-none placeholder:text-[var(--text-tertiary)] focus:border-[var(--accent)]"
+          />
+        </div>
       </div>
 
       <ActionBar>
@@ -187,7 +215,6 @@ export default function NewExpensePage() {
           Zapisz koszt
         </Button>
       </ActionBar>
-      <Toast message={toast} />
     </AppShell>
   )
 }

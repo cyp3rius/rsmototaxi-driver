@@ -2,17 +2,29 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Fuel, Plane, Plus, Phone, Receipt } from 'lucide-react'
+import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
+import { DriverProfileSheet } from '@/components/ui/DriverProfileSheet'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { StatusChip } from '@/components/ui/StatusChip'
-import { Toast } from '@/components/ui/Toast'
+import { useStartShift } from '@/components/ui/StartShiftProvider'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, startOfDayIso } from '@/lib/format'
-import { tripRouteLabel, driverFirstName, isAppScopedTrip, polishCourseWord } from '@/lib/tripMeta'
+import {
+  driverFirstName,
+  isAppScopedTrip,
+  polishCourseWord,
+  resolveVehicleColor,
+  tripDropoffLabel,
+  tripPickupLabel,
+  tripRouteLabel,
+  type TripMeta,
+  readTripMeta,
+} from '@/lib/tripMeta'
 
 function formatTime(iso: string | null | undefined) {
   if (!iso) return '—'
@@ -45,37 +57,15 @@ function minutesUntil(iso: string | null | undefined) {
   return Math.round((t - Date.now()) / 60000)
 }
 
-type TripMeta = {
-  tripRequest?: {
-    from?: string
-    to?: string
-    fromNote?: string
-    toNote?: string
-    flightNumber?: string
-    flightOrigin?: string
-    estimatedArrival?: string
-    childSeat?: boolean
-    boosterSeat?: boolean
-    englishSpeakingDriver?: boolean
-    meetAndGreet?: boolean
-  }
-  distanceKm?: number
-  durationMin?: number
-  prepaid?: boolean
-}
-
-function readTripMeta(trip: Record<string, unknown> | null | undefined): TripMeta {
-  if (!trip || typeof trip.metadata !== 'object' || !trip.metadata) return {}
-  return trip.metadata as TripMeta
-}
-
 export function DashboardScreen() {
   const router = useRouter()
   const { me, refreshMe } = useAuth()
-  const [toast, setToast] = useState<string | null>(null)
+  const toast = useToast()
+  const { openStartShift } = useStartShift()
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [endOpen, setEndOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [missingTrips, setMissingTrips] = useState<Array<{ id: string; label: string }>>([])
   const [missingCount, setMissingCount] = useState(0)
   const [todayStats, setTodayStats] = useState<{ trips: number; revenue: number }>({
@@ -88,6 +78,10 @@ export function DashboardScreen() {
   const nextTrip = me?.nextTrip
   const liveTrip = me?.liveTrip
   const plate = assignment?.resourcePlate || me?.profile?.defaultResourcePlate || null
+  const vehicleColor = resolveVehicleColor(
+    assignment?.resourceColor,
+    me?.profile?.defaultResourceColor,
+  )
   // resourceName preferred; label may include plate — cleaned below as vehicleModel
 
   useEffect(() => {
@@ -181,12 +175,11 @@ export function DashboardScreen() {
       await omClient.startAssignmentShift(assignment.id, { action: 'end' })
       await refreshMe()
       setEndOpen(false)
-      setToast('Zmiana zakończona')
+      toast.success('Zmiana zakończona')
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się zakończyć zmiany')
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zakończyć zmiany')
     } finally {
       setBusy(false)
-      window.setTimeout(() => setToast(null), 3000)
     }
   }
 
@@ -197,9 +190,21 @@ export function DashboardScreen() {
     >
       <header className="flex items-start justify-between gap-3 px-0 py-2.5">
         <div className="min-w-0 flex-1">
-          <h1 className="display-dash-hdr" style={{ viewTransitionName: 'driver-hello' }}>
-            Witaj, <span className="text-[var(--accent)]">{firstName}</span>
-          </h1>
+          <button
+            type="button"
+            onClick={() => setProfileOpen(true)}
+            className="flex max-w-full items-center gap-1.5 text-left"
+            aria-label="Otwórz profil kierowcy"
+          >
+            <h1 className="display-dash-hdr min-w-0 truncate" style={{ viewTransitionName: 'driver-hello' }}>
+              Witaj, <span className="text-[var(--accent)]">{firstName}</span>
+            </h1>
+            <ChevronDown
+              size={22}
+              strokeWidth={2.2}
+              className="mt-1 flex-none text-[var(--text-secondary)]"
+            />
+          </button>
           <p className="mt-0.5 capitalize text-[15px] text-[var(--text-secondary)]">{dateLabel}</p>
         </div>
         {state === 'C' ? (
@@ -264,10 +269,19 @@ export function DashboardScreen() {
             </div>
             <p className="numeric-xl mt-1.5 tracking-[-0.01em]">{shiftTimer}</p>
             <div className="mt-[18px] flex items-center justify-between gap-3">
-              {plate ? <PlateBadge plate={plate} /> : <span />}
+              {plate ? (
+                <span style={{ viewTransitionName: 'driver-plate' }}>
+                  <PlateBadge plate={plate} />
+                </span>
+              ) : (
+                <span />
+              )}
               {vehicleModel ? (
                 <span className="flex items-center gap-2 text-[15px] text-[var(--text-secondary)]">
-                  <span className="size-2.5 flex-none rounded-full bg-[#6CCB2E]" />
+                  <span
+                    className="size-2.5 flex-none rounded-full"
+                    style={{ background: vehicleColor }}
+                  />
                   {vehicleModel}
                 </span>
               ) : null}
@@ -285,10 +299,19 @@ export function DashboardScreen() {
             </p>
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">Możesz zacząć wcześniej w oknie startu.</p>
             <div className="mt-4 flex items-center justify-between gap-3">
-              {plate ? <PlateBadge plate={plate} /> : <span />}
+              {plate ? (
+                <span style={{ viewTransitionName: 'driver-plate' }}>
+                  <PlateBadge plate={plate} />
+                </span>
+              ) : (
+                <span />
+              )}
               {vehicleModel ? (
                 <span className="flex items-center gap-2 text-[15px] text-[var(--text-secondary)]">
-                  <span className="size-2.5 flex-none rounded-full bg-[#6CCB2E]" />
+                  <span
+                    className="size-2.5 flex-none rounded-full"
+                    style={{ background: vehicleColor }}
+                  />
                   {vehicleModel}
                 </span>
               ) : null}
@@ -370,13 +393,13 @@ export function DashboardScreen() {
             </Button>
           ) : null}
           {state === 'B' ? (
-            <Button onClick={() => router.push('/app/shifts?start=1')}>Rozpocznij zmianę</Button>
+            <Button onClick={() => openStartShift()}>Rozpocznij zmianę</Button>
           ) : null}
           {state === 'A' ? (
-            <Button onClick={() => router.push('/app/shifts?start=1')}>Rozpocznij zmianę ad hoc</Button>
+            <Button onClick={() => openStartShift()}>Rozpocznij zmianę ad hoc</Button>
           ) : null}
           {state === 'D' ? (
-            <Button onClick={() => router.push('/app/shifts?start=1')}>Rozpocznij kolejną zmianę</Button>
+            <Button onClick={() => openStartShift()}>Rozpocznij kolejną zmianę</Button>
           ) : null}
           {state === 'A2' ? (
             <Button variant="secondary" onClick={() => (window.location.href = 'tel:+48508222321')}>
@@ -466,7 +489,7 @@ export function DashboardScreen() {
         gpsKm={assignment?.gpsDistanceKm}
         missingReceiptTrips={missingTrips}
       />
-      <Toast message={toast} />
+      <DriverProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   )
 }
@@ -491,8 +514,8 @@ function TripHeroCard({
   mins: number | null
   href: string
 }) {
-  const from = meta.tripRequest?.from || 'Kurs'
-  const to = meta.tripRequest?.to
+  const from = tripPickupLabel(trip)
+  const to = tripDropoffLabel(trip)
   const amount =
     trip.revenueAmount != null
       ? `${Number(trip.revenueAmount).toLocaleString('pl-PL', { maximumFractionDigits: 0 })} zł`

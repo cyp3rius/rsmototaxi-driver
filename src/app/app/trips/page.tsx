@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { Plus, Receipt, RefreshCw } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -11,10 +11,84 @@ import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
+import { StatusChip } from '@/components/ui/StatusChip'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, formatTime, startOfDayIso } from '@/lib/format'
-import { tripRouteLabel, tripTypeLabel } from '@/lib/tripMeta'
-import { Suspense } from 'react'
+import {
+  isAppScopedTrip,
+  readTripMeta,
+  tripPaymentLabel,
+  tripRouteLabel,
+  tripStatusChipLabel,
+  tripTypeLabel,
+} from '@/lib/tripMeta'
+
+function TripListCard({ trip }: { trip: Record<string, unknown> }) {
+  const receiptStatus = receiptUiStatusFromRecord(trip)
+  const pending = Boolean(trip._pendingSync)
+  const meta = readTripMeta(trip)
+  const prepaid = Boolean(meta.prepaid || meta.isPrepayment || trip.prepayment || trip.isPrepayment)
+  const payment = tripPaymentLabel(trip)
+  const statusLabel = tripStatusChipLabel(trip.status)
+  const typeLabel = trip.platform
+    ? String(trip.platform)
+    : tripTypeLabel(trip.tripType)
+  const showCompletedChip =
+    statusLabel === 'Zakończony' &&
+    !pending &&
+    String(trip.status) !== 'pending_authorization'
+
+  return (
+    <Link href={`/app/trips/${String(trip.id)}`} className="block">
+      <SurfaceCard className="rounded-[20px]" padding="md">
+        <div className="flex flex-col gap-1.5">
+          <div className="flex justify-between gap-2.5">
+            <span className="text-[17px] font-semibold tabular-nums">
+              {formatTime(String(trip.startedAt || ''))}
+              {trip.endedAt ? `–${formatTime(String(trip.endedAt))}` : ''}
+            </span>
+            <span className="text-[17px] font-semibold tabular-nums">
+              {formatMoneyShort(trip.revenueAmount)}
+            </span>
+          </div>
+          <p className="text-[16px] leading-[22px] text-[var(--text-primary)]">
+            {tripRouteLabel(trip)}
+          </p>
+          <div className="mt-0.5 flex flex-wrap gap-1.5">
+            {showCompletedChip ? (
+              <StatusChip tone="success">{statusLabel}</StatusChip>
+            ) : null}
+            {String(trip.status) === 'in_progress' ? (
+              <StatusChip tone="accent" pulse>
+                W trakcie
+              </StatusChip>
+            ) : null}
+            {String(trip.status) === 'scheduled' ? (
+              <StatusChip tone="neutral">Zaplanowany</StatusChip>
+            ) : null}
+            {String(trip.status) === 'pending_authorization' ? (
+              <StatusChip tone="accent">Czeka na autoryzację</StatusChip>
+            ) : null}
+            <StatusChip tone="neutral">{typeLabel}</StatusChip>
+            {prepaid ? <StatusChip tone="accent">Przedpłata</StatusChip> : null}
+            {receiptStatus === 'missing' ? (
+              <StatusChip tone="warning">Brak paragonu</StatusChip>
+            ) : receiptStatus ? (
+              <ReceiptStatusBadge status={receiptStatus} />
+            ) : null}
+            {payment ? <StatusChip tone="neutral">{payment}</StatusChip> : null}
+            {pending ? (
+              <StatusChip tone="neutral">
+                <RefreshCw size={14} strokeWidth={2} className="mr-0.5" />
+                Sync
+              </StatusChip>
+            ) : null}
+          </div>
+        </div>
+      </SurfaceCard>
+    </Link>
+  )
+}
 
 function TripsInner() {
   const search = useSearchParams()
@@ -29,35 +103,42 @@ function TripsInner() {
   const [loadingMore, setLoadingMore] = useState(false)
   const pageSize = 20
 
-  const load = useCallback(async (pageNum = 1, append = false) => {
-    if (append) setLoadingMore(true)
-    else setLoading(true)
-    try {
-      const params: Parameters<typeof omClient.getTrips>[0] = {
-        page: pageNum,
-        pageSize,
-        missingReceipt: missingOnly || undefined,
+  const load = useCallback(
+    async (pageNum = 1, append = false) => {
+      if (append) setLoadingMore(true)
+      else setLoading(true)
+      try {
+        const params: Parameters<typeof omClient.getTrips>[0] = {
+          page: pageNum,
+          pageSize,
+          missingReceipt: missingOnly || undefined,
+        }
+        if (scope === 'today' && !missingOnly) {
+          params.startedFrom = startOfDayIso()
+          params.startedTo = endOfDayIso()
+        }
+        const [list, missing] = await Promise.all([
+          omClient.getTrips(params),
+          pageNum === 1 && !missingOnly
+            ? omClient.getTrips({ pageSize: 100, missingReceipt: true })
+            : Promise.resolve(null),
+        ])
+        const scopedItems = list.items.filter(isAppScopedTrip)
+        setItems((prev) => (append ? [...prev, ...scopedItems] : scopedItems))
+        setTotal(list.total)
+        setPage(pageNum)
+        if (missing) {
+          setMissingCount(missing.items.filter(isAppScopedTrip).length)
+        } else if (missingOnly && pageNum === 1) {
+          setMissingCount(scopedItems.length)
+        }
+      } finally {
+        setLoading(false)
+        setLoadingMore(false)
       }
-      if (scope === 'today' && !missingOnly) {
-        params.startedFrom = startOfDayIso()
-        params.startedTo = endOfDayIso()
-      }
-      const [list, missing] = await Promise.all([
-        omClient.getTrips(params),
-        pageNum === 1 && !missingOnly
-          ? omClient.getTrips({ pageSize: 1, missingReceipt: true })
-          : Promise.resolve(null),
-      ])
-      setItems((prev) => (append ? [...prev, ...list.items] : list.items))
-      setTotal(list.total)
-      setPage(pageNum)
-      if (missing) setMissingCount(missing.total)
-      else if (missingOnly && pageNum === 1) setMissingCount(list.total)
-    } finally {
-      setLoading(false)
-      setLoadingMore(false)
-    }
-  }, [missingOnly, scope])
+    },
+    [missingOnly, scope],
+  )
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -137,8 +218,13 @@ function TripsInner() {
           />
           <div className="mt-4 flex gap-2">
             <FilterChip
+              tone="warning"
               active={missingOnly}
-              onClick={() => setMissingOverride(!missingOnly)}
+              onClick={() => {
+                const next = !missingOnly
+                setMissingOverride(next)
+                if (next) setScope('all')
+              }}
               icon={<Receipt size={16} strokeWidth={2} />}
             >
               Brak paragonu{missingCount ? ` · ${missingCount}` : ''}
@@ -148,67 +234,26 @@ function TripsInner() {
           {loading ? (
             <p className="mt-6 text-[var(--text-secondary)]">Ładowanie…</p>
           ) : items.length === 0 ? (
-            <p className="mt-6 text-[var(--text-secondary)]">Brak kursów.</p>
+            <p className="mt-6 text-[var(--text-secondary)]">
+              {scope === 'today' && !missingOnly
+                ? 'Na dziś nie masz zleceń.'
+                : missingOnly
+                  ? 'Brak kursów bez paragonu.'
+                  : 'Brak kursów.'}
+            </p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="mt-4 flex flex-col gap-3">
               {groups.map((group) => (
                 <div key={group.title}>
-                  <p className="px-1 pb-2 pt-3 text-[15px] font-semibold capitalize text-[var(--text-secondary)]">
+                  <p className="px-1 pb-2 pt-3 text-[15px] font-semibold text-[var(--text-secondary)] first-letter:uppercase">
                     {group.title}
                   </p>
-                  <ul className="space-y-3">
-                    {group.items.map((trip) => {
-                      const receiptStatus = receiptUiStatusFromRecord(trip)
-                      const pending = Boolean(trip._pendingSync)
-                      return (
-                        <li key={String(trip.id)}>
-                          <Link href={`/app/trips/${String(trip.id)}`}>
-                            <SurfaceCard>
-                              <div className="flex justify-between gap-2.5">
-                                <span className="text-[17px] font-semibold tabular-nums">
-                                  {formatTime(String(trip.startedAt || ''))}
-                                  {trip.endedAt ? `–${formatTime(String(trip.endedAt))}` : ''}
-                                </span>
-                                <span className="text-[17px] font-semibold tabular-nums">
-                                  {formatMoneyShort(trip.revenueAmount)}
-                                </span>
-                              </div>
-                              <p className="mt-1.5 text-[16px] leading-[22px]">{tripRouteLabel(trip)}</p>
-                              <div className="mt-2 flex flex-wrap gap-1.5">
-                                <span className="inline-flex h-[30px] items-center rounded-[10px] bg-[var(--bg-surface-raised)] px-2.5 text-[15px] font-medium text-[var(--text-secondary)]">
-                                  {trip.platform ? String(trip.platform) : tripTypeLabel(trip.tripType)}
-                                </span>
-                                {trip.prepayment || trip.isPrepayment ? (
-                                  <span className="inline-flex h-[30px] items-center rounded-[10px] tint-accent px-2.5 text-[15px] font-medium text-[var(--accent)]">
-                                    Przedpłata
-                                  </span>
-                                ) : null}
-                                {receiptStatus === 'missing' ? (
-                                  <span className="inline-flex h-[30px] items-center rounded-[10px] px-2.5 text-[15px] font-medium tint-warning text-[var(--warning)]">
-                                    Brak paragonu
-                                  </span>
-                                ) : receiptStatus ? (
-                                  <span className="inline-flex [&_.inline-flex]:h-[30px] [&_.inline-flex]:rounded-[10px]">
-                                    <ReceiptStatusBadge status={receiptStatus} />
-                                  </span>
-                                ) : null}
-                                {pending ? (
-                                  <span className="inline-flex h-[30px] items-center gap-1 rounded-[10px] bg-[var(--bg-surface-raised)] px-2.5 text-[15px] font-medium text-[var(--text-secondary)]">
-                                    <RefreshCw size={14} strokeWidth={2} />
-                                    Sync
-                                  </span>
-                                ) : null}
-                                {String(trip.status) === 'pending_authorization' ? (
-                                  <span className="inline-flex h-[30px] items-center rounded-[10px] tint-accent px-2.5 text-[15px] font-medium text-[var(--accent)]">
-                                    Czeka na autoryzację
-                                  </span>
-                                ) : null}
-                              </div>
-                            </SurfaceCard>
-                          </Link>
-                        </li>
-                      )
-                    })}
+                  <ul className="flex flex-col gap-3">
+                    {group.items.map((trip) => (
+                      <li key={String(trip.id)}>
+                        <TripListCard trip={trip} />
+                      </li>
+                    ))}
                   </ul>
                 </div>
               ))}
@@ -219,7 +264,7 @@ function TripsInner() {
               type="button"
               disabled={loadingMore}
               onClick={() => void load(page + 1, true)}
-              className="mt-5 flex h-12 w-full items-center justify-center rounded-[14px] border border-[var(--separator)] text-[16px] font-semibold"
+              className="mt-5 flex h-14 w-full items-center justify-center rounded-full border border-[var(--separator)] text-[17px] font-medium"
             >
               {loadingMore ? 'Ładowanie…' : 'Pokaż więcej'}
             </button>
@@ -232,7 +277,13 @@ function TripsInner() {
 
 export default function TripsPage() {
   return (
-    <Suspense fallback={<AppShell><div className="px-5 py-6 text-[var(--text-secondary)]">Ładowanie…</div></AppShell>}>
+    <Suspense
+      fallback={
+        <AppShell>
+          <div className="px-5 py-6 text-[var(--text-secondary)]">Ładowanie…</div>
+        </AppShell>
+      }
+    >
       <TripsInner />
     </Suspense>
   )

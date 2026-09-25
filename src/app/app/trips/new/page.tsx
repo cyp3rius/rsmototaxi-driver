@@ -28,7 +28,8 @@ import { PlateBadge } from '@/components/ui/PlateBadge'
 import { SelectTile } from '@/components/ui/SelectTile'
 import { CustomerPicker, type SelectedCustomer } from '@/components/ui/CustomerSheet'
 import { TextField } from '@/components/ui/TextField'
-import { Toast } from '@/components/ui/Toast'
+import { useStartShift } from '@/components/ui/StartShiftProvider'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { PAYMENT_OPTIONS, TRIP_TYPE_OPTIONS } from '@/lib/tripMeta'
@@ -62,6 +63,8 @@ const payIcons = {
 
 export default function NewTripPage() {
   const router = useRouter()
+  const toast = useToast()
+  const { openStartShift } = useStartShift()
   const { me, refreshMe } = useAuth()
   const onShift = me?.dashboardState === 'C'
   const plate = me?.todayAssignment?.resourcePlate || me?.profile?.defaultResourcePlate
@@ -82,7 +85,6 @@ export default function NewTripPage() {
   const [quoteBusy, setQuoteBusy] = useState(false)
   const [customer, setCustomer] = useState<SelectedCustomer | null>(null)
   const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
   const [fieldError, setFieldError] = useState<string | null>(null)
 
   const title = useMemo(() => {
@@ -94,7 +96,7 @@ export default function NewTripPage() {
 
   function pickMode(next: Mode) {
     if (next === 'live' && !onShift) {
-      router.push('/app/shifts?start=1')
+      openStartShift()
       return
     }
     setMode(next)
@@ -128,7 +130,7 @@ export default function NewTripPage() {
     })
     if (err) {
       setFieldError(err)
-      setToast(err)
+      toast.warning(err)
       return
     }
     setFieldError(null)
@@ -137,7 +139,7 @@ export default function NewTripPage() {
 
   async function recalculate() {
     if (!from.trim() || !to.trim()) {
-      setToast('Podaj adresy skąd i dokąd')
+      toast.warning('Podaj adresy skąd i dokąd')
       return
     }
     setQuoteBusy(true)
@@ -171,15 +173,15 @@ export default function NewTripPage() {
         })) as { totalPrice?: number; currency?: string }
         if (typeof quote.totalPrice === 'number') {
           setAmount(String(quote.totalPrice.toFixed(2)).replace('.', ','))
-          setToast(`Sugerowana kwota: ${quote.totalPrice.toFixed(2)} ${quote.currency || 'PLN'}`)
+          toast.success(`Sugerowana kwota: ${quote.totalPrice.toFixed(2)} ${quote.currency || 'PLN'}`)
         } else {
-          setToast(km ? `Dystans ≈ ${km.toFixed(1)} km` : 'Przeliczono trasę')
+          toast.success(km ? `Dystans ≈ ${km.toFixed(1)} km` : 'Przeliczono trasę')
         }
       } else {
-        setToast('Nie udało się wyliczyć dystansu')
+        toast.warning('Nie udało się wyliczyć dystansu')
       }
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Przeliczanie nie powiodło się')
+      toast.error(err instanceof Error ? err.message : 'Przeliczanie nie powiodło się')
     } finally {
       setQuoteBusy(false)
     }
@@ -189,11 +191,11 @@ export default function NewTripPage() {
     if (mode === 'choose') return
     const timeErr = validateTripTimes({ mode, onShift, startedAt, endedAt, me })
     if (timeErr) {
-      setToast(timeErr)
+      toast.warning(timeErr)
       return
     }
     if ((tripType === 'client' || tripType === 'other') && !customer) {
-      setToast('Wybierz lub dodaj klienta')
+      toast.warning('Wybierz lub dodaj klienta')
       return
     }
     setBusy(true)
@@ -212,10 +214,14 @@ export default function NewTripPage() {
         distanceKm: distanceKm,
         customerEntityId: customer?.id || null,
         metadata: {
+          paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
           tripRequest: {
             from: from.trim(),
             to: to.trim(),
+            fromAddress: from.trim(),
+            toAddress: to.trim(),
             stops: stops.filter((s) => s.trim()),
+            paymentType: tripType === 'internal' || tripType === 'private' ? undefined : payment,
           },
         },
       }
@@ -226,15 +232,15 @@ export default function NewTripPage() {
         return
       }
       if (result.status === 'pending_authorization' || tripType === 'internal') {
-        setToast('Kurs zapisany. Czeka na autoryzację.')
+        toast.success('Kurs zapisany. Czeka na autoryzację.')
       } else {
-        setToast('Kurs zapisany')
+        toast.success('Kurs zapisany')
       }
       window.setTimeout(() => {
         router.replace(result.id ? `/app/trips/${result.id}` : '/app/trips')
       }, 700)
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się zapisać kursu')
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zapisać kursu')
       setBusy(false)
     }
   }
@@ -278,7 +284,7 @@ export default function NewTripPage() {
                     </span>
                   </span>
                 </div>
-                <Button className="mt-3" size="md" variant="secondary" onClick={() => router.push('/app/shifts?start=1')}>
+                <Button className="mt-3" size="md" variant="secondary" onClick={() => openStartShift()}>
                   Rozpocznij zmianę
                 </Button>
               </div>
@@ -498,7 +504,6 @@ export default function NewTripPage() {
           </Button>
         )}
       </ActionBar>
-      <Toast message={toast} />
     </AppShell>
   )
 }

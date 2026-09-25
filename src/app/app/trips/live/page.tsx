@@ -8,21 +8,21 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
-import { Toast } from '@/components/ui/Toast'
+import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
-import { formatElapsed, formatTime } from '@/lib/format'
-import { readTripMeta } from '@/lib/tripMeta'
+import { formatElapsedHms, formatTime } from '@/lib/format'
+import { tripPickupLabel } from '@/lib/tripMeta'
 
 export default function LiveTripPage() {
   const router = useRouter()
   const { me, refreshMe } = useAuth()
+  const toast = useToast()
   const [trip, setTrip] = useState<Record<string, unknown> | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [gpsKm, setGpsKm] = useState(0)
   const [gpsPoints, setGpsPoints] = useState(0)
   const [busy, setBusy] = useState(false)
-  const [toast, setToast] = useState<string | null>(null)
   const [now, setNow] = useState(() => Date.now())
   const lastPos = useRef<{ lat: number; lon: number } | null>(null)
 
@@ -88,25 +88,27 @@ export default function LiveTripPage() {
   }, [trip?.id, me?.todayAssignment?.id])
 
   const liveTimer = !trip?.startedAt
-    ? '0:00'
-    : formatElapsed(now - new Date(String(trip.startedAt)).getTime())
+    ? '0:00:00'
+    : formatElapsedHms(now - new Date(String(trip.startedAt)).getTime())
 
   const shiftTimer = !me?.todayAssignment?.shiftStart
     ? null
-    : formatElapsed(now - new Date(me.todayAssignment.shiftStart).getTime())
-
-  const meta = readTripMeta(trip)
+    : formatElapsedHms(now - new Date(me.todayAssignment.shiftStart).getTime())
 
   async function endTrip() {
     if (!trip?.id || busy) return
     setBusy(true)
     try {
-      await omClient.updateTrip({ id: trip.id, status: 'completed' })
+      await omClient.updateTrip({
+        id: trip.id,
+        status: 'completed',
+        distanceKm: gpsKm > 0 ? Number(gpsKm.toFixed(2)) : null,
+      })
       await refreshMe()
-      setToast('Kurs zakończony')
+      toast.success('Kurs zakończony')
       window.setTimeout(() => router.replace(`/app/trips/${String(trip.id)}`), 500)
     } catch (err) {
-      setToast(err instanceof Error ? err.message : 'Nie udało się zakończyć')
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zakończyć')
       setBusy(false)
     }
   }
@@ -118,7 +120,9 @@ export default function LiveTripPage() {
         <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
           <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />
           <span className="text-[15px] font-semibold text-[var(--success)]">Na zmianie</span>
-          {shiftTimer ? <span className="text-[17px] font-semibold tabular-nums">{shiftTimer}</span> : null}
+          {shiftTimer ? (
+            <span className="text-[17px] font-semibold tabular-nums">{shiftTimer}</span>
+          ) : null}
           <span className="flex-1" />
           {me?.todayAssignment?.resourcePlate ? (
             <PlateBadge plate={me.todayAssignment.resourcePlate} size="sm" />
@@ -137,9 +141,9 @@ export default function LiveTripPage() {
             Skąd · od {formatTime(String(trip?.startedAt || ''))}
           </p>
           <p className="text-[19px] font-semibold leading-[26px]">
-            {address || meta.tripRequest?.from || 'Lokalizacja GPS…'}
+            {address || tripPickupLabel(trip) || 'Lokalizacja GPS…'}
           </p>
-          <div className="mt-4.5 grid grid-cols-2 gap-2.5 border-t border-[var(--separator)] pt-4">
+          <div className="mt-[18px] grid grid-cols-2 gap-2.5 border-t border-[var(--separator)] pt-4">
             <div>
               <div className="text-[15px] text-[var(--text-secondary)]">Dystans z GPS</div>
               <div className="text-[24px] font-semibold tabular-nums">
@@ -154,15 +158,14 @@ export default function LiveTripPage() {
         </SurfaceCard>
 
         <p className="px-1 text-[15px] leading-5 text-[var(--text-secondary)]">
-          Po zakończeniu uzupełnisz trasę i szczegóły kursu. Nie zamykaj aplikacji: GPS działa tylko przy otwartym
-          ekranie.
+          Po zakończeniu uzupełnisz trasę i szczegóły kursu. Nie zamykaj aplikacji: GPS działa tylko
+          przy otwartym ekranie.
         </p>
       </div>
 
       <ActionBar>
         <SlideToConfirm label="Przesuń, aby zakończyć" onConfirm={() => void endTrip()} disabled={busy} />
       </ActionBar>
-      <Toast message={toast} />
     </AppShell>
   )
 }

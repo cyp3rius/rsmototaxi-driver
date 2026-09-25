@@ -48,6 +48,16 @@ export function formatElapsed(ms: number) {
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
+/** Always H:MM:SS — live trip / shift timers in design. */
+export function formatElapsedHms(ms: number) {
+  if (ms < 0) ms = 0
+  const totalSec = Math.floor(ms / 1000)
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
 export function todayIsoDate() {
   const d = new Date()
   const y = d.getFullYear()
