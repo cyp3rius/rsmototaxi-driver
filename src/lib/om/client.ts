@@ -261,6 +261,43 @@ class OmClient {
     return this.requestJson('taxi_fleet/route/distance', { method: 'POST', body })
   }
 
+  async getProfiles() {
+    return this.requestJson('taxi_fleet/driver-app/v2/profiles')
+  }
+
+  async placesAutocomplete(input: string, lang = 'pl') {
+    const q = new URLSearchParams({ input, lang })
+    return this.requestJson<{ suggestions: Array<{ id: string; label: string; lat?: number; lon?: number; isAirport?: boolean }> }>(
+      `taxi_fleet/route/places-autocomplete?${q.toString()}`,
+    )
+  }
+
+  async reverseGeocode(lat: number, lon: number) {
+    return this.requestJson<{ label?: string; address?: string }>(
+      `taxi_fleet/route/reverse-geocode?lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`,
+    )
+  }
+
+  async getPushSubscription() {
+    return this.requestJson('taxi_fleet/driver-app/v2/push-subscription')
+  }
+
+  async savePushSubscription(body: Record<string, unknown>) {
+    return this.requestJson('taxi_fleet/driver-app/v2/push-subscription', { method: 'POST', body })
+  }
+
+  async deletePushSubscription() {
+    return this.requestJson('taxi_fleet/driver-app/v2/push-subscription', { method: 'DELETE' })
+  }
+
+  async endImpersonation() {
+    return this.requestJson('taxi_fleet/driver-app/v2/impersonation', { method: 'DELETE' })
+  }
+
+  async ackCommunication(body: Record<string, unknown>) {
+    return this.requestJson('taxi_fleet/driver-app/v2/communications/ack', { method: 'POST', body })
+  }
+
   private async requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json' }
     if (!options.formData) headers['Content-Type'] = 'application/json'

@@ -35,7 +35,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       className={cn(
-        'inline-flex w-full items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:opacity-[0.38]',
+        'inline-flex w-full items-center justify-center gap-2.5 rounded-full font-semibold transition active:scale-[0.98] disabled:opacity-[0.38]',
         height,
         styles,
         className,

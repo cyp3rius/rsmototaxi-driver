@@ -1,0 +1,27 @@
+---
+description: Przed commitami testy+build; przy PR podbij wersję; push tylko na polecenie
+alwaysApply: true
+---
+
+# Git: commit, PR, push
+
+## Przed każdym commitem
+
+Zawsze przed utworzeniem commita uruchom i poczekaj na sukces:
+
+1. Testy: `yarn test` jeśli skrypt istnieje; w przeciwnym razie `yarn lint`
+2. Build: `yarn build`
+
+Jeśli testy lub build padną — **nie commituj**. Napraw problem, uruchom ponownie, dopiero potem commit.
+
+## Przy tworzeniu PR
+
+Oprócz powyższego (testy + build muszą przejść):
+
+1. **Podbij wersję** w `package.json` (domyślnie patch, np. `0.1.0` → `0.1.1`), chyba że użytkownik wskaże minor/major
+2. Wersja ma być w commitach wchodzących w PR (osobny commit lub w ramach zmian — preferuj osobny commit „bump version”)
+
+## Push
+
+- **Nigdy** nie wypychaj (`git push`) z własnej inicjatywy
+- Push tylko gdy użytkownik **wyraźnie** o to poprosi
