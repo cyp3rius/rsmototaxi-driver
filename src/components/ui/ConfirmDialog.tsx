@@ -28,9 +28,11 @@ export function ConfirmDialog({
 
   useEffect(() => {
     if (open) {
-      setMounted(true)
-      setEntered(false)
       let raf2 = 0
+      queueMicrotask(() => {
+        setMounted(true)
+        setEntered(false)
+      })
       const raf1 = requestAnimationFrame(() => {
         raf2 = requestAnimationFrame(() => setEntered(true))
       })
@@ -39,7 +41,7 @@ export function ConfirmDialog({
         cancelAnimationFrame(raf2)
       }
     }
-    setEntered(false)
+    queueMicrotask(() => setEntered(false))
     const t = window.setTimeout(() => setMounted(false), EXIT_MS)
     return () => window.clearTimeout(t)
   }, [open])

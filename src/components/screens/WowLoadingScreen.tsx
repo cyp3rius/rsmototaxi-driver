@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { useAuth } from '@/lib/om/AuthProvider'
@@ -102,7 +102,7 @@ export function WowLoadingScreen() {
   const [nextTripLabel, setNextTripLabel] = useState<string | null>(null)
   const [skip, setSkip] = useState(false)
   const [dataReady, setDataReady] = useState(false)
-  const [safeTop, setSafeTop] = useState(0)
+  const [safeTop] = useState(() => (typeof window !== 'undefined' ? readSafeTop() : 0))
   const finished = useRef(false)
   const rootRef = useRef<HTMLElement>(null)
 
@@ -126,10 +126,6 @@ export function WowLoadingScreen() {
       router.replace('/app')
     })
   }, [returning, router])
-
-  useLayoutEffect(() => {
-    setSafeTop(readSafeTop())
-  }, [])
 
   // Shared rAF clock for A and B
   useEffect(() => {

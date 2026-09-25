@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/lib/om/AuthProvider'
 import { SplashGate } from '@/components/shell/SplashGate'
 import { ClientBoot } from '@/components/shell/ClientBoot'
+import { StartShiftProvider } from '@/components/ui/StartShiftProvider'
 import { ToastProvider } from '@/components/ui/toast/ToastProvider'
 
 const archivo = Archivo({
@@ -75,9 +76,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="mx-auto min-h-dvh max-w-[430px] bg-[var(--bg-base)] antialiased shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <AuthProvider>
           <ToastProvider>
-            <ClientBoot>
-              <SplashGate>{children}</SplashGate>
-            </ClientBoot>
+            <StartShiftProvider>
+              <ClientBoot>
+                <SplashGate>{children}</SplashGate>
+              </ClientBoot>
+            </StartShiftProvider>
           </ToastProvider>
         </AuthProvider>
       </body>

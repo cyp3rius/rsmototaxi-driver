@@ -38,7 +38,10 @@ export function StartShiftSheet({
   const [pickOther, setPickOther] = useState(false)
 
   const planned = Boolean(me?.todayAssignment && !me.todayAssignment.shiftStart)
-  const allVehicles = me?.profile?.defaultResourceIds || []
+  const allVehicles = useMemo(
+    () => me?.profile?.defaultResourceIds ?? [],
+    [me?.profile?.defaultResourceIds],
+  )
   const available = useMemo(() => {
     const list = me?.profile?.availableDefaultResourceIds?.length
       ? me.profile.availableDefaultResourceIds
@@ -50,14 +53,16 @@ export function StartShiftSheet({
 
   useEffect(() => {
     if (!open) return
-    setPickOther(false)
-    setBusy(false)
-    const preferred =
-      (planned && me?.todayAssignment?.resourceId) ||
-      available[0]?.id ||
-      me?.profile?.defaultResourceId ||
-      null
-    setSelectedId(preferred)
+    queueMicrotask(() => {
+      setPickOther(false)
+      setBusy(false)
+      const preferred =
+        (planned && me?.todayAssignment?.resourceId) ||
+        available[0]?.id ||
+        me?.profile?.defaultResourceId ||
+        null
+      setSelectedId(preferred)
+    })
   }, [open, planned, me, available])
 
   const selected =

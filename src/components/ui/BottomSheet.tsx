@@ -45,7 +45,8 @@ export function BottomSheet({
   const dragYRef = useRef(0)
   const [dragging, setDragging] = useState(false)
   const [keyboardPad, setKeyboardPad] = useState(0)
-  const closingByDrag = useRef(false)
+  const [closingByDrag, setClosingByDrag] = useState(false)
+  const closingByDragRef = useRef(false)
 
   function setDrag(y: number) {
     dragYRef.current = y
@@ -54,12 +55,15 @@ export function BottomSheet({
 
   useEffect(() => {
     if (open) {
-      closingByDrag.current = false
-      setMounted(true)
-      setDrag(0)
-      setDragging(false)
-      setEntered(false)
       let raf2 = 0
+      queueMicrotask(() => {
+        closingByDragRef.current = false
+        setClosingByDrag(false)
+        setMounted(true)
+        setDrag(0)
+        setDragging(false)
+        setEntered(false)
+      })
       const raf1 = requestAnimationFrame(() => {
         // Force layout so translateY(100%) paints before we animate to 0
         void panelRef.current?.getBoundingClientRect()
@@ -71,13 +75,16 @@ export function BottomSheet({
       }
     }
 
-    setEntered(false)
-    if (!closingByDrag.current) setDrag(0)
+    queueMicrotask(() => {
+      setEntered(false)
+      if (!closingByDragRef.current) setDrag(0)
+    })
     const t = window.setTimeout(() => {
       setMounted(false)
       setDrag(0)
       setDragging(false)
-      closingByDrag.current = false
+      closingByDragRef.current = false
+      setClosingByDrag(false)
     }, EXIT_MS)
     return () => window.clearTimeout(t)
   }, [open])
@@ -100,7 +107,7 @@ export function BottomSheet({
   }, [open])
 
   function beginDrag(clientY: number) {
-    if (!entered || closingByDrag.current || !open) return false
+    if (!entered || closingByDrag || !open) return false
     const el = panelRef.current
     if (!el || el.scrollTop > 0) return false
     startY.current = clientY
@@ -121,7 +128,8 @@ export function BottomSheet({
     pointerId.current = null
     const threshold = Math.min(110, window.innerHeight * 0.16)
     if (dragYRef.current > threshold) {
-      closingByDrag.current = true
+      closingByDragRef.current = true
+      setClosingByDrag(true)
       setDragging(false)
       setDrag(window.innerHeight)
       window.setTimeout(() => onClose(), EXIT_MS)
@@ -151,7 +159,7 @@ export function BottomSheet({
 
   if (!mounted) return null
 
-  const usingPx = closingByDrag.current || dragY > 0 || dragging
+  const usingPx = closingByDrag || dragY > 0 || dragging
   const panelTransform = usingPx
     ? `translate3d(0, ${dragY}px, 0)`
     : entered
@@ -175,7 +183,7 @@ export function BottomSheet({
           transition: dragging ? 'none' : `opacity ${ENTER_MS}ms ${EASE}`,
         }}
         onClick={() => {
-          if (closingByDrag.current) return
+          if (closingByDrag) return
           onClose()
         }}
       />

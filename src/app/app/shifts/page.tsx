@@ -147,8 +147,10 @@ function ShiftsInner() {
   )
 
   useEffect(() => {
-    setLoading(true)
-    void load(1, true).finally(() => setLoading(false))
+    queueMicrotask(() => {
+      setLoading(true)
+      void load(1, true).finally(() => setLoading(false))
+    })
   }, [load])
 
   useEffect(() => {

@@ -101,14 +101,16 @@ export function ReceiptSheet({
 
   useEffect(() => {
     if (!open) {
-      setPreview((prev) => {
-        if (prev) URL.revokeObjectURL(prev)
-        return null
+      queueMicrotask(() => {
+        setPreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev)
+          return null
+        })
+        setFile(null)
+        setDocNumber('')
+        if (cameraRef.current) cameraRef.current.value = ''
+        if (fileRef.current) fileRef.current.value = ''
       })
-      setFile(null)
-      setDocNumber('')
-      if (cameraRef.current) cameraRef.current.value = ''
-      if (fileRef.current) fileRef.current.value = ''
       return
     }
     queueMicrotask(() => setDocNumber(initialDocumentNumber))

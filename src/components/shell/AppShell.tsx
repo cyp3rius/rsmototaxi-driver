@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { useEffect, type ReactNode } from 'react'
 import { BottomNav } from '@/components/shell/BottomNav'
 import { SystemBanners } from '@/components/shell/SystemBanners'
-import { StartShiftProvider } from '@/components/ui/StartShiftProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { Button } from '@/components/ui/Button'
 
@@ -44,19 +43,17 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
   }
 
   return (
-    <StartShiftProvider>
-      <div
-        className={`mx-auto min-h-dvh max-w-lg bg-[var(--bg-base)] ${readOnly ? 'pointer-events-none select-none' : ''}`}
-      >
-        {readOnly ? (
-          <div className="pointer-events-auto sticky top-0 z-50 tint-accent px-4 py-2.5 text-center text-[15px] font-semibold text-[var(--accent)]">
-            Podgląd operatora — tylko do odczytu
-          </div>
-        ) : null}
-        <SystemBanners />
-        <div className={readOnly ? 'pointer-events-none opacity-90' : undefined}>{children}</div>
-        {!hideNav ? <BottomNav /> : null}
-      </div>
-    </StartShiftProvider>
+    <div
+      className={`mx-auto min-h-dvh max-w-lg bg-[var(--bg-base)] ${readOnly ? 'pointer-events-none select-none' : ''}`}
+    >
+      {readOnly ? (
+        <div className="pointer-events-auto sticky top-0 z-50 tint-accent px-4 py-2.5 text-center text-[15px] font-semibold text-[var(--accent)]">
+          Podgląd operatora — tylko do odczytu
+        </div>
+      ) : null}
+      <SystemBanners />
+      <div className={readOnly ? 'pointer-events-none opacity-90' : undefined}>{children}</div>
+      {!hideNav ? <BottomNav /> : null}
+    </div>
   )
 }

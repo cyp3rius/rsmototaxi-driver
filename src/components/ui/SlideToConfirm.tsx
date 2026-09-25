@@ -18,6 +18,7 @@ export function SlideToConfirm({
   const [dragging, setDragging] = useState(false)
   const [confirming, setConfirming] = useState(false)
   const maxRef = useRef(0)
+  const [max, setMax] = useState(0)
   const xRef = useRef(0)
   const startXRef = useRef(0)
   const startOffsetRef = useRef(0)
@@ -25,7 +26,9 @@ export function SlideToConfirm({
   const measure = useCallback(() => {
     const track = trackRef.current
     if (!track) return
-    maxRef.current = Math.max(0, track.clientWidth - 66)
+    const next = Math.max(0, track.clientWidth - 66)
+    maxRef.current = next
+    setMax(next)
   }, [])
 
   useEffect(() => {
@@ -83,7 +86,7 @@ export function SlideToConfirm({
     void finish(ratio >= 0.88)
   }
 
-  const progress = maxRef.current > 0 ? x / maxRef.current : 0
+  const progress = max > 0 ? x / max : 0
   const labelOpacity = Math.max(0, 1 - progress * 1.35)
 
   return (

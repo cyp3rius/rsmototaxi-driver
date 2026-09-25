@@ -137,11 +137,13 @@ export function DriverProfileSheet({
 
   useEffect(() => {
     if (!open) {
-      setLogoutOpen(false)
-      setHelpOpen(false)
+      queueMicrotask(() => {
+        setLogoutOpen(false)
+        setHelpOpen(false)
+      })
       return
     }
-    void refreshPermissions()
+    queueMicrotask(() => void refreshPermissions())
   }, [open, refreshPermissions])
 
   const displayName = (me?.member.displayName || session?.displayName || 'Kierowca').trim()
