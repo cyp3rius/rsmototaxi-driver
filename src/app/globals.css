@@ -156,8 +156,9 @@ select {
 .enter-1, .enter-2, .enter-3 {
   animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
-.enter-2 { animation-delay: 150ms; }
-.enter-3 { animation-delay: 300ms; }
+.enter-1 { animation-duration: 400ms; }
+.enter-2 { animation-delay: 150ms; animation-duration: 500ms; }
+.enter-3 { animation-delay: 300ms; animation-duration: 500ms; }
 @keyframes rise {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -210,8 +211,8 @@ select {
   font-family: var(--font-display);
   font-weight: 600;
   font-stretch: 125%;
-  font-size: 40px;
-  line-height: 44px;
+  font-size: 48px;
+  line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
@@ -220,8 +221,8 @@ select {
     font-size: 30px;
   }
   .display-hello {
-    font-size: 34px;
-    line-height: 38px;
+    font-size: 36px;
+    line-height: 1.05;
   }
   .numeric-xl {
     font-size: 48px;

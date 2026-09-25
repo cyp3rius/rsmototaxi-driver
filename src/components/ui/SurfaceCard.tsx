@@ -12,7 +12,7 @@ export function SurfaceCard({
 }) {
   const pad = padding === 'lg' ? 'p-5' : padding === 'sm' ? 'p-3' : 'p-4'
   return (
-    <div className={cn('rounded-[20px] border border-[var(--separator)] bg-[var(--bg-surface)]', pad, className)}>
+    <div className={cn('rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)]', pad, className)}>
       {children}
     </div>
   )

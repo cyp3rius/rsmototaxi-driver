@@ -99,6 +99,14 @@ export function WowLoadingScreen() {
     void (async () => {
       try {
         if (!navigator.onLine) {
+          // Spec: with any cached me → continue; without → offline error
+          const cached = me || (await refreshMe().catch(() => null))
+          if (cached) {
+            setDataReady(true)
+            setProgress(100)
+            setPhase('hello')
+            return
+          }
           setError('offline')
           return
         }

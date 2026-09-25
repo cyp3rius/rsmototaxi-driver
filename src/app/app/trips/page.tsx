@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Plus, Receipt, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -13,11 +14,14 @@ import { receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/R
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, formatTime, startOfDayIso } from '@/lib/format'
 import { tripRouteLabel, tripTypeLabel } from '@/lib/tripMeta'
+import { Suspense } from 'react'
 
-export default function TripsPage() {
+function TripsInner() {
+  const search = useSearchParams()
   const [scope, setScope] = useState<'today' | 'all'>('today')
   const [items, setItems] = useState<Record<string, unknown>[]>([])
-  const [missingOnly, setMissingOnly] = useState(false)
+  const [missingOverride, setMissingOverride] = useState<boolean | null>(null)
+  const missingOnly = missingOverride ?? search.get('missing') === '1'
   const [missingCount, setMissingCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -124,7 +128,7 @@ export default function TripsPage() {
             value={scope}
             onChange={(v) => {
               setScope(v)
-              if (v === 'today') setMissingOnly(false)
+              if (v === 'today') setMissingOverride(false)
             }}
             options={[
               { id: 'today', label: 'Dziś' },
@@ -134,7 +138,7 @@ export default function TripsPage() {
           <div className="mt-4 flex gap-2">
             <FilterChip
               active={missingOnly}
-              onClick={() => setMissingOnly((v) => !v)}
+              onClick={() => setMissingOverride(!missingOnly)}
               icon={<Receipt size={16} strokeWidth={2} />}
             >
               Brak paragonu{missingCount ? ` · ${missingCount}` : ''}
@@ -223,5 +227,13 @@ export default function TripsPage() {
         </div>
       </PullToRefresh>
     </AppShell>
+  )
+}
+
+export default function TripsPage() {
+  return (
+    <Suspense fallback={<AppShell><div className="px-5 py-6 text-[var(--text-secondary)]">Ładowanie…</div></AppShell>}>
+      <TripsInner />
+    </Suspense>
   )
 }

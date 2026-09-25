@@ -23,7 +23,8 @@ export function StatusChip({
   return (
     <span
       className={cn(
-        'inline-flex h-9 flex-none items-center gap-2 rounded-full px-3 text-[15px] font-semibold',
+        'inline-flex h-9 flex-none items-center gap-2 rounded-full px-3 text-[15px]',
+        pulse ? 'font-semibold' : 'font-medium',
         tones[tone],
         className,
       )}

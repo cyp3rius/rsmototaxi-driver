@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plane, Plus, Phone } from 'lucide-react'
+import { Fuel, Plane, Plus, Phone, Receipt } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
@@ -11,6 +11,7 @@ import { StatusChip } from '@/components/ui/StatusChip'
 import { Toast } from '@/components/ui/Toast'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import { endOfDayIso, formatMoneyShort, startOfDayIso } from '@/lib/format'
 import { tripRouteLabel } from '@/lib/tripMeta'
 
 function formatTime(iso: string | null | undefined) {
@@ -70,12 +71,17 @@ function readTripMeta(trip: Record<string, unknown> | null | undefined): TripMet
 
 export function DashboardScreen() {
   const router = useRouter()
-  const { me, refreshMe, logout } = useAuth()
+  const { me, refreshMe } = useAuth()
   const [toast, setToast] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [endOpen, setEndOpen] = useState(false)
   const [missingTrips, setMissingTrips] = useState<Array<{ id: string; label: string }>>([])
+  const [missingCount, setMissingCount] = useState(0)
+  const [todayStats, setTodayStats] = useState<{ trips: number; revenue: number }>({
+    trips: 0,
+    revenue: 0,
+  })
 
   const state = me?.dashboardState ?? 'A'
   const assignment = me?.todayAssignment
@@ -90,6 +96,27 @@ export function DashboardScreen() {
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [state])
+
+  useEffect(() => {
+    let cancelled = false
+    void (async () => {
+      try {
+        const [today, missing] = await Promise.all([
+          omClient.getTrips({ pageSize: 50, startedFrom: startOfDayIso(), startedTo: endOfDayIso() }),
+          omClient.getTrips({ pageSize: 1, missingReceipt: true }),
+        ])
+        if (cancelled) return
+        const revenue = today.items.reduce((sum, t) => sum + (Number(t.revenueAmount) || 0), 0)
+        setTodayStats({ trips: today.total, revenue })
+        setMissingCount(missing.total)
+      } catch {
+        // keep defaults
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [me?.today, state])
 
   const shiftTimer = (() => {
     if (!assignment?.shiftStart) return '00:00:00'
@@ -146,8 +173,11 @@ export function DashboardScreen() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col px-5 pb-28 max-[390px]:px-5 sm:px-6" style={{ paddingTop: 'calc(var(--safe-top) + 8px)' }}>
-      <header className="flex items-start justify-between gap-3 py-2.5">
+    <div
+      className="flex min-h-dvh flex-col px-5 pb-28"
+      style={{ paddingTop: 'calc(var(--safe-top) + 8px)' }}
+    >
+      <header className="flex items-start justify-between gap-3 px-0 py-2.5">
         <div className="min-w-0">
           <h1 className="display-hello truncate" style={{ viewTransitionName: 'driver-hello' }}>
             Witaj, <span className="text-[var(--accent)]">{firstName}</span>
@@ -294,7 +324,7 @@ export function DashboardScreen() {
               {plate ? ` · ${plate}` : ''}
             </p>
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--separator)] pt-3.5">
-              <Stat label="Kursy" value="—" />
+              <Stat label="Kursy" value={String(todayStats.trips || '—')} />
               <Stat
                 label="GPS"
                 value={
@@ -303,7 +333,10 @@ export function DashboardScreen() {
                     : '—'
                 }
               />
-              <Stat label="Przychód" value="—" />
+              <Stat
+                label="Przychód"
+                value={todayStats.revenue > 0 ? formatMoneyShort(todayStats.revenue) : '—'}
+              />
             </div>
           </section>
         ) : null}
@@ -334,7 +367,7 @@ export function DashboardScreen() {
 
         {state === 'C' ? (
           <section className="grid grid-cols-3 gap-2 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] px-5 py-4">
-            <Stat label="Kursy" value="—" />
+            <Stat label="Kursy" value={String(todayStats.trips || '—')} />
             <Stat
               label="GPS"
               value={
@@ -343,28 +376,63 @@ export function DashboardScreen() {
                   : '—'
               }
             />
-            <Stat label="Przychód" value="—" />
+            <Stat
+              label="Przychód"
+              value={todayStats.revenue > 0 ? formatMoneyShort(todayStats.revenue) : '—'}
+            />
           </section>
         ) : null}
 
-        {state === 'C' ? (
-          <button
-            type="button"
-            disabled={busy || !!me?.impersonation?.active}
-            onClick={() => void openEndShift()}
-            className="py-3 text-center text-[15px] font-medium text-[var(--text-secondary)] disabled:opacity-38"
+        {missingCount > 0 && (state === 'C' || state === 'D') ? (
+          <Link
+            href="/app/trips?missing=1"
+            className="flex min-h-14 items-center gap-3 rounded-[18px] border border-[color-mix(in_srgb,var(--warning)_28%,transparent)] px-4 tint-warning"
           >
-            Zakończ zmianę
-          </button>
+            <Receipt size={22} className="text-[var(--warning)]" strokeWidth={1.8} />
+            <span className="flex-1 text-[16px] font-medium">
+              {missingCount} {missingCount === 1 ? 'kurs bez paragonu' : 'kursy bez paragonu'}
+            </span>
+            <span className="text-[16px] font-semibold text-[var(--warning)]">Dodaj</span>
+          </Link>
         ) : null}
 
-        <button
-          type="button"
-          className="py-2 text-center text-[15px] text-[var(--text-tertiary)]"
-          onClick={() => void logout().then(() => router.replace('/'))}
-        >
-          Wyloguj
-        </button>
+        <div className="mt-3 flex flex-col gap-2">
+          {state === 'B' ? (
+            <Button variant="secondary" size="md" onClick={() => router.push('/app/trips')}>
+              Podgląd kursów
+            </Button>
+          ) : null}
+          {state === 'D' ? (
+            <Button variant="secondary" size="md" onClick={() => router.push('/app/trips')}>
+              Kursy z tej zmiany
+            </Button>
+          ) : null}
+          {state !== 'A2' ? (
+            <Button variant="secondary" size="md" onClick={() => router.push('/app/expenses/new')}>
+              <Fuel size={20} strokeWidth={1.8} />
+              Zarejestruj koszt
+            </Button>
+          ) : null}
+          {state === 'C' ? (
+            <button
+              type="button"
+              disabled={busy || !!me?.impersonation?.active}
+              onClick={() => void openEndShift()}
+              className="flex h-14 items-center justify-center text-[17px] font-semibold text-[var(--danger)] disabled:opacity-[0.38]"
+            >
+              Zakończ zmianę
+            </button>
+          ) : null}
+          {state === 'A' || state === 'A2' || state === 'B' ? (
+            <button
+              type="button"
+              onClick={() => router.push('/app/shifts')}
+              className="flex h-14 items-center justify-center text-[17px] font-medium text-[var(--text-secondary)]"
+            >
+              Pokaż grafik
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <EndShiftSheet

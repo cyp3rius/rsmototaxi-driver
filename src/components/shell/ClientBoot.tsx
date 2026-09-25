@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react'
 import { InstallPrompt } from '@/components/shell/InstallPrompt'
-import { OfflineBanner } from '@/components/shell/OfflineBanner'
 
+/** Global boot: SW + install gate. Offline banners live only inside authenticated AppShell. */
 export function ClientBoot({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -14,7 +14,6 @@ export function ClientBoot({ children }: { children: React.ReactNode }) {
   return (
     <>
       <InstallPrompt />
-      <OfflineBanner />
       {children}
     </>
   )

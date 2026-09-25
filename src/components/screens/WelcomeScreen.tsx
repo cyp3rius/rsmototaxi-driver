@@ -1,27 +1,57 @@
 'use client'
 
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Phone } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { TextField } from '@/components/ui/TextField'
 import { useAuth } from '@/lib/om/AuthProvider'
+import { OmApiError } from '@/lib/om/client'
 
-export function WelcomeScreen() {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+function WelcomeInner() {
   const router = useRouter()
-  const { ready, session } = useAuth()
+  const search = useSearchParams()
+  const { ready, session, login } = useAuth()
   const [reduced] = useState(
     () =>
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches,
   )
   const [helpOpen, setHelpOpen] = useState(false)
+  const loginFromUrl = search.get('login') === '1' || search.get('login') === 'true'
+  const [loginForced, setLoginForced] = useState(false)
+  const loginOpen = loginForced || loginFromUrl
   const parallaxRef = useRef<HTMLDivElement>(null)
+
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [emailError, setEmailError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [shake, setShake] = useState(false)
+  const [offline, setOffline] = useState(
+    () => typeof navigator !== 'undefined' && !navigator.onLine,
+  )
 
   useEffect(() => {
     if (ready && session) router.replace('/loading')
   }, [ready, session, router])
+
+  useEffect(() => {
+    const sync = () => setOffline(!navigator.onLine)
+    window.addEventListener('online', sync)
+    window.addEventListener('offline', sync)
+    const remembered = localStorage.getItem('rs-driver-email')
+    if (remembered) queueMicrotask(() => setEmail(remembered))
+    return () => {
+      window.removeEventListener('online', sync)
+      window.removeEventListener('offline', sync)
+    }
+  }, [])
 
   useEffect(() => {
     if (reduced) return
@@ -36,20 +66,71 @@ export function WelcomeScreen() {
     return () => window.removeEventListener('deviceorientation', onOrient)
   }, [reduced])
 
+  const sheetOpen = loginOpen || helpOpen
+  const canSubmit = useMemo(
+    () => EMAIL_RE.test(email.trim()) && password.length > 0,
+    [email, password],
+  )
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!EMAIL_RE.test(email.trim())) {
+      setEmailError('Wpisz pełny adres e-mail, np. jan@rsmototaxi.pl')
+      return
+    }
+    setEmailError(null)
+    if (!canSubmit || loading || offline) return
+    setLoading(true)
+    setError(null)
+    try {
+      await login(email.trim(), password)
+      localStorage.setItem('rs-driver-email', email.trim())
+      router.replace('/loading')
+    } catch (err) {
+      let message =
+        'Nieprawidłowy e-mail lub hasło. Sprawdź dane albo skontaktuj się z koordynatorem.'
+      if (err instanceof OmApiError) {
+        const raw = err.message.toLowerCase()
+        if (raw.includes('feature') || raw.includes('driver') || raw.includes('permission')) {
+          message = 'To konto nie ma dostępu do aplikacji kierowcy'
+        } else if (raw.includes('inactive') || raw.includes('disabled') || raw.includes('nieaktywn')) {
+          message = 'Twoje konto jest nieaktywne. Skontaktuj się z koordynatorem.'
+        }
+      }
+      setError(message)
+      setShake(true)
+      window.setTimeout(() => setShake(false), 400)
+      setLoading(false)
+    }
+  }
+
+  function closeLogin() {
+    setLoginForced(false)
+    if (search.get('login')) router.replace('/')
+  }
+
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#020407] text-white">
       <div className="absolute inset-0">
-        <div ref={parallaxRef} className="absolute inset-[-12px] will-change-transform">
+        <div
+          ref={parallaxRef}
+          className="absolute inset-[-12px] will-change-transform"
+          style={{
+            filter: sheetOpen ? 'blur(10px) brightness(0.55)' : undefined,
+            transform: sheetOpen ? 'scale(1.04)' : undefined,
+            transition: 'filter 200ms ease, transform 200ms ease',
+          }}
+        >
           <Image
             src="/brand/fleet-hero-green.webp"
             alt=""
             fill
             priority
-            className={reduced ? 'object-cover' : 'kenburns object-cover'}
+            className={reduced || sheetOpen ? 'object-cover' : 'kenburns object-cover'}
             style={{ objectPosition: '50% 46%' }}
           />
         </div>
-        {!reduced ? <div className="headlights" aria-hidden /> : null}
+        {!reduced && !sheetOpen ? <div className="headlights" aria-hidden /> : null}
         <div
           className="absolute inset-0"
           style={{
@@ -57,14 +138,27 @@ export function WelcomeScreen() {
               'linear-gradient(180deg, rgba(2,4,7,.5) 0%, rgba(2,4,7,0) 20%, rgba(2,4,7,0) 50%, rgba(2,4,7,.88) 67%, #020407 100%)',
           }}
         />
+        {sheetOpen ? <div className="absolute inset-0 bg-[#020407]/35" /> : null}
       </div>
 
       <div
-        className="relative z-10 flex min-h-dvh flex-col px-5 max-[390px]:px-5 sm:px-6"
-        style={{ paddingTop: 'calc(var(--safe-top) + 16px)', paddingBottom: 'calc(var(--safe-bottom) + 16px)' }}
+        className="relative z-10 flex min-h-dvh flex-col px-6 transition-opacity duration-200"
+        style={{
+          paddingTop: 'calc(var(--safe-top) + 24px)',
+          paddingBottom: 'calc(var(--safe-bottom) + 12px)',
+          opacity: sheetOpen ? 0 : 1,
+          pointerEvents: sheetOpen ? 'none' : 'auto',
+        }}
       >
-        <div className="enter-1 mt-2 flex justify-center">
-          <Image src="/brand/logo-light.svg" alt="RS Moto Taxi" width={51} height={68} className="h-[68px] w-auto" priority />
+        <div className="enter-1 mt-0 flex justify-center">
+          <Image
+            src="/brand/logo-light.svg"
+            alt="RS Moto Taxi"
+            width={51}
+            height={68}
+            className="h-[68px] w-auto"
+            priority
+          />
         </div>
 
         <div className="flex flex-1 flex-col justify-end pb-1">
@@ -73,7 +167,7 @@ export function WelcomeScreen() {
             <p className="mt-3 text-[17px] leading-6 text-white/[0.74]">Aplikacja kierowcy RS Moto Taxi</p>
           </div>
           <div className="enter-3 mt-7 space-y-0">
-            <Button size="md" onClick={() => router.push('/login')}>
+            <Button size="md" onClick={() => setLoginForced(true)}>
               Zaloguj się
             </Button>
             <button
@@ -86,6 +180,64 @@ export function WelcomeScreen() {
           </div>
         </div>
       </div>
+
+      <BottomSheet
+        open={loginOpen}
+        onClose={closeLogin}
+        title="Zaloguj się"
+        subtitle="Użyj danych konta kierowcy."
+        expanded
+        className={shake ? 'animate-shake' : undefined}
+      >
+        <form onSubmit={onSubmit} className="space-y-4" autoComplete="on" action="#">
+          {offline ? (
+            <div className="flex items-center gap-3 rounded-[14px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] tint-warning px-4 py-3 text-[15px] text-[var(--warning)]">
+              Brak połączenia z internetem. Logowanie wymaga sieci.
+            </div>
+          ) : null}
+          <TextField
+            label="E-mail"
+            type="email"
+            name="email"
+            autoComplete="username"
+            inputMode="email"
+            autoCapitalize="off"
+            autoCorrect="off"
+            spellCheck={false}
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value)
+              setEmailError(null)
+            }}
+            error={emailError}
+          />
+          <TextField
+            label="Hasło"
+            type="password"
+            name="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={error}
+          />
+          <div className="pt-6">
+            <Button type="submit" size="md" disabled={!canSubmit || offline} loading={loading}>
+              Zaloguj się
+            </Button>
+          </div>
+          <button
+            type="button"
+            className="flex h-12 w-full items-center justify-center text-[15px] font-medium text-[var(--text-secondary)]"
+            onClick={() => {
+              setLoginForced(false)
+              if (search.get('login')) router.replace('/')
+              setHelpOpen(true)
+            }}
+          >
+            Problem z logowaniem?
+          </button>
+        </form>
+      </BottomSheet>
 
       <BottomSheet
         open={helpOpen}
@@ -118,6 +270,15 @@ export function WelcomeScreen() {
               <span className="block text-[17px] font-semibold">hello@rsmototaxi.pl</span>
             </span>
           </a>
+          <a
+            className="flex min-h-16 items-center gap-3.5 rounded-2xl bg-[var(--bg-surface-raised)] px-4"
+            href="https://wa.me/48609999823"
+          >
+            <span className="flex-1">
+              <span className="block text-[15px] text-[var(--text-secondary)]">WhatsApp</span>
+              <span className="block text-[17px] font-semibold">Napisz na WhatsApp</span>
+            </span>
+          </a>
           <button
             type="button"
             className="flex h-14 w-full items-center justify-center text-[16px] font-semibold text-[var(--text-secondary)]"
@@ -128,5 +289,13 @@ export function WelcomeScreen() {
         </div>
       </BottomSheet>
     </main>
+  )
+}
+
+export function WelcomeScreen() {
+  return (
+    <Suspense fallback={<div className="min-h-dvh bg-[#020407]" />}>
+      <WelcomeInner />
+    </Suspense>
   )
 }
