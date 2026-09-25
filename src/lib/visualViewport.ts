@@ -10,17 +10,47 @@ function readCssViewportHeight(unit: 'lvh' | 'dvh' | 'svh'): number {
   return Number.isFinite(h) ? h : 0
 }
 
-/** Tallest known layout height — beats iOS “phantom gap” after fullscreen SPA morphs. */
+/** Home-screen / installed PWA (no Safari toolbars). */
+export function isStandaloneDisplay(): boolean {
+  if (typeof window === 'undefined') return false
+  const nav = navigator as Navigator & { standalone?: boolean }
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
+    Boolean(nav.standalone)
+  )
+}
+
+/**
+ * Frame height for the driver chrome.
+ * - PWA: live layout/dvh only — do NOT inflate with `lvh` (that leaves a phantom
+ *   gap the size of the missing browser chrome).
+ * - Safari tab: max(layout, visual, lvh) closes post-morph phantoms above the toolbar.
+ */
 export function readFrameHeight(): number {
   if (typeof window === 'undefined') return 0
   const vv = window.visualViewport
+
+  if (isStandaloneDisplay()) {
+    return Math.round(
+      Math.max(
+        window.innerHeight,
+        vv && vv.offsetTop < 1 ? vv.height : 0,
+        readCssViewportHeight('dvh'),
+        readCssViewportHeight('svh'),
+      ),
+    )
+  }
+
   const vvExtent = vv ? vv.offsetTop + vv.height : 0
-  return Math.max(
-    window.innerHeight,
-    document.documentElement?.clientHeight ?? 0,
-    vvExtent,
-    readCssViewportHeight('lvh'),
-    readCssViewportHeight('dvh'),
+  return Math.round(
+    Math.max(
+      window.innerHeight,
+      document.documentElement?.clientHeight ?? 0,
+      vvExtent,
+      readCssViewportHeight('lvh'),
+      readCssViewportHeight('dvh'),
+    ),
   )
 }
 
@@ -49,7 +79,6 @@ export function isVisualViewportMeaningfullyShortened(): boolean {
   if (!vv) return false
   const inset = readVisualViewportBottomInset()
   if (inset < 24) return false
-  // Keyboard / chrome typically eats a large share of height; morph phantom is ~40–80px.
   return vv.height < window.innerHeight * 0.82
 }
 
@@ -58,15 +87,18 @@ export function syncVisualViewportCssVars() {
   const inset = isVisualViewportMeaningfullyShortened() ? readVisualViewportBottomInset() : 0
   document.documentElement.style.setProperty('--vv-bottom', `${inset}px`)
   document.documentElement.style.setProperty('--app-height', `${readFrameHeight()}px`)
+  document.documentElement.dataset.displayMode = isStandaloneDisplay() ? 'standalone' : 'browser'
 }
 
 /**
  * Safari often leaves `position:fixed` chrome misaligned after a fullscreen SPA
- * transition (e.g. 5.3–5.4 → 5.5). A tiny scroll forces a layout pass.
+ * transition. A tiny scroll forces a layout pass — but only in an unlocked Safari tab.
+ * Never do this in PWA / while root scroll is locked (it shifts the whole shell).
  */
 export function forceFixedBottomReflow() {
   if (typeof window === 'undefined') return
   syncVisualViewportCssVars()
+  if (rootScrollLockCount > 0 || isStandaloneDisplay()) return
   const y = window.scrollY || window.pageYOffset || 0
   window.scrollTo(0, y <= 0 ? 1 : y)
   window.scrollTo(0, y)
@@ -82,10 +114,52 @@ export function requestViewportSettle() {
   window.dispatchEvent(new Event(VIEWPORT_SETTLE_EVENT))
 }
 
+let rootScrollLockCount = 0
+let lockedScrollY = 0
+
+function isTouchInsideScroller(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  return Boolean(target.closest('[data-scroll], [data-sheet-panel], .rs-scrollable'))
+}
+
+function preventRootTouchMove(e: TouchEvent) {
+  if (isTouchInsideScroller(e.target)) return
+  e.preventDefault()
+}
+
+/**
+ * Freeze document rubber-band so only in-chrome scrollers (`[data-scroll]`) move.
+ * Without this, iOS can pan the layout viewport while the list scrolls separately —
+ * hiding the top of the shell and leaving a gap under the tab bar.
+ */
+export function lockAppViewport() {
+  if (typeof document === 'undefined') return
+  rootScrollLockCount += 1
+  if (rootScrollLockCount > 1) return
+
+  lockedScrollY = window.scrollY || window.pageYOffset || 0
+  document.documentElement.classList.add('rs-app-lock')
+  document.body.style.top = `-${lockedScrollY}px`
+  window.scrollTo(0, 0)
+  syncVisualViewportCssVars()
+  document.addEventListener('touchmove', preventRootTouchMove, { passive: false })
+}
+
+export function unlockAppViewport() {
+  if (typeof document === 'undefined') return
+  rootScrollLockCount = Math.max(0, rootScrollLockCount - 1)
+  if (rootScrollLockCount > 0) return
+
+  document.removeEventListener('touchmove', preventRootTouchMove)
+  document.documentElement.classList.remove('rs-app-lock')
+  document.body.style.top = ''
+  window.scrollTo(0, lockedScrollY)
+  lockedScrollY = 0
+}
+
 /**
  * Pin a fullscreen fixed chrome shell to the real screen frame.
- * Uses the *max* of layout / visual / large viewport heights so iOS morph
- * phantoms cannot leave a black gap under the tab bar.
+ * PWA: stretch top/bottom (no browser chrome). Safari tab: explicit max frame height.
  */
 export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512) {
   const vv = window.visualViewport
@@ -93,26 +167,34 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
   el.style.margin = '0'
   el.style.inset = ''
   el.style.right = 'auto'
-  el.style.bottom = 'auto'
   el.style.zIndex = el.style.zIndex || '0'
   el.style.transform = ''
 
   const layoutW = window.innerWidth
   const vvW = vv?.width ?? layoutW
   const width = Math.min(vvW, maxWidthPx)
-  const left = vv
-    ? vv.offsetLeft + (vvW - width) / 2
-    : (layoutW - width) / 2
+  const left = vv ? vv.offsetLeft + (vvW - width) / 2 : (layoutW - width) / 2
   el.style.left = `${Math.max(0, left)}px`
   el.style.width = `${width}px`
 
   if (vv && isVisualViewportMeaningfullyShortened()) {
     el.style.top = `${vv.offsetTop}px`
+    el.style.bottom = 'auto'
     el.style.height = `${vv.height}px`
     return
   }
 
+  if (isStandaloneDisplay()) {
+    // Stretch to the locked screen edges — no lvh inflate (that matches Safari’s
+    // “above toolbar” frame and leaves a dead band where the browser bar was).
+    el.style.top = '0px'
+    el.style.bottom = '0px'
+    el.style.height = ''
+    return
+  }
+
   el.style.top = '0px'
+  el.style.bottom = 'auto'
   el.style.height = `${readFrameHeight()}px`
 }
 
@@ -127,6 +209,12 @@ export function pinFixedBottomElement(el: HTMLElement) {
   if (isVisualViewportMeaningfullyShortened()) {
     el.style.bottom = 'auto'
     el.style.top = `${Math.max(0, readVisualViewportBottomY() - height)}px`
+    return
+  }
+
+  if (isStandaloneDisplay()) {
+    el.style.top = ''
+    el.style.bottom = '0px'
     return
   }
 

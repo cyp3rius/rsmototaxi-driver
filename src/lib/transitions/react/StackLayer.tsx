@@ -18,9 +18,11 @@ import {
   type StackEls,
 } from '@/lib/transitions/stackTransition'
 import {
+  lockAppViewport,
   pinFixedChromeToVisualViewport,
   requestViewportSettle,
   syncVisualViewportCssVars,
+  unlockAppViewport,
   VIEWPORT_SETTLE_EVENT,
 } from '@/lib/visualViewport'
 
@@ -132,6 +134,8 @@ export function StackLayer({
     const el = rootRef.current
     if (!el) return
 
+    lockAppViewport()
+
     const pin = () => {
       pinFixedChromeToVisualViewport(el)
       syncVisualViewportCssVars()
@@ -144,7 +148,6 @@ export function StackLayer({
     const timers = [50, 160, 400, 800, 1600].map((ms) => window.setTimeout(pin, ms))
     const vv = window.visualViewport
     vv?.addEventListener('resize', pin)
-    // Do not re-pin on vv.scroll — that fights rubber-band / address-bar and can leave a gap.
     window.addEventListener('resize', pin)
     window.addEventListener('orientationchange', pin)
     window.addEventListener(VIEWPORT_SETTLE_EVENT, pin)
@@ -157,12 +160,12 @@ export function StackLayer({
       window.removeEventListener('orientationchange', pin)
       window.removeEventListener(VIEWPORT_SETTLE_EVENT, pin)
       document.removeEventListener('visibilitychange', pin)
+      unlockAppViewport()
     }
   }, [])
 
   return (
     <StackBackContext.Provider value={requestClose}>
-      {/* Geometry: CSS fill-available + JS pinFixedChromeToVisualViewport (max frame). */}
       <div ref={rootRef} className="rs-driver-chrome z-0">
         <div ref={listRef} className="absolute inset-0 flex h-full min-h-0 flex-col">
           {list}
@@ -176,11 +179,12 @@ export function StackLayer({
         <div
           ref={detailRef}
           hidden
+          data-scroll
           className="absolute inset-0 z-50 overflow-y-auto bg-[var(--bg-base)]"
           style={{
             transform: 'translateX(100%)',
             touchAction: 'pan-y',
-            overscrollBehavior: 'contain',
+            overscrollBehavior: 'none',
             WebkitOverflowScrolling: 'touch',
           }}
         >

@@ -64,7 +64,6 @@ body {
   margin: 0;
   min-height: 100%;
   min-height: 100dvh;
-  min-height: 100lvh;
   min-height: -webkit-fill-available;
   background: var(--bg-base);
   color: var(--text-primary);
@@ -73,10 +72,14 @@ body {
   line-height: 24px;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  overscroll-behavior-y: contain;
+  overscroll-behavior-y: none;
 }
 
-/* Fullscreen driver chrome — explicit frame beats iOS fixed-inset phantoms */
+/*
+ * Driver chrome height:
+ * - Safari tab: prefer large viewport (closes phantom gap above toolbar).
+ * - PWA / standalone: dvh + fill-available only (no lvh inflate — no browser bar).
+ */
 .rs-driver-chrome {
   position: fixed;
   top: 0;
@@ -86,13 +89,49 @@ body {
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
-  /* Cascade: dvh → lvh → fill-available → JS --app-height (last wins when set) */
   height: 100dvh;
   height: 100lvh;
   height: -webkit-fill-available;
   height: var(--app-height, 100lvh);
   overflow: hidden;
+  overscroll-behavior: none;
   background: var(--bg-base);
+  touch-action: manipulation;
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  .rs-driver-chrome {
+    height: 100dvh;
+    height: -webkit-fill-available;
+    height: var(--app-height, 100dvh);
+  }
+}
+
+html[data-display-mode='standalone'] .rs-driver-chrome {
+  height: 100dvh;
+  height: -webkit-fill-available;
+  height: var(--app-height, 100dvh);
+}
+
+/* Freeze document rubber-band while the fixed driver chrome is mounted */
+html.rs-app-lock {
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  height: 100% !important;
+  height: -webkit-fill-available !important;
+}
+
+html.rs-app-lock body {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
+  max-width: none !important;
+  overflow: hidden !important;
+  overscroll-behavior: none !important;
+  height: 100% !important;
+  height: -webkit-fill-available !important;
+  min-height: 0 !important;
 }
 
 * {

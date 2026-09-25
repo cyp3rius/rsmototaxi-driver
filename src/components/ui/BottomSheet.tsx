@@ -196,10 +196,13 @@ export function BottomSheet({
             : 'max-h-[92dvh]',
           className,
         )}
+        data-sheet-panel
+        data-scroll
         style={{
           paddingBottom: `calc(var(--safe-bottom) + 16px + ${keyboardPad}px)`,
           transform: panelTransform,
           transition: dragging ? 'none' : `transform ${entered ? ENTER_MS : EXIT_MS}ms ${EASE}`,
+          overscrollBehavior: 'none',
         }}
       >
         <div

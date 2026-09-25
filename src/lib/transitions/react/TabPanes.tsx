@@ -43,8 +43,9 @@ export function TabPanes({
             position: 'absolute',
             inset: 0,
             overflowY: 'auto',
-            overscrollBehaviorY: 'contain',
+            overscrollBehaviorY: 'none',
             WebkitOverflowScrolling: 'touch',
+            touchAction: 'pan-y',
           }}
         >
           {pane}
