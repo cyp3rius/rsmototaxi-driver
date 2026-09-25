@@ -1,9 +1,8 @@
 'use client'
 
+import { Building2, Plus, UserRound, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
-import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { TextField } from '@/components/ui/TextField'
 import { omClient } from '@/lib/om/client'
 
@@ -12,142 +11,10 @@ export type SelectedCustomer = {
   kind: 'person' | 'company'
   label: string
   phone?: string | null
+  description?: string | null
 }
 
-export function CustomerCreateSheet({
-  open,
-  onClose,
-  onCreated,
-  initialKind = 'person',
-}: {
-  open: boolean
-  onClose: () => void
-  onCreated: (customer: SelectedCustomer) => void
-  initialKind?: 'person' | 'company'
-}) {
-  const [kind, setKind] = useState<'person' | 'company'>(initialKind)
-  const [phone, setPhone] = useState('')
-  const [name, setName] = useState('')
-  const [nip, setNip] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  useEffect(() => {
-    if (!open) return
-    queueMicrotask(() => {
-      setKind(initialKind)
-      setError(null)
-    })
-  }, [open, initialKind])
-
-  const canSubmit = useMemo(() => {
-    if (phone.trim().length < 5) return false
-    if (kind === 'company') return nip.replace(/\D/g, '').length === 10
-    return true
-  }, [phone, kind, nip])
-
-  async function submit() {
-    if (!canSubmit || busy) return
-    setBusy(true)
-    setError(null)
-    try {
-      const parts = name.trim().split(/\s+/).filter(Boolean)
-      const body =
-        kind === 'company'
-          ? {
-              kind: 'company' as const,
-              primaryPhone: phone.trim(),
-              displayName: name.trim() || undefined,
-              nip: nip.replace(/\D/g, ''),
-            }
-          : {
-              kind: 'person' as const,
-              primaryPhone: phone.trim(),
-              firstName: parts[0] || undefined,
-              lastName: parts.slice(1).join(' ') || undefined,
-              displayName: name.trim() || undefined,
-            }
-      const created = (await omClient.createCustomer(body)) as {
-        id?: string
-        displayName?: string
-        primaryPhone?: string
-      }
-      const id = String(created.id || '')
-      if (!id) throw new Error('Brak id klienta')
-      onCreated({
-        id,
-        kind,
-        label: created.displayName || name.trim() || phone.trim(),
-        phone: created.primaryPhone || phone.trim(),
-      })
-      onClose()
-      setPhone('')
-      setName('')
-      setNip('')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Nie udało się dodać klienta')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <BottomSheet
-      open={open}
-      onClose={onClose}
-      title="Dodaj klienta"
-      subtitle="Telefon jest wymagany zawsze. Dane firmy uzupełni CRM na podstawie NIP."
-    >
-      <div className="space-y-4">
-        <SegmentedControl
-          value={kind}
-          onChange={setKind}
-          options={[
-            { id: 'person', label: 'Osoba' },
-            { id: 'company', label: 'Firma' },
-          ]}
-        />
-        <TextField
-          label="Telefon"
-          inputMode="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="504 013 184"
-        />
-        {kind === 'person' ? (
-          <TextField
-            label="Imię i nazwisko"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Opcjonalnie"
-          />
-        ) : (
-          <>
-            <TextField
-              label="NIP"
-              inputMode="numeric"
-              value={nip}
-              onChange={(e) => setNip(e.target.value)}
-              placeholder="10 cyfr"
-              error={nip && nip.replace(/\D/g, '').length !== 10 ? 'NIP jest wymagany (10 cyfr).' : null}
-            />
-            <TextField
-              label="Nazwa firmy"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Opcjonalnie"
-            />
-          </>
-        )}
-        {error ? <p className="text-[15px] text-[var(--danger)]">{error}</p> : null}
-        <Button loading={busy} disabled={!canSubmit} onClick={() => void submit()}>
-          Dodaj klienta
-        </Button>
-      </div>
-    </BottomSheet>
-  )
-}
+const MIN_SEARCH = 3
 
 export function CustomerPicker({
   value,
@@ -160,117 +27,271 @@ export function CustomerPicker({
 }) {
   const [query, setQuery] = useState('')
   const [items, setItems] = useState<SelectedCustomer[]>([])
+  const [searching, setSearching] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
   const [createKind, setCreateKind] = useState<'person' | 'company'>('person')
+  const [phone, setPhone] = useState('')
+  const [name, setName] = useState('')
+  const [nip, setNip] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
   const trimmedQuery = query.trim()
-  const shownItems = trimmedQuery.length < 2 ? [] : items
 
   useEffect(() => {
-    if (trimmedQuery.length < 2) return
+    if (trimmedQuery.length < MIN_SEARCH) {
+      setItems([])
+      setSearching(false)
+      return
+    }
+    let active = true
+    setSearching(true)
     const t = window.setTimeout(() => {
       void omClient
         .searchCustomers(trimmedQuery)
         .then((res) => {
+          if (!active) return
           const list = (res as { items?: Array<Record<string, unknown>> }).items || []
           setItems(
             list.map((item) => ({
-              id: String(item.id),
+              id: String(item.id || ''),
               kind: (item.kind === 'company' ? 'company' : 'person') as 'person' | 'company',
-              label: String(item.displayName || item.label || item.primaryPhone || 'Klient'),
+              label: String(item.label || item.displayName || item.primaryPhone || 'Klient'),
               phone: item.primaryPhone ? String(item.primaryPhone) : null,
-            })),
+              description: item.description ? String(item.description) : null,
+            })).filter((item) => item.id),
           )
         })
-        .catch(() => setItems([]))
+        .catch(() => {
+          if (active) setItems([])
+        })
+        .finally(() => {
+          if (active) setSearching(false)
+        })
     }, 250)
-    return () => window.clearTimeout(t)
+    return () => {
+      active = false
+      window.clearTimeout(t)
+    }
   }, [trimmedQuery])
 
-  return (
-    <div>
-      <p className="mb-2 text-[15px] font-medium">
-        Klient
-        {!required ? <span className="font-normal text-[var(--text-secondary)]"> (opcjonalnie)</span> : null}
-      </p>
-      {value ? (
+  const canSubmit = useMemo(() => {
+    if (phone.trim().length < 5) return false
+    if (createKind === 'company') return nip.replace(/\D/g, '').length === 10
+    return true
+  }, [phone, createKind, nip])
+
+  function resetCreate() {
+    setCreateOpen(false)
+    setError(null)
+    setPhone('')
+    setName('')
+    setNip('')
+    setBusy(false)
+  }
+
+  async function submitCreate() {
+    if (!canSubmit || busy) return
+    setBusy(true)
+    setError(null)
+    try {
+      const body =
+        createKind === 'company'
+          ? {
+              kind: 'company' as const,
+              primaryPhone: phone.trim(),
+              displayName: name.trim() || undefined,
+              nip: nip.replace(/\D/g, ''),
+            }
+          : {
+              kind: 'person' as const,
+              primaryPhone: phone.trim(),
+              displayName: name.trim() || undefined,
+            }
+      const created = (await omClient.createCustomer(body)) as {
+        id?: string
+        label?: string
+        displayName?: string
+        primaryPhone?: string
+        error?: string
+      }
+      const id = String(created.id || '')
+      if (!id) throw new Error(created.error || 'Nie udało się dodać klienta')
+      onChange({
+        id,
+        kind: createKind,
+        label: created.label || created.displayName || name.trim() || phone.trim(),
+        phone: created.primaryPhone || phone.trim(),
+      })
+      resetCreate()
+      setQuery('')
+      setItems([])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Nie udało się dodać klienta')
+      setBusy(false)
+    }
+  }
+
+  if (value) {
+    return (
+      <div>
+        <p className="mb-2 text-[15px] font-medium">
+          Klient
+          {required ? <span className="text-[var(--danger)]"> *</span> : null}
+        </p>
         <div className="flex min-h-16 items-center gap-2.5 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4 py-2">
+          <span className="mt-0.5 text-[var(--text-secondary)]">
+            {value.kind === 'company' ? <Building2 size={18} /> : <UserRound size={18} />}
+          </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[17px] font-semibold">{value.label}</span>
+            <span className="block truncate text-[17px] font-semibold">{value.label}</span>
             <span className="block text-[15px] text-[var(--text-secondary)]">
-              {value.kind === 'company' ? 'firma' : 'osoba'}
+              {value.kind === 'company' ? 'Firma' : 'Osoba'}
               {value.phone ? ` · ${value.phone}` : ''}
             </span>
           </span>
           <button
             type="button"
-            className="text-[15px] font-semibold text-[var(--accent)]"
+            className="flex size-10 items-center justify-center rounded-full text-[var(--text-secondary)]"
+            aria-label="Wyczyść klienta"
             onClick={() => onChange(null)}
           >
-            Zmień
+            <X size={18} />
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <p className="mb-2 text-[15px] font-medium">
+          Klient
+          {required ? <span className="text-[var(--danger)]"> *</span> : null}
+          {!required ? <span className="font-normal text-[var(--text-secondary)]"> (opcjonalnie)</span> : null}
+        </p>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Szukaj po nazwie, telefonie lub NIP…"
+          autoComplete="off"
+          className="h-14 w-full rounded-[14px] border border-transparent bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none focus:border-[var(--accent)]"
+        />
+      </div>
+
+      {trimmedQuery.length > 0 ? (
+        <div className="max-h-52 overflow-y-auto rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)]">
+          {trimmedQuery.length < MIN_SEARCH ? (
+            <p className="px-4 py-3 text-[15px] text-[var(--text-secondary)]">
+              Wpisz co najmniej {MIN_SEARCH} znaki…
+            </p>
+          ) : null}
+          {trimmedQuery.length >= MIN_SEARCH && searching ? (
+            <p className="px-4 py-3 text-[15px] text-[var(--text-secondary)]">Szukam…</p>
+          ) : null}
+          {trimmedQuery.length >= MIN_SEARCH && !searching && items.length === 0 ? (
+            <p className="px-4 py-3 text-[15px] text-[var(--text-secondary)]">Brak klientów.</p>
+          ) : null}
+          {items.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className="flex min-h-[60px] w-full items-start gap-2.5 border-b border-[var(--separator)] px-4 py-2 text-left last:border-0"
+              onClick={() => {
+                onChange(item)
+                setQuery('')
+                setItems([])
+                resetCreate()
+              }}
+            >
+              <span className="mt-0.5 text-[var(--text-secondary)]">
+                {item.kind === 'company' ? <Building2 size={18} /> : <UserRound size={18} />}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[16px] font-semibold">{item.label}</span>
+                <span className="block truncate text-[15px] text-[var(--text-secondary)]">
+                  {item.description || item.phone || (item.kind === 'company' ? 'firma' : 'osoba')}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {!createOpen ? (
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+            onClick={() => {
+              setCreateKind('person')
+              setNip('')
+              setError(null)
+              setCreateOpen(true)
+            }}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            Nowa osoba
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+            onClick={() => {
+              setCreateKind('company')
+              setError(null)
+              setCreateOpen(true)
+            }}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            Nowa firma
           </button>
         </div>
       ) : (
-        <>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Szukaj po telefonie lub nazwisku"
-            className="h-14 w-full rounded-[14px] border border-transparent bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none focus:border-[var(--accent)]"
+        <div className="space-y-3 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-4">
+          <p className="text-[17px] font-semibold">
+            {createKind === 'company' ? 'Nowa firma' : 'Nowa osoba'}
+          </p>
+          <TextField
+            label="Telefon"
+            inputMode="tel"
+            autoComplete="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="504 013 184"
+            required
           />
-          {shownItems.length > 0 ? (
-            <ul className="mt-2 overflow-hidden rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)]">
-              {shownItems.map((item) => (
-                <li key={item.id}>
-                  <button
-                    type="button"
-                    className="flex min-h-[60px] w-full flex-col justify-center border-b border-[var(--separator)] px-4 text-left last:border-0"
-                    onClick={() => {
-                      onChange(item)
-                      setQuery('')
-                      setItems([])
-                    }}
-                  >
-                    <span className="text-[16px] font-semibold">{item.label}</span>
-                    <span className="text-[15px] text-[var(--text-secondary)]">{item.phone || item.kind}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+          {createKind === 'company' ? (
+            <TextField
+              label="NIP"
+              inputMode="numeric"
+              autoComplete="off"
+              value={nip}
+              onChange={(e) => setNip(e.target.value)}
+              placeholder="10 cyfr"
+              error={
+                nip && nip.replace(/\D/g, '').length !== 10 ? 'NIP jest wymagany (10 cyfr).' : null
+              }
+            />
           ) : null}
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="inline-flex h-11 items-center rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
-              onClick={() => {
-                setCreateKind('person')
-                setCreateOpen(true)
-              }}
-            >
-              + Nowa osoba
-            </button>
-            <button
-              type="button"
-              className="inline-flex h-11 items-center rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
-              onClick={() => {
-                setCreateKind('company')
-                setCreateOpen(true)
-              }}
-            >
-              + Nowa firma
-            </button>
+          <TextField
+            label={createKind === 'company' ? 'Nazwa firmy' : 'Imię i nazwisko'}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Opcjonalnie"
+            autoComplete="name"
+          />
+          {error ? <p className="text-[15px] text-[var(--danger)]">{error}</p> : null}
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="secondary" size="md" disabled={busy} onClick={resetCreate}>
+              Anuluj
+            </Button>
+            <Button size="md" loading={busy} disabled={!canSubmit} onClick={() => void submitCreate()}>
+              Zapisz klienta
+            </Button>
           </div>
-        </>
+        </div>
       )}
-      <CustomerCreateSheet
-        open={createOpen}
-        initialKind={createKind}
-        onClose={() => setCreateOpen(false)}
-        onCreated={(customer) => {
-          onChange(customer)
-          setCreateOpen(false)
-        }}
-      />
     </div>
   )
 }

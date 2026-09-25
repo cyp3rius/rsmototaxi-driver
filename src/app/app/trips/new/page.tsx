@@ -37,6 +37,8 @@ import {
   nowLocalInput,
   shiftWindowBounds,
   todayStartLocalInput,
+  tomorrowAt8LocalInput,
+  dayAfterTomorrowAt8LocalInput,
   validateTripTimes,
   yesterdayStartLocalInput,
   type TripCreateMode,
@@ -368,7 +370,7 @@ export default function NewTripPage() {
 
             {mode !== 'live' ? (
               <>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   <TimeShortcut
                     label="Teraz"
                     onClick={() => {
@@ -376,22 +378,50 @@ export default function NewTripPage() {
                       if (mode === 'past') setEndedAt(nowLocalInput())
                     }}
                   />
-                  <TimeShortcut label="Dziś 8:00" onClick={() => setStartedAt(todayStartLocalInput())} />
-                  <TimeShortcut
-                    label="Wczoraj 8:00"
-                    onClick={() => {
-                      setStartedAt(yesterdayStartLocalInput())
-                      if (mode === 'past') {
-                        const d = new Date()
-                        d.setDate(d.getDate() - 1)
-                        d.setHours(9, 0, 0, 0)
-                        d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-                        setEndedAt(d.toISOString().slice(0, 16))
-                      }
-                    }}
-                  />
+                  {mode === 'schedule' ? (
+                    <>
+                      <TimeShortcut
+                        label="Jutro 8:00"
+                        onClick={() => {
+                          setStartedAt(tomorrowAt8LocalInput())
+                          setEndedAt('')
+                        }}
+                      />
+                      <TimeShortcut
+                        label="Pojutrze 8:00"
+                        onClick={() => {
+                          setStartedAt(dayAfterTomorrowAt8LocalInput())
+                          setEndedAt('')
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <TimeShortcut
+                        label="Dzisiaj 8:00"
+                        onClick={() => {
+                          setStartedAt(todayStartLocalInput())
+                          const end = new Date()
+                          end.setHours(9, 0, 0, 0)
+                          end.setMinutes(end.getMinutes() - end.getTimezoneOffset())
+                          setEndedAt(end.toISOString().slice(0, 16))
+                        }}
+                      />
+                      <TimeShortcut
+                        label="Wczoraj 8:00"
+                        onClick={() => {
+                          setStartedAt(yesterdayStartLocalInput())
+                          const d = new Date()
+                          d.setDate(d.getDate() - 1)
+                          d.setHours(9, 0, 0, 0)
+                          d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+                          setEndedAt(d.toISOString().slice(0, 16))
+                        }}
+                      />
+                    </>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-2.5">
                   <TextField
                     label="Start"
                     type="datetime-local"
@@ -513,7 +543,7 @@ function TimeShortcut({ label, onClick }: { label: string; onClick: () => void }
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] px-3 text-[15px] font-medium"
+      className="inline-flex h-9 items-center rounded-[10px] bg-[var(--bg-surface-raised)] px-3.5 text-[15px] font-medium"
     >
       {label}
     </button>

@@ -25,6 +25,20 @@ export function yesterdayStartLocalInput() {
   return toLocalInputValue(d)
 }
 
+export function tomorrowAt8LocalInput() {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  d.setHours(8, 0, 0, 0)
+  return toLocalInputValue(d)
+}
+
+export function dayAfterTomorrowAt8LocalInput() {
+  const d = new Date()
+  d.setDate(d.getDate() + 2)
+  d.setHours(8, 0, 0, 0)
+  return toLocalInputValue(d)
+}
+
 export function shiftWindowBounds(me: DriverMe | null): { min?: string; max?: string } {
   const a = me?.todayAssignment
   if (!a) return {}

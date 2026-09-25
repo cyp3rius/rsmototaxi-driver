@@ -291,8 +291,13 @@ class OmClient {
   }
 
   async reverseGeocode(lat: number, lon: number) {
-    return this.requestJson<{ label?: string; address?: string }>(
-      `taxi_fleet/route/reverse-geocode?lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`,
+    const q = new URLSearchParams({
+      lat: String(lat),
+      lng: String(lon),
+      lang: 'pl',
+    })
+    return this.requestJson<{ address?: string; label?: string; lat?: number; lng?: number }>(
+      `taxi_fleet/route/reverse-geocode?${q.toString()}`,
     )
   }
 
