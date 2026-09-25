@@ -89,15 +89,21 @@ export function InstallPrompt() {
             <Step n={2}>
               Wybierz <b className="font-semibold">„Do ekranu początkowego”</b>
             </Step>
-            <Step n={3}>Otwórz RS Driver z ekranu telefonu</Step>
+            <Step n={3}>Otwórz RS Moto Taxi - Kierowca z ekranu telefonu</Step>
           </div>
         ) : (
           <div className="mt-7 flex items-center gap-3.5 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-[18px]">
-            <span className="flex size-14 flex-none items-center justify-center rounded-[14px] bg-[#020407]">
-              <Image src="/brand/logo-light.svg" alt="" width={28} height={38} className="h-[38px] w-auto" />
+            <span className="flex size-14 flex-none items-center justify-center overflow-hidden rounded-[14px] bg-[#020407]">
+              <Image
+                src="/pwa/apple-touch-icon.png"
+                alt=""
+                width={56}
+                height={56}
+                className="size-14"
+              />
             </span>
             <span>
-              <span className="block text-[17px] font-semibold">RS Driver</span>
+              <span className="block text-[17px] font-semibold">RS Moto Taxi - Kierowca</span>
               <span className="block text-[15px] text-[var(--text-secondary)]">{host}</span>
             </span>
           </div>

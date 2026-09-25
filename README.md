@@ -1,4 +1,4 @@
-# RS Moto Taxi — Driver PWA (v2)
+# RS Moto Taxi - Kierowca (PWA v2)
 
 Zewnętrzna aplikacja kierowcy (Vercel). Przeglądarka gada **tylko z Next.js**; Next (BFF) woła Open Mercato.
 
