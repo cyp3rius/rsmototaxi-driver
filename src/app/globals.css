@@ -361,30 +361,6 @@ select {
   }
 }
 
-::view-transition-old(driver-hello),
-::view-transition-new(driver-hello) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Morph already landed on header coords — soft crossfade, no geometry jump */
-  height: 100%;
-  object-fit: none;
-  mix-blend-mode: normal;
-}
-::view-transition-group(driver-hello) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-::view-transition-old(driver-plate),
-::view-transition-new(driver-plate) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  height: 100%;
-  object-fit: none;
-}
-::view-transition-group(driver-plate) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.28s;

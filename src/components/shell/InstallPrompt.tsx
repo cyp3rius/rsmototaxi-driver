@@ -91,7 +91,9 @@ export function InstallPrompt() {
             <Step n={2}>
               Wybierz <b className="font-semibold">„Do ekranu początkowego”</b>
             </Step>
-            <Step n={3}>Otwórz RS Moto Taxi - Kierowca z ekranu telefonu</Step>
+            <Step n={3}>
+              Otwórz <b className="font-semibold">RS Moto Taxi - Kierowca</b> z ekranu telefonu
+            </Step>
           </div>
         ) : (
           <div className="mt-7 flex items-center gap-3.5 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-[18px]">

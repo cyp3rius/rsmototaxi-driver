@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { useAuth } from '@/lib/om/AuthProvider'
@@ -13,7 +13,7 @@ import {
   tripDropoffLabel,
   tripPickupLabel,
 } from '@/lib/tripMeta'
-import { isReturnVisit, markWowSeen, navigateWithViewTransition } from '@/lib/viewTransition'
+import { isReturnVisit, markWowSeen } from '@/lib/viewTransition'
 
 const clamp = (x: number) => Math.max(0, Math.min(1, x))
 const seg = (x: number, a: number, b: number) => clamp((x - a) / (b - a))
@@ -103,12 +103,17 @@ export function WowLoadingScreen() {
   const [skip, setSkip] = useState(false)
   const [dataReady, setDataReady] = useState(false)
   const [safeTop] = useState(() => (typeof window !== 'undefined' ? readSafeTop() : 0))
+  const [slotTargets, setSlotTargets] = useState<{ headerTop: number; plateTop: number; plateLeft: number } | null>(
+    null,
+  )
   const finished = useRef(false)
   const rootRef = useRef<HTMLElement>(null)
+  const helloSlotRef = useRef<HTMLDivElement>(null)
+  const plateSlotRef = useRef<HTMLSpanElement>(null)
 
   const name = driverFirstName(me?.member)
   const plate = me?.todayAssignment?.resourcePlate || me?.profile?.defaultResourcePlate
-  /** Plate flies into dashboard shift card only when that card hosts `driver-plate`. */
+  /** Plate flies into dashboard shift card only when that card hosts the plate slot. */
   const plateLandsOnCard =
     Boolean(plate) &&
     (me?.dashboardState === 'B' ||
@@ -117,24 +122,53 @@ export function WowLoadingScreen() {
     ? contextLine(me, missingCount, nextTripLabel)
     : { primary: 'Przygotowujemy Twój dzień.', secondary: null }
 
-  // Real dashboard: safeTop+4 pad, header pt-2 (8) → greeting top.
-  const headerTop = safeTop + 12
-  /**
-   * Plate slot in C-timer / B-planned card (matches DashboardScreen + design handoff):
-   * header block (~68) + content pt 2 + card pad 20 + label + timer + mt-18.
-   */
-  const plateTargetTop = safeTop + 194
-  const plateTargetLeft = 40
+  // Fallback until slots measure; prefer live layout from phantom (= /app).
+  const headerTop = slotTargets?.headerTop ?? safeTop + 12
+  const plateTargetTop = slotTargets?.plateTop ?? safeTop + 194
+  const plateTargetLeft = slotTargets?.plateLeft ?? 40
   const morphDone = concept === 'A' ? 5350 : 4550
   const helloAt = concept === 'A' ? 2700 : 100
+
+  useLayoutEffect(() => {
+    const root = rootRef.current
+    const hello = helloSlotRef.current
+    if (!root || !hello) return
+    const rootRect = root.getBoundingClientRect()
+    const helloRect = hello.getBoundingClientRect()
+    const phantom = hello.closest('[data-wow-phantom]') as HTMLElement | null
+    const ty = phantom
+      ? Number.parseFloat(phantom.style.transform.match(/translateY\(([-\d.]+)px\)/)?.[1] || '0')
+      : 0
+    const next = {
+      headerTop: helloRect.top - rootRect.top - ty,
+      plateTop: safeTop + 194,
+      plateLeft: 40,
+    }
+    const plateEl = plateSlotRef.current
+    if (plateEl) {
+      const plateRect = plateEl.getBoundingClientRect()
+      next.plateTop = plateRect.top - rootRect.top - ty
+      next.plateLeft = plateRect.left - rootRect.left
+    }
+    setSlotTargets((prev) => {
+      if (
+        prev &&
+        Math.abs(prev.headerTop - next.headerTop) < 0.5 &&
+        Math.abs(prev.plateTop - next.plateTop) < 0.5 &&
+        Math.abs(prev.plateLeft - next.plateLeft) < 0.5
+      ) {
+        return prev
+      }
+      return next
+    })
+  }, [me, plate, plateLandsOnCard, safeTop])
 
   const finish = useCallback(() => {
     if (finished.current) return
     finished.current = true
     markWowSeen(!returning)
-    navigateWithViewTransition(() => {
-      router.replace('/app')
-    })
+    // Morph already painted dashboard chrome — plain replace avoids VT geometry jump.
+    router.replace('/app')
   }, [returning, router])
 
   // Shared rAF clock for A and B
@@ -276,16 +310,17 @@ export function WowLoadingScreen() {
   const nameTy = 8 * (1 - w2) + lerp(0, -46, m)
   const ctxOp = w3 * (1 - clamp(mRaw * 3))
   const ctxTy = 8 * (1 - w3) - 20 * m
-  // Hand VT to phantom once morph is nearly landed — hide flying layer so it doesn't ghost
-  const vtOnHeader = mRaw >= 0.82
-  const vtOnPlate = !isRoute && plateLandsOnCard && mRaw >= 0.86
 
-  // Phantom dashboard under morph (brief dashOp / hdrOp)
+  // Phantom dashboard under morph
   const dashInStart = isRoute ? 4700 : 3900
   const dashInEnd = isRoute ? 5350 : 4550
   const dashOp = eo(seg(tt, dashInStart, dashInEnd))
   const dashY = 36 * (1 - dashOp)
   const hdrOp = seg(mRaw, 0.55, 1)
+  // Reveal phantom only once it has settled (dashY ≈ 0); keep flying layers until then.
+  const phantomSettled = dashOp >= 0.96
+  const showPhantomHdr = phantomSettled && mRaw >= 0.88
+  const showPhantomPlate = phantomSettled && !isRoute && plateLandsOnCard && mRaw >= 0.9
 
   // Path A map
   const mapIn = eo(seg(tt, 0, 400))
@@ -316,9 +351,7 @@ export function WowLoadingScreen() {
     : plateFromY - 18 * plateDissolve + 8 * (1 - plateOp)
   const plateLeft = plateLandsOnCard ? lerp(G_LEFT, plateTargetLeft, m) : G_LEFT
   const plateScale = plateLandsOnCard ? 1 : lerp(1, 0.86, plateDissolve)
-  const plateFade = plateLandsOnCard
-    ? plateOp * (1 - seg(mRaw, 0.82, 0.95))
-    : plateOp * (1 - plateDissolve)
+  const plateFade = plateLandsOnCard ? plateOp : plateOp * (1 - plateDissolve)
   // Prefer real load progress once available; else timeline bar
   const barWidth = dataReady ? Math.max(bar, progress / 100) : bar
 
@@ -373,28 +406,27 @@ export function WowLoadingScreen() {
     >
       {/* Phantom dashboard fades in under morph — lands greeting on real header coords */}
       <div
+        data-wow-phantom
         className="pointer-events-none absolute inset-0 flex flex-col"
         style={{
-          paddingTop: safeTop + 4,
+          paddingTop: 'calc(var(--safe-top) + 4px)',
           opacity: dashOp,
-          transform: `translateY(${dashY}px)`,
+          transform: dashY > 0.5 ? `translateY(${dashY}px)` : undefined,
         }}
         aria-hidden
       >
         <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-2.5">
           <div className="min-w-0">
             <div
+              ref={helloSlotRef}
               className="display-dash-hdr"
-              style={{
-                opacity: hdrOp,
-                viewTransitionName: vtOnHeader ? 'driver-hello' : undefined,
-              }}
+              style={{ opacity: showPhantomHdr ? 1 : 0 }}
             >
               Witaj, <span className="text-[var(--accent)]">{name}</span>
             </div>
             <div
               className="mt-0.5 text-[15px] leading-5 capitalize text-[var(--text-secondary)]"
-              style={{ opacity: hdrOp }}
+              style={{ opacity: showPhantomHdr ? 1 : 0 }}
             >
               {(me?.today ? new Date(`${me.today}T12:00:00`) : new Date()).toLocaleDateString('pl-PL', {
                 weekday: 'long',
@@ -405,7 +437,7 @@ export function WowLoadingScreen() {
           </div>
         </div>
         {!isRoute && plate && plateLandsOnCard ? (
-          <div className="px-5 pt-0.5" style={{ opacity: Math.max(hdrOp, vtOnPlate ? 1 : 0) }}>
+          <div className="px-5 pt-0.5" style={{ opacity: showPhantomPlate || hdrOp > 0.2 ? dashOp : 0 }}>
             <div className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
               <div className="flex justify-between text-[15px] leading-5 text-[var(--text-secondary)] opacity-40">
                 <span>Czas zmiany</span>
@@ -413,12 +445,7 @@ export function WowLoadingScreen() {
               </div>
               <div className="numeric-xl mt-1.5 opacity-0">00:00:00</div>
               <div className="mt-[18px]">
-                <span
-                  style={{
-                    viewTransitionName: vtOnPlate ? 'driver-plate' : undefined,
-                    opacity: vtOnPlate ? 1 : 0,
-                  }}
-                >
+                <span ref={plateSlotRef} style={{ opacity: showPhantomPlate ? 1 : 0 }}>
                   <PlateBadge plate={plate} />
                 </span>
               </div>
@@ -546,11 +573,11 @@ export function WowLoadingScreen() {
             marginLeft: greetMarginL,
             transform: `scale(${greetScale})`,
             transformOrigin: '0 0',
-            opacity: vtOnHeader ? 0 : greetOp,
+            opacity: showPhantomHdr ? 0 : greetOp > 0.02 ? 1 : 0,
             width: `calc(100% - ${G_LEFT * 2}px)`,
           }}
         >
-          <div style={{ viewTransitionName: vtOnHeader ? undefined : 'driver-hello' }}>
+          <div>
             <div
               className="display-hello text-[var(--text-primary)]"
               style={{
@@ -602,9 +629,8 @@ export function WowLoadingScreen() {
           style={{
             left: plateLeft,
             top: plateTop,
-            opacity: vtOnPlate ? 0 : plateFade,
+            opacity: showPhantomPlate ? 0 : plateFade,
             transform: `scale(${plateScale})`,
-            viewTransitionName: plateLandsOnCard && !vtOnPlate ? 'driver-plate' : undefined,
           }}
         >
           <PlateBadge plate={plate} />

@@ -196,7 +196,7 @@ export function DashboardScreen() {
             className="flex max-w-full items-center gap-1.5 text-left"
             aria-label="Otwórz profil kierowcy"
           >
-            <h1 className="display-dash-hdr min-w-0 truncate" style={{ viewTransitionName: 'driver-hello' }}>
+            <h1 className="display-dash-hdr min-w-0 truncate">
               Witaj, <span className="text-[var(--accent)]">{firstName}</span>
             </h1>
             <ChevronDown
@@ -270,9 +270,7 @@ export function DashboardScreen() {
             <p className="numeric-xl mt-1.5 tracking-[-0.01em]">{shiftTimer}</p>
             <div className="mt-[18px] flex items-center justify-between gap-3">
               {plate ? (
-                <span style={{ viewTransitionName: 'driver-plate' }}>
-                  <PlateBadge plate={plate} />
-                </span>
+                <PlateBadge plate={plate} />
               ) : (
                 <span />
               )}
@@ -300,9 +298,7 @@ export function DashboardScreen() {
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">Możesz zacząć wcześniej w oknie startu.</p>
             <div className="mt-4 flex items-center justify-between gap-3">
               {plate ? (
-                <span style={{ viewTransitionName: 'driver-plate' }}>
-                  <PlateBadge plate={plate} />
-                </span>
+                <PlateBadge plate={plate} />
               ) : (
                 <span />
               )}
