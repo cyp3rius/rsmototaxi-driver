@@ -80,18 +80,22 @@ a {
   color: inherit;
 }
 
-/* Bottom nav active must beat Tailwind preflight `a { color: inherit }` */
-.rs-bottom-nav a.rs-nav-idle {
+/* Bottom nav active must beat Tailwind preflight `a { color: inherit }` / button defaults */
+.rs-bottom-nav a.rs-nav-idle,
+.rs-bottom-nav button.rs-nav-idle {
   color: var(--text-secondary) !important;
 }
-.rs-bottom-nav a.rs-nav-active {
+.rs-bottom-nav a.rs-nav-active,
+.rs-bottom-nav button.rs-nav-active {
   color: var(--accent) !important;
 }
-.rs-bottom-nav a.rs-nav-active svg {
+.rs-bottom-nav a.rs-nav-active svg,
+.rs-bottom-nav button.rs-nav-active svg {
   color: var(--accent) !important;
   stroke: var(--accent) !important;
 }
-.rs-bottom-nav a.rs-nav-idle svg {
+.rs-bottom-nav a.rs-nav-idle svg,
+.rs-bottom-nav button.rs-nav-idle svg {
   color: var(--text-secondary) !important;
   stroke: var(--text-secondary) !important;
 }

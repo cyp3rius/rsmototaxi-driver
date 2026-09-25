@@ -11,10 +11,12 @@ import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { formatElapsedHms, formatTime } from '@/lib/format'
+import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { tripPickupLabel } from '@/lib/tripMeta'
 
 export default function LiveTripPage() {
   const router = useRouter()
+  const stackBack = useStackBack(() => router.push('/app'))
   const { me, refreshMe } = useAuth()
   const toast = useToast()
   const [trip, setTrip] = useState<Record<string, unknown> | null>(null)
@@ -114,7 +116,7 @@ export default function LiveTripPage() {
 
   return (
     <>
-      <PageHeader title="Kurs live" onBack={() => router.push('/app')} />
+      <PageHeader title="Kurs live" onBack={stackBack} />
       <div className="space-y-3 px-5 pb-36">
         <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
           <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />

@@ -145,6 +145,7 @@ export function BottomNav({
                   'relative flex h-full w-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5',
                   active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
                 )}
+                style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
               >
                 <span className="relative">
                   <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />

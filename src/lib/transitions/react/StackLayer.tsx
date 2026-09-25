@@ -122,8 +122,9 @@ export function StackLayer({
 
   return (
     <StackBackContext.Provider value={requestClose}>
-      <div className="relative min-h-dvh overflow-hidden bg-[var(--bg-base)]">
-        <div ref={listRef} className="absolute inset-0 flex min-h-dvh flex-col">
+      {/* Fixed fill: abspos under min-height-only parents left the docked nav floating. */}
+      <div className="fixed inset-0 z-0 mx-auto w-full max-w-lg overflow-hidden bg-[var(--bg-base)]">
+        <div ref={listRef} className="absolute inset-0 flex h-full flex-col">
           {list}
         </div>
         <div

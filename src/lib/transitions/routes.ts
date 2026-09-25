@@ -12,7 +12,7 @@ export type TabIndex = 0 | 1 | 2 | 3 | 4
 
 const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
-/** Full-screen flows without bottom nav / tab panes (forms, live). */
+/** Create / live flows — stack 1c over the parent tab (same as detail). */
 export function isFullscreenPath(pathname: string): boolean {
   if (pathname === '/app/trips/new' || pathname.startsWith('/app/trips/new/')) return true
   if (pathname === '/app/trips/live' || pathname.startsWith('/app/trips/live/')) return true
@@ -25,13 +25,17 @@ export function isDetailPath(pathname: string): boolean {
   if (new RegExp(`^/app/trips/${UUID}$`, 'i').test(pathname)) return true
   if (new RegExp(`^/app/payouts/monthly/${UUID}$`, 'i').test(pathname)) return true
   if (new RegExp(`^/app/payouts/weekly/${UUID}$`, 'i').test(pathname)) return true
-  // Non-UUID ids still used in some envs
   if (/^\/app\/trips\/[^/]+$/.test(pathname) && pathname !== '/app/trips/new' && pathname !== '/app/trips/live') {
     return true
   }
   if (/^\/app\/payouts\/monthly\/[^/]+$/.test(pathname)) return true
   if (/^\/app\/payouts\/weekly\/[^/]+$/.test(pathname)) return true
   return false
+}
+
+/** Any route that slides in over the tab list (detail or create/live form). */
+export function isStackPath(pathname: string): boolean {
+  return isDetailPath(pathname) || isFullscreenPath(pathname)
 }
 
 export function tabIndexFromPath(pathname: string): TabIndex {

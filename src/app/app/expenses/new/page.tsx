@@ -11,10 +11,12 @@ import { SelectTile } from '@/components/ui/SelectTile'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { formatTime } from '@/lib/format'
+import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { COST_TYPE_OPTIONS } from '@/lib/tripMeta'
 
 export default function NewExpensePage() {
   const router = useRouter()
+  const stackBack = useStackBack()
   const [costType, setCostType] = useState<(typeof COST_TYPE_OPTIONS)[number]['id']>('fuel')
   const [amount, setAmount] = useState('')
   const [vat, setVat] = useState<number | null>(null)
@@ -75,7 +77,7 @@ export default function NewExpensePage() {
 
   return (
     <>
-      <PageHeader title="Zarejestruj koszt" onClose={() => router.back()} />
+      <PageHeader title="Zarejestruj koszt" onClose={stackBack} />
       <p className="px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
         Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie
         paragonu.

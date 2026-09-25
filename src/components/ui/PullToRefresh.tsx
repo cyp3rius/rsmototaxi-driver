@@ -18,6 +18,8 @@ const HOLD = 64
 const RESISTANCE = 0.5
 const MAX_PULL = 120
 const PILL_MS = 1200
+/** Extra space between the PTR spinner and the sliding content (design: not flush). */
+const CONTENT_GAP = 14
 const LAST_OK_KEY = 'rs-driver-ptr-last-ok'
 
 type Phase = 'idle' | 'pulling' | 'refreshing'
@@ -294,8 +296,8 @@ export function PullToRefresh({
 
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden"
-        style={{ height: offset }}
+        className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden pb-1"
+        style={{ height: offset > 0 ? offset : 0 }}
       >
         {offset > 10 ? (
           <>
@@ -315,7 +317,8 @@ export function PullToRefresh({
 
       <div
         style={{
-          transform: offset > 0 ? `translate3d(0, ${offset}px, 0)` : undefined,
+          transform:
+            offset > 0 ? `translate3d(0, ${offset + CONTENT_GAP}px, 0)` : undefined,
           transition: phase === 'pulling' ? 'none' : 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)',
           willChange: offset > 0 ? 'transform' : undefined,
         }}

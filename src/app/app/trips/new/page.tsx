@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import {
   Building2,
   Calendar,
@@ -67,6 +68,7 @@ const payIcons = {
 
 export default function NewTripPage() {
   const router = useRouter()
+  const stackBack = useStackBack()
   const toast = useToast()
   const { openStartShift } = useStartShift()
   const { me, refreshMe } = useAuth()
@@ -322,7 +324,7 @@ export default function NewTripPage() {
   if (mode === 'choose') {
     return (
       <>
-        <PageHeader title="Nowy kurs" onClose={() => router.back()} />
+        <PageHeader title="Nowy kurs" onClose={stackBack} />
         <div className="space-y-3 px-5 pb-10">
           {onShift ? (
             <>
