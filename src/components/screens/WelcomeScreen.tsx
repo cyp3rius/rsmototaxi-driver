@@ -53,20 +53,25 @@ function WelcomeInner() {
     }
   }, [])
 
+  const sheetOpen = loginOpen || helpOpen
+
   useEffect(() => {
-    if (reduced) return
+    if (reduced || sheetOpen) {
+      const el = parallaxRef.current
+      if (el) el.style.transform = ''
+      return
+    }
     const el = parallaxRef.current
     if (!el || !window.DeviceOrientationEvent) return
     const onOrient = (e: DeviceOrientationEvent) => {
       const x = Math.max(-8, Math.min(8, (e.gamma ?? 0) * 0.25))
       const y = Math.max(-8, Math.min(8, (e.beta ?? 0) * 0.12 - 4))
-      el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(1.04)`
+      // Translate only — never touch scale/filter (owned by sheet open transition)
+      el.style.transform = `translate3d(${x}px, ${y}px, 0)`
     }
     window.addEventListener('deviceorientation', onOrient)
     return () => window.removeEventListener('deviceorientation', onOrient)
-  }, [reduced])
-
-  const sheetOpen = loginOpen || helpOpen
+  }, [reduced, sheetOpen])
   const canSubmit = useMemo(
     () => EMAIL_RE.test(email.trim()) && password.length > 0,
     [email, password],
@@ -112,25 +117,40 @@ function WelcomeInner() {
   return (
     <main className="relative min-h-dvh overflow-hidden bg-[#020407] text-white">
       <div className="absolute inset-0">
+        {/* Sheet open: filter+scale live on outer layer so parallax never fights the transition */}
         <div
-          ref={parallaxRef}
-          className="absolute inset-[-12px] will-change-transform"
+          className="absolute inset-0 will-change-[filter,transform]"
           style={{
-            filter: sheetOpen ? 'blur(10px) brightness(0.55)' : undefined,
-            transform: sheetOpen ? 'scale(1.04)' : undefined,
-            transition: 'filter 200ms ease, transform 200ms ease',
+            filter: sheetOpen ? 'blur(10px) brightness(0.55)' : 'blur(0px) brightness(1)',
+            transform: sheetOpen ? 'scale(1.04)' : 'scale(1)',
+            transition: reduced
+              ? 'none'
+              : 'filter 360ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1)',
           }}
         >
-          <Image
-            src="/brand/fleet-hero-green.webp"
-            alt=""
-            fill
-            priority
-            className={reduced || sheetOpen ? 'object-cover' : 'kenburns object-cover'}
-            style={{ objectPosition: '50% 46%' }}
-          />
+          <div ref={parallaxRef} className="absolute inset-[-12px] will-change-transform">
+            {/* Ken Burns + headlights share one layer so glow stays glued to LEDs */}
+            <div className={reduced || sheetOpen ? 'absolute inset-0' : 'kenburns absolute inset-0'}>
+              <Image
+                src="/brand/fleet-hero-green.webp"
+                alt=""
+                fill
+                priority
+                className="object-cover"
+                style={{ objectPosition: '50% 40%' }}
+              />
+              {!reduced && !sheetOpen ? (
+                <div className="headlights" aria-hidden>
+                  <span className="hl-glow hl-secondary" />
+                  <span className="hl-glow hl-primary" />
+                  <span className="hl-flare" />
+                  <span className="hl-core hl-core-secondary" />
+                  <span className="hl-core hl-core-primary" />
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
-        {!reduced && !sheetOpen ? <div className="headlights" aria-hidden /> : null}
         <div
           className="absolute inset-0"
           style={{
@@ -138,15 +158,26 @@ function WelcomeInner() {
               'linear-gradient(180deg, rgba(2,4,7,.5) 0%, rgba(2,4,7,0) 20%, rgba(2,4,7,0) 50%, rgba(2,4,7,.88) 67%, #020407 100%)',
           }}
         />
-        {sheetOpen ? <div className="absolute inset-0 bg-[#020407]/35" /> : null}
+        <div
+          className="absolute inset-0 bg-[#020407]/35"
+          style={{
+            opacity: sheetOpen ? 1 : 0,
+            transition: reduced ? 'none' : 'opacity 360ms cubic-bezier(0.22, 1, 0.36, 1)',
+            pointerEvents: 'none',
+          }}
+        />
       </div>
 
       <div
-        className="relative z-10 flex min-h-dvh flex-col px-6 transition-opacity duration-200"
+        className="relative z-10 flex min-h-dvh flex-col px-6"
         style={{
           paddingTop: 'calc(var(--safe-top) + 24px)',
           paddingBottom: 'calc(var(--safe-bottom) + 12px)',
           opacity: sheetOpen ? 0 : 1,
+          transform: sheetOpen ? 'translateY(-8px)' : 'translateY(0)',
+          transition: reduced
+            ? 'none'
+            : 'opacity 280ms cubic-bezier(0.22, 1, 0.36, 1), transform 360ms cubic-bezier(0.22, 1, 0.36, 1)',
           pointerEvents: sheetOpen ? 'none' : 'auto',
         }}
       >

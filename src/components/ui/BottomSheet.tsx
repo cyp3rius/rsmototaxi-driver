@@ -1,7 +1,17 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent as ReactTouchEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from 'react'
 import { cn } from '@/lib/cn'
+
+const ENTER_MS = 360
+const EXIT_MS = 320
+const EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
 
 export function BottomSheet({
   open,
@@ -11,7 +21,6 @@ export function BottomSheet({
   children,
   className,
   titleClassName,
-  /** Login/SE: fill most of the viewport */
   expanded,
 }: {
   open: boolean
@@ -23,21 +32,50 @@ export function BottomSheet({
   titleClassName?: string
   expanded?: boolean
 }) {
-  const [visible, setVisible] = useState(open)
+  const [mounted, setMounted] = useState(open)
+  const [entered, setEntered] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
+  const dragActive = useRef(false)
+  const pointerId = useRef<number | null>(null)
   const [dragY, setDragY] = useState(0)
+  const dragYRef = useRef(0)
+  const [dragging, setDragging] = useState(false)
   const [keyboardPad, setKeyboardPad] = useState(0)
+  const closingByDrag = useRef(false)
+
+  function setDrag(y: number) {
+    dragYRef.current = y
+    setDragY(y)
+  }
 
   useEffect(() => {
     if (open) {
-      const id = requestAnimationFrame(() => setVisible(true))
-      return () => cancelAnimationFrame(id)
+      closingByDrag.current = false
+      setMounted(true)
+      setDrag(0)
+      setDragging(false)
+      setEntered(false)
+      let raf2 = 0
+      const raf1 = requestAnimationFrame(() => {
+        // Force layout so translateY(100%) paints before we animate to 0
+        void panelRef.current?.getBoundingClientRect()
+        raf2 = requestAnimationFrame(() => setEntered(true))
+      })
+      return () => {
+        cancelAnimationFrame(raf1)
+        cancelAnimationFrame(raf2)
+      }
     }
+
+    setEntered(false)
+    if (!closingByDrag.current) setDrag(0)
     const t = window.setTimeout(() => {
-      setVisible(false)
-      setDragY(0)
-    }, 220)
+      setMounted(false)
+      setDrag(0)
+      setDragging(false)
+      closingByDrag.current = false
+    }, EXIT_MS)
     return () => window.clearTimeout(t)
   }, [open])
 
@@ -58,58 +96,110 @@ export function BottomSheet({
     }
   }, [open])
 
-  function onTouchStart(e: ReactTouchEvent) {
+  function beginDrag(clientY: number) {
+    if (!entered || closingByDrag.current || !open) return false
     const el = panelRef.current
-    if (!el || el.scrollTop > 0) return
-    startY.current = e.touches[0]?.clientY ?? 0
+    if (!el || el.scrollTop > 0) return false
+    startY.current = clientY
+    dragActive.current = true
+    setDragging(true)
+    return true
   }
 
-  function onTouchMove(e: ReactTouchEvent) {
-    if (!startY.current) return
-    const dy = (e.touches[0]?.clientY ?? 0) - startY.current
-    if (dy > 0) setDragY(Math.min(dy, 220))
+  function moveDrag(clientY: number) {
+    if (!dragActive.current) return
+    const dy = clientY - startY.current
+    if (dy > 0) setDrag(Math.min(dy, window.innerHeight * 0.92))
   }
 
-  function onTouchEnd() {
-    if (dragY > 96) onClose()
-    setDragY(0)
+  function endDrag() {
+    if (!dragActive.current) return
+    dragActive.current = false
+    pointerId.current = null
+    const threshold = Math.min(110, window.innerHeight * 0.16)
+    if (dragYRef.current > threshold) {
+      closingByDrag.current = true
+      setDragging(false)
+      setDrag(window.innerHeight)
+      window.setTimeout(() => onClose(), EXIT_MS)
+    } else {
+      setDragging(false)
+      setDrag(0)
+    }
     startY.current = 0
   }
 
-  if (!visible) return null
+  function onHandlePointerDown(e: ReactPointerEvent) {
+    if (e.button !== 0 && e.pointerType === 'mouse') return
+    if (!beginDrag(e.clientY)) return
+    pointerId.current = e.pointerId
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  function onHandlePointerMove(e: ReactPointerEvent) {
+    if (!dragActive.current || pointerId.current !== e.pointerId) return
+    moveDrag(e.clientY)
+  }
+
+  function onHandlePointerUp(e: ReactPointerEvent) {
+    if (pointerId.current !== null && pointerId.current !== e.pointerId) return
+    endDrag()
+  }
+
+  if (!mounted) return null
+
+  const usingPx = closingByDrag.current || dragY > 0 || dragging
+  const panelTransform = usingPx
+    ? `translate3d(0, ${dragY}px, 0)`
+    : entered
+      ? 'translate3d(0, 0, 0)'
+      : 'translate3d(0, 100%, 0)'
+
+  const backdropOpacity = !entered
+    ? 0
+    : dragY > 0
+      ? Math.max(0, 1 - dragY / 320)
+      : 1
 
   return (
     <div className="fixed inset-0 z-50">
       <button
         type="button"
         aria-label="Zamknij"
-        className={cn('absolute inset-0 bg-black/50 transition', open ? 'opacity-100' : 'opacity-0')}
-        onClick={onClose}
+        className="absolute inset-0 bg-black/50"
+        style={{
+          opacity: backdropOpacity,
+          transition: dragging ? 'none' : `opacity ${ENTER_MS}ms ${EASE}`,
+        }}
+        onClick={() => {
+          if (closingByDrag.current) return
+          onClose()
+        }}
       />
       <div
         ref={panelRef}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
         className={cn(
-          'absolute inset-x-0 bottom-0 overflow-auto rounded-t-[32px] border-t border-transparent bg-[var(--bg-surface)] px-6 pt-2.5 shadow-[var(--sheet-shadow)] transition-transform duration-200 dark:border-[var(--separator)]',
+          'absolute inset-x-0 bottom-0 overflow-auto rounded-t-[32px] border-t border-transparent bg-[var(--bg-surface)] px-6 pt-2.5 shadow-[var(--sheet-shadow)] will-change-transform dark:border-[var(--separator)]',
           expanded
             ? 'max-h-[calc(100dvh-var(--safe-top))] min-h-[72dvh] max-[390px]:min-h-[calc(100dvh-var(--safe-top))]'
             : 'max-h-[92dvh]',
-          open && dragY === 0 ? 'translate-y-0' : open ? '' : 'translate-y-full',
           className,
         )}
         style={{
           paddingBottom: `calc(var(--safe-bottom) + 16px + ${keyboardPad}px)`,
-          transform: open
-            ? dragY
-              ? `translateY(${dragY}px)`
-              : undefined
-            : 'translateY(100%)',
-          transition: dragY ? 'none' : undefined,
+          transform: panelTransform,
+          transition: dragging ? 'none' : `transform ${entered ? ENTER_MS : EXIT_MS}ms ${EASE}`,
         }}
       >
-        <div className="mx-auto mb-1.5 flex justify-center py-2.5">
+        <div
+          className="mx-auto mb-1.5 flex touch-none select-none justify-center py-2.5"
+          data-sheet-handle
+          style={{ touchAction: 'none', cursor: 'grab' }}
+          onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
+          onPointerUp={onHandlePointerUp}
+          onPointerCancel={onHandlePointerUp}
+        >
           <span className="h-1.5 w-10 rounded-[3px] bg-[var(--separator)]" />
         </div>
         {title ? (

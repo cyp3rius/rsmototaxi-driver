@@ -131,27 +131,118 @@ select {
 
 .kenburns {
   animation: kenburns 28s ease-in-out infinite alternate;
-  transform-origin: 55% 45%;
+  /* origin on primary LED (green hero) */
+  transform-origin: 36.5% 40.3%;
 }
 @keyframes kenburns {
   from { transform: scale(1); }
   to { transform: scale(1.06); }
 }
+
+/* 5.1 headlights — locked to real LED positions on fleet-hero-green.webp
+   Primary cluster ≈ 36.5% / 40.3% (design + pixel sample). Cool LED white, not warm yellow. */
 .headlights {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 35% 55%, rgba(255, 240, 200, 0.35), transparent 40%),
-    radial-gradient(ellipse at 65% 55%, rgba(255, 240, 200, 0.28), transparent 38%);
-  mix-blend-mode: screen;
-  animation: breath 4.4s ease-in-out infinite;
-  animation-delay: 0.7s;
+  pointer-events: none;
+  z-index: 1;
+  animation: hl-ignite-breathe 4.4s ease-in-out 0.7s infinite both;
   opacity: 0;
 }
-@keyframes breath {
-  0%, 100% { opacity: 0.64; }
-  8% { opacity: 0.95; }
-  50% { opacity: 0.82; }
+.headlights .hl-glow {
+  position: absolute;
+  border-radius: 50%;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+}
+/* Main (near) headlight — tight bloom on the lit LED */
+.headlights .hl-primary {
+  left: 36.5%;
+  top: 40.3%;
+  width: min(62vw, 248px);
+  height: min(24vw, 96px);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(236, 248, 255, 0.92) 0%,
+    rgba(196, 228, 255, 0.55) 14%,
+    rgba(160, 210, 255, 0.18) 36%,
+    rgba(140, 190, 255, 0) 68%
+  );
+  filter: blur(0.5px);
+}
+/* Far / left lamp — softer, slightly higher */
+.headlights .hl-secondary {
+  left: 25%;
+  top: 37.2%;
+  width: min(36vw, 140px);
+  height: min(14vw, 56px);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(220, 240, 255, 0.55) 0%,
+    rgba(180, 220, 255, 0.22) 28%,
+    rgba(150, 200, 255, 0) 70%
+  );
+  opacity: 0.72;
+}
+/* Thin lens flare through both lamps */
+.headlights .hl-flare {
+  position: absolute;
+  left: 18%;
+  top: 40.1%;
+  width: 58%;
+  height: 2px;
+  transform: translateY(-50%) rotate(-2deg);
+  background: linear-gradient(
+    90deg,
+    rgba(200, 230, 255, 0),
+    rgba(220, 240, 255, 0.7) 28%,
+    rgba(236, 248, 255, 0.85) 42%,
+    rgba(200, 230, 255, 0.55) 58%,
+    rgba(180, 215, 255, 0)
+  );
+  mix-blend-mode: screen;
+  filter: blur(0.4px);
+  opacity: 0.85;
+}
+/* Hot core dots — sit on the LED glass, not floating */
+.headlights .hl-core {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: screen;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(200, 230, 255, 0.6) 40%, transparent 70%);
+  box-shadow: 0 0 18px 6px rgba(190, 225, 255, 0.55);
+}
+.headlights .hl-core-primary {
+  left: 36.5%;
+  top: 40.3%;
+}
+.headlights .hl-core-secondary {
+  left: 25%;
+  top: 37.2%;
+  width: 7px;
+  height: 7px;
+  opacity: 0.65;
+  box-shadow: 0 0 12px 4px rgba(190, 225, 255, 0.35);
+}
+
+/* Ignition flash (0.7–1.4s) then soft LED breathe — matches DriverScreen glowOp */
+@keyframes hl-ignite-breathe {
+  0% { opacity: 0; }
+  4% { opacity: 0.7; }   /* flash on */
+  8% { opacity: 0.05; }  /* brief dip */
+  12% { opacity: 0.9; }  /* settle */
+  50% { opacity: 0.72; }
+  100% { opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .headlights {
+    animation: none;
+    opacity: 0;
+  }
 }
 .enter-1, .enter-2, .enter-3 {
   animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -162,15 +253,6 @@ select {
 @keyframes rise {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
-}
-.route-draw {
-  stroke-dasharray: 400;
-  stroke-dashoffset: 400;
-  animation: draw 1.3s ease forwards;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent));
-}
-@keyframes draw {
-  to { stroke-dashoffset: 0; }
 }
 .tint-accent {
   background: color-mix(in srgb, var(--accent) 14%, var(--bg-surface));
@@ -207,13 +289,25 @@ select {
   line-height: 1.08;
   letter-spacing: -0.01em;
 }
+/* 5.4 wow greeting — brief display.xl ≈ 44 */
 .display-hello {
   font-family: var(--font-display);
   font-weight: 600;
   font-stretch: 125%;
-  font-size: 48px;
-  line-height: 1.05;
-  letter-spacing: -0.02em;
+  font-size: 44px;
+  line-height: 46px;
+  letter-spacing: -0.01em;
+}
+
+/* 5.5 dashboard header after morph */
+.display-dash-hdr {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 125%;
+  font-size: 22px;
+  line-height: 28px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 @media (max-width: 390px) {
@@ -221,38 +315,12 @@ select {
     font-size: 30px;
   }
   .display-hello {
-    font-size: 36px;
-    line-height: 1.05;
+    font-size: 40px;
+    line-height: 42px;
   }
   .numeric-xl {
-    font-size: 48px;
+    font-size: 52px;
   }
-}
-
-.wow-glow {
-  background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--accent) 55%, transparent) 0%,
-    color-mix(in srgb, var(--accent) 18%, transparent) 30%,
-    transparent 65%
-  );
-  animation: glowExpand 0.55s ease-out forwards;
-}
-@keyframes glowExpand {
-  from { transform: translate(-50%, -50%) scale(0.2); opacity: 0.9; }
-  to { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
-}
-.wow-dot-pulse {
-  animation: rsPulse 0.8s ease-out 1;
-}
-.hello-enter {
-  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.hello-line-2 {
-  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
-}
-.hello-line-3 {
-  animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) 250ms both;
 }
 .plate-fly {
   animation: plateFly 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;

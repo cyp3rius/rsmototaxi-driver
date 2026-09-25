@@ -12,7 +12,7 @@ import { Toast } from '@/components/ui/Toast'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, startOfDayIso } from '@/lib/format'
-import { tripRouteLabel } from '@/lib/tripMeta'
+import { tripRouteLabel, driverFirstName, isAppScopedTrip, polishCourseWord } from '@/lib/tripMeta'
 
 function formatTime(iso: string | null | undefined) {
   if (!iso) return '—'
@@ -88,8 +88,7 @@ export function DashboardScreen() {
   const nextTrip = me?.nextTrip
   const liveTrip = me?.liveTrip
   const plate = assignment?.resourcePlate || me?.profile?.defaultResourcePlate || null
-  const vehicleName =
-    assignment?.resourceName || assignment?.resourceLabel || me?.profile?.defaultResourceName || me?.profile?.defaultResourceLabel
+  // resourceName preferred; label may include plate — cleaned below as vehicleModel
 
   useEffect(() => {
     if (state !== 'C' && state !== 'D') return
@@ -102,13 +101,14 @@ export function DashboardScreen() {
     void (async () => {
       try {
         const [today, missing] = await Promise.all([
-          omClient.getTrips({ pageSize: 50, startedFrom: startOfDayIso(), startedTo: endOfDayIso() }),
-          omClient.getTrips({ pageSize: 1, missingReceipt: true }),
+          omClient.getTrips({ pageSize: 100, startedFrom: startOfDayIso(), startedTo: endOfDayIso() }),
+          omClient.getTrips({ pageSize: 100, missingReceipt: true }),
         ])
         if (cancelled) return
-        const revenue = today.items.reduce((sum, t) => sum + (Number(t.revenueAmount) || 0), 0)
-        setTodayStats({ trips: today.total, revenue })
-        setMissingCount(missing.total)
+        const scopedToday = today.items.filter(isAppScopedTrip)
+        const revenue = scopedToday.reduce((sum, t) => sum + (Number(t.revenueAmount) || 0), 0)
+        setTodayStats({ trips: scopedToday.length, revenue })
+        setMissingCount(missing.items.filter(isAppScopedTrip).length)
       } catch {
         // keep defaults
       }
@@ -136,16 +136,34 @@ export function DashboardScreen() {
     month: 'long',
   })
 
-  const firstName = me?.member.firstName || me?.member.displayName?.split(/\s+/)[0] || 'kierowco'
+  const firstName = driverFirstName(me?.member)
   const tripMeta = readTripMeta(nextTrip)
   const mins = minutesUntil(nextTrip ? String(nextTrip.startedAt || '') : null)
   const occupied = (me?.profile?.defaultResourceIds || []).filter((v) => !v.available)
+  const vehicleModel = (() => {
+    const raw =
+      assignment?.resourceName ||
+      assignment?.resourceLabel ||
+      me?.profile?.defaultResourceName ||
+      me?.profile?.defaultResourceLabel ||
+      ''
+    if (!raw) return null
+    // Strip plate if it was concatenated into the label
+    if (plate && raw.includes(plate)) {
+      return raw
+        .replace(plate, '')
+        .replace(/[•·|]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim() || null
+    }
+    return raw
+  })()
 
   async function openEndShift() {
     try {
-      const missing = await omClient.getTrips({ pageSize: 20, missingReceipt: true })
+      const missing = await omClient.getTrips({ pageSize: 50, missingReceipt: true })
       setMissingTrips(
-        missing.items.map((trip) => ({
+        missing.items.filter(isAppScopedTrip).map((trip) => ({
           id: String(trip.id),
           label: tripRouteLabel(trip),
         })),
@@ -175,17 +193,17 @@ export function DashboardScreen() {
   return (
     <div
       className="flex min-h-dvh flex-col px-5 pb-28"
-      style={{ paddingTop: 'calc(var(--safe-top) + 8px)' }}
+      style={{ paddingTop: 'calc(var(--safe-top) + 4px)' }}
     >
       <header className="flex items-start justify-between gap-3 px-0 py-2.5">
-        <div className="min-w-0">
-          <h1 className="display-hello truncate" style={{ viewTransitionName: 'driver-hello' }}>
+        <div className="min-w-0 flex-1">
+          <h1 className="display-dash-hdr" style={{ viewTransitionName: 'driver-hello' }}>
             Witaj, <span className="text-[var(--accent)]">{firstName}</span>
           </h1>
           <p className="mt-0.5 capitalize text-[15px] text-[var(--text-secondary)]">{dateLabel}</p>
         </div>
         {state === 'C' ? (
-          <StatusChip tone="success" pulse>
+          <StatusChip tone="success" pulse className="pl-2.5 pr-3">
             Na zmianie
           </StatusChip>
         ) : (
@@ -244,13 +262,13 @@ export function DashboardScreen() {
               <span>Czas zmiany</span>
               <span>od {formatTime(assignment?.shiftStart)}</span>
             </div>
-            <p className="numeric-xl mt-1.5">{shiftTimer}</p>
-            <div className="mt-4.5 flex items-center justify-between gap-3">
+            <p className="numeric-xl mt-1.5 tracking-[-0.01em]">{shiftTimer}</p>
+            <div className="mt-[18px] flex items-center justify-between gap-3">
               {plate ? <PlateBadge plate={plate} /> : <span />}
-              {vehicleName ? (
+              {vehicleModel ? (
                 <span className="flex items-center gap-2 text-[15px] text-[var(--text-secondary)]">
-                  <span className="size-2 rounded-full bg-[var(--success)]" />
-                  {vehicleName}
+                  <span className="size-2.5 flex-none rounded-full bg-[#6CCB2E]" />
+                  {vehicleModel}
                 </span>
               ) : null}
             </div>
@@ -268,8 +286,11 @@ export function DashboardScreen() {
             <p className="mt-2 text-[15px] text-[var(--text-secondary)]">Możesz zacząć wcześniej w oknie startu.</p>
             <div className="mt-4 flex items-center justify-between gap-3">
               {plate ? <PlateBadge plate={plate} /> : <span />}
-              {vehicleName ? (
-                <span className="text-[15px] text-[var(--text-secondary)]">{vehicleName}</span>
+              {vehicleModel ? (
+                <span className="flex items-center gap-2 text-[15px] text-[var(--text-secondary)]">
+                  <span className="size-2.5 flex-none rounded-full bg-[#6CCB2E]" />
+                  {vehicleModel}
+                </span>
               ) : null}
             </div>
           </section>
@@ -324,7 +345,7 @@ export function DashboardScreen() {
               {plate ? ` · ${plate}` : ''}
             </p>
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--separator)] pt-3.5">
-              <Stat label="Kursy" value={String(todayStats.trips || '—')} />
+              <Stat label="Kursy" value={String(todayStats.trips)} />
               <Stat
                 label="GPS"
                 value={
@@ -341,7 +362,7 @@ export function DashboardScreen() {
           </section>
         ) : null}
 
-        <div className="pt-3">
+        <div className="pt-0.5">
           {state === 'C' ? (
             <Button onClick={() => router.push('/app/trips/new')}>
               <Plus size={22} strokeWidth={2.3} />
@@ -367,7 +388,7 @@ export function DashboardScreen() {
 
         {state === 'C' ? (
           <section className="grid grid-cols-3 gap-2 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] px-5 py-4">
-            <Stat label="Kursy" value={String(todayStats.trips || '—')} />
+            <Stat label="Kursy" value={String(todayStats.trips)} />
             <Stat
               label="GPS"
               value={
@@ -390,7 +411,7 @@ export function DashboardScreen() {
           >
             <Receipt size={22} className="text-[var(--warning)]" strokeWidth={1.8} />
             <span className="flex-1 text-[16px] font-medium">
-              {missingCount} {missingCount === 1 ? 'kurs bez paragonu' : 'kursy bez paragonu'}
+              {missingCount} {polishCourseWord(missingCount)} bez paragonu
             </span>
             <span className="text-[16px] font-semibold text-[var(--warning)]">Dodaj</span>
           </Link>

@@ -71,8 +71,20 @@ export function costTypeLabel(type: unknown) {
   return found?.label || String(type || 'Koszt')
 }
 
+/** Platform / sync trips are CRM-only — never count in driver-app stats or receipts. */
+export function isPlatformTrip(trip: Record<string, unknown> | null | undefined) {
+  if (!trip) return false
+  if (trip.platform) return true
+  const type = String(trip.tripType || '')
+  return type === 'platform' || type === 'event'
+}
+
+export function isAppScopedTrip(trip: Record<string, unknown> | null | undefined) {
+  return Boolean(trip) && !isPlatformTrip(trip)
+}
+
 export function receiptStatusLabel(trip: Record<string, unknown>) {
-  if (trip.platform) return null
+  if (isPlatformTrip(trip)) return null
   if (trip.receiptAttachmentId) {
     const ocr = String(trip.ocrStatus || '')
     if (ocr === 'pending' || ocr === 'processing') return 'Przetwarzanie'
@@ -81,6 +93,25 @@ export function receiptStatusLabel(trip: Record<string, unknown>) {
     return 'Paragon'
   }
   const type = String(trip.tripType || '')
-  if (type === 'internal' || type === 'platform') return null
+  if (type === 'internal') return null
   return 'Brak paragonu'
+}
+
+/** Polish: 1 kurs / 2–4 kursy / 5+ kursów */
+export function polishCourseWord(count: number) {
+  const n = Math.abs(count)
+  if (n === 1) return 'kurs'
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return 'kursy'
+  return 'kursów'
+}
+
+export function driverFirstName(member?: {
+  firstName?: string | null
+  displayName?: string | null
+} | null) {
+  const raw = (member?.firstName || member?.displayName || '').trim()
+  const first = raw.split(/\s+/)[0]
+  return first || 'kierowco'
 }
