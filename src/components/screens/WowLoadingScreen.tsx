@@ -117,9 +117,14 @@ export function WowLoadingScreen() {
     ? contextLine(me, missingCount, nextTripLabel)
     : { primary: 'Przygotowujemy Twój dzień.', secondary: null }
 
-  // Brief: tgtTop = deviceTop + 17; plate toY = deviceTop + 222
-  const headerTop = safeTop + 17
-  const plateTargetTop = safeTop + 222
+  // Real dashboard: safeTop+4 pad, header pt-2 (8) → greeting top.
+  const headerTop = safeTop + 12
+  /**
+   * Plate slot in C-timer / B-planned card (matches DashboardScreen + design handoff):
+   * header block (~68) + content pt 2 + card pad 20 + label + timer + mt-18.
+   */
+  const plateTargetTop = safeTop + 194
+  const plateTargetLeft = 40
   const morphDone = concept === 'A' ? 5350 : 4550
   const helloAt = concept === 'A' ? 2700 : 100
 
@@ -261,7 +266,7 @@ export function WowLoadingScreen() {
   const w2 = eo(seg(tt, w2s, w2s + 450))
   const w3 = eo(seg(tt, w3s, w3s + 450))
 
-  // Greeting morph: absolute top G0 → headerTop (brief), scale 1 → 0.5
+  // Greeting morph: absolute top G0 → headerTop, scale 1 → 0.5
   const greetTop = lerp(G0, headerTop, m)
   const greetScale = lerp(1, 0.5, m)
   const greetOp = 1 - seg(mRaw, 0.7, 1)
@@ -271,9 +276,9 @@ export function WowLoadingScreen() {
   const nameTy = 8 * (1 - w2) + lerp(0, -46, m)
   const ctxOp = w3 * (1 - clamp(mRaw * 3))
   const ctxTy = 8 * (1 - w3) - 20 * m
-  // Hand VT to phantom header once morph is near destination (avoids landing too low)
-  const vtOnHeader = mRaw >= 0.55
-  const vtOnPlate = !isRoute && plateLandsOnCard && mRaw >= 0.75
+  // Hand VT to phantom once morph is nearly landed — hide flying layer so it doesn't ghost
+  const vtOnHeader = mRaw >= 0.82
+  const vtOnPlate = !isRoute && plateLandsOnCard && mRaw >= 0.86
 
   // Phantom dashboard under morph (brief dashOp / hdrOp)
   const dashInStart = isRoute ? 4700 : 3900
@@ -309,10 +314,10 @@ export function WowLoadingScreen() {
   const plateTop = plateLandsOnCard
     ? lerp(plateFromY, plateTargetTop, m) + 8 * (1 - plateOp)
     : plateFromY - 18 * plateDissolve + 8 * (1 - plateOp)
-  const plateLeft = plateLandsOnCard ? lerp(G_LEFT, 40, m) : G_LEFT
+  const plateLeft = plateLandsOnCard ? lerp(G_LEFT, plateTargetLeft, m) : G_LEFT
   const plateScale = plateLandsOnCard ? 1 : lerp(1, 0.86, plateDissolve)
   const plateFade = plateLandsOnCard
-    ? plateOp * (1 - seg(mRaw, 0.85, 1))
+    ? plateOp * (1 - seg(mRaw, 0.82, 0.95))
     : plateOp * (1 - plateDissolve)
   // Prefer real load progress once available; else timeline bar
   const barWidth = dataReady ? Math.max(bar, progress / 100) : bar
@@ -370,13 +375,13 @@ export function WowLoadingScreen() {
       <div
         className="pointer-events-none absolute inset-0 flex flex-col"
         style={{
-          paddingTop: headerTop - 17 + 4,
+          paddingTop: safeTop + 4,
           opacity: dashOp,
           transform: `translateY(${dashY}px)`,
         }}
         aria-hidden
       >
-        <div className="flex items-start justify-between gap-3 px-5 py-2.5">
+        <div className="flex items-start justify-between gap-3 px-5 pt-2 pb-2.5">
           <div className="min-w-0">
             <div
               className="display-dash-hdr"
@@ -387,7 +392,10 @@ export function WowLoadingScreen() {
             >
               Witaj, <span className="text-[var(--accent)]">{name}</span>
             </div>
-            <div className="mt-0.5 text-[15px] capitalize text-[var(--text-secondary)]" style={{ opacity: hdrOp }}>
+            <div
+              className="mt-0.5 text-[15px] leading-5 capitalize text-[var(--text-secondary)]"
+              style={{ opacity: hdrOp }}
+            >
               {(me?.today ? new Date(`${me.today}T12:00:00`) : new Date()).toLocaleDateString('pl-PL', {
                 weekday: 'long',
                 day: 'numeric',
@@ -397,15 +405,20 @@ export function WowLoadingScreen() {
           </div>
         </div>
         {!isRoute && plate && plateLandsOnCard ? (
-          <div className="px-5 pt-3" style={{ opacity: Math.max(hdrOp, vtOnPlate ? 1 : 0) }}>
+          <div className="px-5 pt-0.5" style={{ opacity: Math.max(hdrOp, vtOnPlate ? 1 : 0) }}>
             <div className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
-              <div className="flex justify-between text-[15px] text-[var(--text-secondary)] opacity-40">
+              <div className="flex justify-between text-[15px] leading-5 text-[var(--text-secondary)] opacity-40">
                 <span>Czas zmiany</span>
                 <span />
               </div>
               <div className="numeric-xl mt-1.5 opacity-0">00:00:00</div>
               <div className="mt-[18px]">
-                <span style={{ viewTransitionName: vtOnPlate ? 'driver-plate' : undefined, opacity: vtOnPlate ? 1 : 0 }}>
+                <span
+                  style={{
+                    viewTransitionName: vtOnPlate ? 'driver-plate' : undefined,
+                    opacity: vtOnPlate ? 1 : 0,
+                  }}
+                >
                   <PlateBadge plate={plate} />
                 </span>
               </div>
@@ -533,7 +546,7 @@ export function WowLoadingScreen() {
             marginLeft: greetMarginL,
             transform: `scale(${greetScale})`,
             transformOrigin: '0 0',
-            opacity: greetOp,
+            opacity: vtOnHeader ? 0 : greetOp,
             width: `calc(100% - ${G_LEFT * 2}px)`,
           }}
         >
@@ -589,7 +602,7 @@ export function WowLoadingScreen() {
           style={{
             left: plateLeft,
             top: plateTop,
-            opacity: plateFade,
+            opacity: vtOnPlate ? 0 : plateFade,
             transform: `scale(${plateScale})`,
             viewTransitionName: plateLandsOnCard && !vtOnPlate ? 'driver-plate' : undefined,
           }}

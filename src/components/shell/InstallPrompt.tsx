@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Share } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
+import { useAuth } from '@/lib/om/AuthProvider'
 
 function isStandalone() {
   if (typeof window === 'undefined') return true
@@ -16,6 +17,7 @@ function isStandalone() {
 
 export function InstallPrompt() {
   const pathname = usePathname()
+  const { ready, session } = useAuth()
   const [show, setShow] = useState(false)
   const [deferred, setDeferred] = useState<(Event & { prompt: () => Promise<void> }) | null>(null)
   const [ios] = useState(
@@ -41,7 +43,7 @@ export function InstallPrompt() {
     return () => window.removeEventListener('beforeinstallprompt', onBip)
   }, [onAuthGate])
 
-  if (!show || !onAuthGate) return null
+  if (!show || !onAuthGate || !ready || session) return null
 
   function dismiss() {
     sessionStorage.setItem('rs-install-dismissed', '1')

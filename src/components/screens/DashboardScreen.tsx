@@ -188,7 +188,7 @@ export function DashboardScreen() {
       className="flex min-h-dvh flex-col px-5 pb-28"
       style={{ paddingTop: 'calc(var(--safe-top) + 4px)' }}
     >
-      <header className="flex items-start justify-between gap-3 px-0 py-2.5">
+      <header className="flex items-start justify-between gap-3 px-0 pt-2 pb-2.5">
         <div className="min-w-0 flex-1">
           <button
             type="button"
@@ -205,7 +205,7 @@ export function DashboardScreen() {
               className="mt-1 flex-none text-[var(--text-secondary)]"
             />
           </button>
-          <p className="mt-0.5 capitalize text-[15px] text-[var(--text-secondary)]">{dateLabel}</p>
+          <p className="mt-0.5 capitalize text-[15px] leading-5 text-[var(--text-secondary)]">{dateLabel}</p>
         </div>
         {state === 'C' ? (
           <StatusChip tone="success" pulse className="pl-2.5 pr-3">
@@ -227,7 +227,7 @@ export function DashboardScreen() {
         </div>
       ) : null}
 
-      <div className="flex flex-1 flex-col gap-3">
+      <div className="flex flex-1 flex-col gap-3 pt-0.5">
         {state === 'C' && liveTrip ? (
           <Link
             href="/app/trips/live"
@@ -263,7 +263,7 @@ export function DashboardScreen() {
 
         {state === 'C' && !nextTrip && !liveTrip ? (
           <section className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
-            <div className="flex justify-between text-[15px] text-[var(--text-secondary)]">
+            <div className="flex justify-between text-[15px] leading-5 text-[var(--text-secondary)]">
               <span>Czas zmiany</span>
               <span>od {formatTime(assignment?.shiftStart)}</span>
             </div>

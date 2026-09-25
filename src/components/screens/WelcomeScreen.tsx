@@ -42,6 +42,7 @@ function WelcomeInner() {
   }, [ready, session, router])
 
   useEffect(() => {
+    if (session) return
     const sync = () => setOffline(!navigator.onLine)
     window.addEventListener('online', sync)
     window.addEventListener('offline', sync)
@@ -51,12 +52,12 @@ function WelcomeInner() {
       window.removeEventListener('online', sync)
       window.removeEventListener('offline', sync)
     }
-  }, [])
+  }, [session])
 
   const sheetOpen = loginOpen || helpOpen
 
   useEffect(() => {
-    if (reduced || sheetOpen) {
+    if (session || reduced || sheetOpen) {
       const el = parallaxRef.current
       if (el) el.style.transform = ''
       return
@@ -71,7 +72,7 @@ function WelcomeInner() {
     }
     window.addEventListener('deviceorientation', onOrient)
     return () => window.removeEventListener('deviceorientation', onOrient)
-  }, [reduced, sheetOpen])
+  }, [session, reduced, sheetOpen])
   const canSubmit = useMemo(
     () => EMAIL_RE.test(email.trim()) && password.length > 0,
     [email, password],
@@ -112,6 +113,11 @@ function WelcomeInner() {
   function closeLogin() {
     setLoginForced(false)
     if (search.get('login')) router.replace('/')
+  }
+
+  // Existing session / hydrate: never paint 5.1 — splash owns handoff to 5.3–5.4.
+  if (!ready || session) {
+    return <div className="min-h-dvh bg-[#020407]" aria-hidden />
   }
 
   return (
