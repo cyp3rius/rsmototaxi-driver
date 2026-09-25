@@ -8,6 +8,7 @@ import {
   CreditCard,
   Ellipsis,
   History,
+  Landmark,
   Lock,
   MapPin,
   Plus,
@@ -32,6 +33,8 @@ import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import { formatEndedAtCaption, resolveAutoEndedAtLocal } from '@/lib/route/endedAt'
+import { translateRouteError } from '@/lib/route/errors'
 import { PAYMENT_OPTIONS, TRIP_TYPE_OPTIONS } from '@/lib/tripMeta'
 import {
   nowLocalInput,
@@ -56,10 +59,10 @@ const tripIcons = {
 } as const
 
 const payIcons = {
-  banknote: Wallet,
+  wallet: Wallet,
   'credit-card': CreditCard,
+  landmark: Landmark,
   smartphone: Smartphone,
-  nfc: Smartphone,
   star: Star,
 } as const
 
@@ -79,11 +82,13 @@ export default function NewTripPage() {
   const [stops, setStops] = useState<string[]>([])
   const [startedAt, setStartedAt] = useState('')
   const [endedAt, setEndedAt] = useState('')
+  const [endVisible, setEndVisible] = useState(false)
   const [tripType, setTripType] = useState<(typeof TRIP_TYPE_OPTIONS)[number]['id']>('client')
   const [payment, setPayment] = useState<(typeof PAYMENT_OPTIONS)[number]['id']>('cash')
   const [amount, setAmount] = useState('')
   const [distanceKm, setDistanceKm] = useState<number | null>(null)
   const [durationText, setDurationText] = useState<string | null>(null)
+  const [durationSeconds, setDurationSeconds] = useState<number | null>(null)
   const [quoteBusy, setQuoteBusy] = useState(false)
   const [customer, setCustomer] = useState<SelectedCustomer | null>(null)
   const [busy, setBusy] = useState(false)
@@ -104,6 +109,11 @@ export default function NewTripPage() {
     setMode(next)
     setStep(1)
     setFieldError(null)
+    setEndVisible(false)
+    setDistanceKm(null)
+    setDurationText(null)
+    setDurationSeconds(null)
+    setAmount('')
     if (next === 'live') {
       setStartedAt(nowLocalInput())
       setEndedAt('')
@@ -115,34 +125,32 @@ export default function NewTripPage() {
       setEndedAt('')
     } else if (next === 'past') {
       setStartedAt(todayStartLocalInput())
-      const end = new Date()
-      end.setMinutes(end.getMinutes() - end.getTimezoneOffset())
-      setEndedAt(end.toISOString().slice(0, 16))
+      setEndedAt('')
     }
   }
 
-  function goStep2() {
-    if (mode === 'choose') return
-    const err = validateTripTimes({
-      mode,
-      onShift,
-      startedAt,
-      endedAt,
-      me,
-    })
-    if (err) {
-      setFieldError(err)
-      toast.warning(err)
-      return
+  function revealAutoEnd(nextDurationSeconds?: number | null, startLocal = startedAt) {
+    if (mode === 'live' || !startLocal) return null
+    const seconds =
+      typeof nextDurationSeconds === 'number' && nextDurationSeconds > 0
+        ? nextDurationSeconds
+        : durationSeconds
+    const nextEnd = resolveAutoEndedAtLocal(startLocal, seconds)
+    if (nextEnd) {
+      setEndedAt(nextEnd)
+      setEndVisible(true)
     }
-    setFieldError(null)
-    setStep(2)
+    return nextEnd
   }
 
-  async function recalculate() {
+  async function recalculate(options?: { silent?: boolean }): Promise<{
+    ok: boolean
+    endedAtLocal: string | null
+    durationSeconds: number | null
+  }> {
     if (!from.trim() || !to.trim()) {
-      toast.warning('Podaj adresy skąd i dokąd')
-      return
+      if (!options?.silent) toast.warning('Podaj adresy skąd i dokąd')
+      return { ok: false, endedAtLocal: null, durationSeconds: null }
     }
     setQuoteBusy(true)
     try {
@@ -156,14 +164,26 @@ export default function NewTripPage() {
         from: from.trim(),
         to: to.trim(),
         lang: 'pl',
-      })) as { distanceKm?: number; durationText?: string; distanceText?: string }
+      })) as {
+        distanceKm?: number
+        durationText?: string
+        distanceText?: string
+        durationSeconds?: number
+      }
 
       const km = typeof dist.distanceKm === 'number' ? dist.distanceKm : null
+      const seconds =
+        typeof dist.durationSeconds === 'number' && Number.isFinite(dist.durationSeconds)
+          ? Math.max(0, Math.round(dist.durationSeconds))
+          : null
+      const resolvedSeconds = seconds && seconds > 0 ? seconds : null
       setDistanceKm(km)
       setDurationText(dist.durationText || dist.distanceText || null)
+      setDurationSeconds(resolvedSeconds)
+      const endedAtLocal = revealAutoEnd(resolvedSeconds)
 
-      if (km && km > 0) {
-        const start = startedAt ? new Date(startedAt) : new Date()
+      if (km && km > 0 && startedAt) {
+        const start = new Date(startedAt)
         const date = start.toISOString().slice(0, 10)
         const time = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
         const quote = (await omClient.quote({
@@ -175,23 +195,73 @@ export default function NewTripPage() {
         })) as { totalPrice?: number; currency?: string }
         if (typeof quote.totalPrice === 'number') {
           setAmount(String(quote.totalPrice.toFixed(2)).replace('.', ','))
-          toast.success(`Sugerowana kwota: ${quote.totalPrice.toFixed(2)} ${quote.currency || 'PLN'}`)
-        } else {
+          if (!options?.silent) {
+            toast.success(
+              `Sugerowana kwota: ${quote.totalPrice.toFixed(2).replace('.', ',')} ${quote.currency || 'PLN'}`,
+            )
+          }
+        } else if (!options?.silent) {
           toast.success(km ? `Dystans ≈ ${km.toFixed(1)} km` : 'Przeliczono trasę')
         }
-      } else {
+      } else if (!options?.silent) {
         toast.warning('Nie udało się wyliczyć dystansu')
       }
+      return { ok: true, endedAtLocal, durationSeconds: resolvedSeconds }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Przeliczanie nie powiodło się')
+      const message = translateRouteError(err instanceof Error ? err.message : null)
+      toast.error(message)
+      return { ok: false, endedAtLocal: null, durationSeconds: null }
     } finally {
       setQuoteBusy(false)
     }
   }
 
+  async function goStep2() {
+    if (mode === 'choose') return
+
+    let resolvedEnd = endedAt
+    let resolvedDuration = durationSeconds
+
+    if (mode !== 'live') {
+      if (!endVisible || !endedAt || distanceKm == null || !amount) {
+        const result = await recalculate({ silent: true })
+        if (result.endedAtLocal) resolvedEnd = result.endedAtLocal
+        if (result.durationSeconds != null) resolvedDuration = result.durationSeconds
+        if (!resolvedEnd) {
+          resolvedEnd = revealAutoEnd(resolvedDuration) || ''
+        }
+      } else if (!endVisible) {
+        resolvedEnd = revealAutoEnd(resolvedDuration) || resolvedEnd
+      }
+    }
+
+    const err = validateTripTimes({
+      mode,
+      onShift,
+      startedAt,
+      endedAt: resolvedEnd || (mode !== 'live' ? resolveAutoEndedAtLocal(startedAt, resolvedDuration) || '' : ''),
+      me,
+    })
+    if (err) {
+      setFieldError(err)
+      toast.warning(err)
+      return
+    }
+    setFieldError(null)
+    setStep(2)
+  }
+
   async function save() {
     if (mode === 'choose') return
-    const timeErr = validateTripTimes({ mode, onShift, startedAt, endedAt, me })
+    const resolvedEnd =
+      endedAt || (mode !== 'live' ? resolveAutoEndedAtLocal(startedAt, durationSeconds) || '' : '')
+    const timeErr = validateTripTimes({
+      mode,
+      onShift,
+      startedAt,
+      endedAt: resolvedEnd,
+      me,
+    })
     if (timeErr) {
       toast.warning(timeErr)
       return
@@ -203,7 +273,7 @@ export default function NewTripPage() {
     setBusy(true)
     try {
       const startIso = startedAt ? new Date(startedAt).toISOString() : new Date().toISOString()
-      const endIso = endedAt ? new Date(endedAt).toISOString() : null
+      const endIso = resolvedEnd ? new Date(resolvedEnd).toISOString() : null
       const status =
         mode === 'live' ? 'in_progress' : mode === 'schedule' ? 'scheduled' : 'completed'
       const body: Record<string, unknown> = {
@@ -224,6 +294,9 @@ export default function NewTripPage() {
             toAddress: to.trim(),
             stops: stops.filter((s) => s.trim()),
             paymentType: tripType === 'internal' || tripType === 'private' ? undefined : payment,
+            durationText: durationText || undefined,
+            distanceKm: distanceKm ?? undefined,
+            basePrice: amount || undefined,
           },
         },
       }
@@ -312,23 +385,25 @@ export default function NewTripPage() {
 
   return (
     <AppShell hideNav>
-      <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
-      <div className="px-6">
-        <div className="grid grid-cols-2 gap-1.5">
-          <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
-          <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+      <div className="flex min-h-dvh flex-col">
+        <div className="shrink-0">
+          <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
+          <div className="px-5">
+            <div className="grid grid-cols-2 gap-1.5">
+              <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+              <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+            </div>
+            <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
+              Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
+            </p>
+          </div>
         </div>
-        <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-          Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
-        </p>
-      </div>
 
-      <div className="space-y-4 px-5 pb-36 pt-4">
-        {step === 1 ? (
-          <>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-36 pt-4">
+          <div className={step === 1 ? 'space-y-4' : 'hidden'} aria-hidden={step !== 1}>
             <AddressField label="Skąd" value={from} onChange={setFrom} placeholder="Adres startu" allowMyLocation />
             {stops.map((stop, index) => (
-              <div key={`stop-${index}`} className="relative">
+              <div key={`stop-${index}`} className="relative min-w-0">
                 <AddressField
                   label={`Przystanek ${index + 1}`}
                   value={stop}
@@ -358,7 +433,12 @@ export default function NewTripPage() {
             <AddressField label="Dokąd" value={to} onChange={setTo} placeholder="Adres końca" allowMyLocation />
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button size="md" variant="secondary" loading={quoteBusy} onClick={() => void recalculate()}>
+              <Button
+                size="md"
+                variant="secondary"
+                loading={quoteBusy}
+                onClick={() => void recalculate()}
+              >
                 Przelicz
               </Button>
               {distanceKm != null ? (
@@ -375,7 +455,9 @@ export default function NewTripPage() {
                     label="Teraz"
                     onClick={() => {
                       setStartedAt(nowLocalInput())
-                      if (mode === 'past') setEndedAt(nowLocalInput())
+                      setEndedAt('')
+                      setEndVisible(false)
+                      setFieldError(null)
                     }}
                   />
                   {mode === 'schedule' ? (
@@ -385,6 +467,8 @@ export default function NewTripPage() {
                         onClick={() => {
                           setStartedAt(tomorrowAt8LocalInput())
                           setEndedAt('')
+                          setEndVisible(false)
+                          setFieldError(null)
                         }}
                       />
                       <TimeShortcut
@@ -392,6 +476,8 @@ export default function NewTripPage() {
                         onClick={() => {
                           setStartedAt(dayAfterTomorrowAt8LocalInput())
                           setEndedAt('')
+                          setEndVisible(false)
+                          setFieldError(null)
                         }}
                       />
                     </>
@@ -401,27 +487,24 @@ export default function NewTripPage() {
                         label="Dzisiaj 8:00"
                         onClick={() => {
                           setStartedAt(todayStartLocalInput())
-                          const end = new Date()
-                          end.setHours(9, 0, 0, 0)
-                          end.setMinutes(end.getMinutes() - end.getTimezoneOffset())
-                          setEndedAt(end.toISOString().slice(0, 16))
+                          setEndedAt('')
+                          setEndVisible(false)
+                          setFieldError(null)
                         }}
                       />
                       <TimeShortcut
                         label="Wczoraj 8:00"
                         onClick={() => {
                           setStartedAt(yesterdayStartLocalInput())
-                          const d = new Date()
-                          d.setDate(d.getDate() - 1)
-                          d.setHours(9, 0, 0, 0)
-                          d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
-                          setEndedAt(d.toISOString().slice(0, 16))
+                          setEndedAt('')
+                          setEndVisible(false)
+                          setFieldError(null)
                         }}
                       />
                     </>
                   )}
                 </div>
-                <div className="flex flex-col gap-2.5">
+                <div className="min-w-0 max-w-full overflow-hidden">
                   <TextField
                     label="Start"
                     type="datetime-local"
@@ -430,35 +513,27 @@ export default function NewTripPage() {
                     max={mode === 'past' ? bounds.max || nowLocalInput() : undefined}
                     onChange={(e) => {
                       setStartedAt(e.target.value)
+                      setEndedAt('')
+                      setEndVisible(false)
                       setFieldError(null)
                     }}
-                    error={fieldError && !endedAt ? fieldError : undefined}
+                    error={fieldError || undefined}
                   />
-                  <TextField
-                    label="Koniec"
-                    type="datetime-local"
-                    value={endedAt}
-                    min={startedAt || bounds.min}
-                    max={mode === 'past' ? bounds.max || nowLocalInput() : undefined}
-                    onChange={(e) => {
-                      setEndedAt(e.target.value)
-                      setFieldError(null)
-                    }}
-                    error={mode === 'past' && fieldError ? fieldError : undefined}
-                  />
+                  {endVisible && endedAt ? (
+                    <p className="mt-2 text-[15px] font-semibold leading-5 text-[var(--text-primary)]">
+                      Koniec · {formatEndedAtCaption(endedAt)}
+                    </p>
+                  ) : null}
                 </div>
-                {fieldError ? (
-                  <p className="text-[15px] text-[var(--danger)]">{fieldError}</p>
-                ) : null}
               </>
             ) : (
               <p className="rounded-[18px] bg-[var(--bg-surface-raised)] px-4 py-3 text-[15px] text-[var(--text-secondary)]">
                 Start od razu. Po zakończeniu uzupełnisz trasę i szczegóły.
               </p>
             )}
-          </>
-        ) : (
-          <>
+          </div>
+
+          <div className={step === 2 ? 'space-y-4' : 'hidden'} aria-hidden={step !== 2}>
             <div>
               <p className="mb-2 text-[15px] font-medium">Typ kursu</p>
               <div className="grid grid-cols-3 gap-2">
@@ -510,21 +585,28 @@ export default function NewTripPage() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0,00"
+                  prefix="PLN"
                 />
-                <Button size="md" variant="secondary" loading={quoteBusy} onClick={() => void recalculate()}>
+                <Button
+                  size="md"
+                  variant="secondary"
+                  loading={quoteBusy}
+                  onClick={() => void recalculate()}
+                >
                   Przelicz sugerowaną kwotę
                 </Button>
               </div>
             ) : null}
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
       <ActionBar>
         {step === 1 ? (
           <Button
-            disabled={!from.trim() || !to.trim() || (mode !== 'live' && !startedAt)}
-            onClick={goStep2}
+            disabled={!from.trim() || !to.trim() || (mode !== 'live' && !startedAt) || quoteBusy}
+            loading={quoteBusy && step === 1}
+            onClick={() => void goStep2()}
           >
             Dalej: szczegóły kursu
           </Button>

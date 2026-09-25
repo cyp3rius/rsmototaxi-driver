@@ -1,8 +1,10 @@
 'use client'
 
-import { Building2, Plus, UserRound, X } from 'lucide-react'
+import { Building2, Plus, UserRound } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { TextField } from '@/components/ui/TextField'
 import { omClient } from '@/lib/om/client'
 
@@ -53,13 +55,15 @@ export function CustomerPicker({
           if (!active) return
           const list = (res as { items?: Array<Record<string, unknown>> }).items || []
           setItems(
-            list.map((item) => ({
-              id: String(item.id || ''),
-              kind: (item.kind === 'company' ? 'company' : 'person') as 'person' | 'company',
-              label: String(item.label || item.displayName || item.primaryPhone || 'Klient'),
-              phone: item.primaryPhone ? String(item.primaryPhone) : null,
-              description: item.description ? String(item.description) : null,
-            })).filter((item) => item.id),
+            list
+              .map((item) => ({
+                id: String(item.id || ''),
+                kind: (item.kind === 'company' ? 'company' : 'person') as 'person' | 'company',
+                label: String(item.label || item.displayName || item.primaryPhone || 'Klient'),
+                phone: item.primaryPhone ? String(item.primaryPhone) : null,
+                description: item.description ? String(item.description) : null,
+              }))
+              .filter((item) => item.id),
           )
         })
         .catch(() => {
@@ -88,6 +92,16 @@ export function CustomerPicker({
     setName('')
     setNip('')
     setBusy(false)
+  }
+
+  function openCreate(kind: 'person' | 'company') {
+    setCreateKind(kind)
+    setError(null)
+    setPhone('')
+    setName('')
+    setNip('')
+    setBusy(false)
+    setCreateOpen(true)
   }
 
   async function submitCreate() {
@@ -133,32 +147,64 @@ export function CustomerPicker({
   }
 
   if (value) {
+    const kindLabel = value.kind === 'company' ? 'firma' : 'osoba'
+    const phonePart = value.phone ? ` · ${value.phone}` : ''
     return (
       <div>
         <p className="mb-2 text-[15px] font-medium">
           Klient
           {required ? <span className="text-[var(--danger)]"> *</span> : null}
         </p>
-        <div className="flex min-h-16 items-center gap-2.5 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4 py-2">
-          <span className="mt-0.5 text-[var(--text-secondary)]">
-            {value.kind === 'company' ? <Building2 size={18} /> : <UserRound size={18} />}
-          </span>
+        <div className="box-border flex min-h-16 items-center gap-2.5 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] py-2 pr-3.5 pl-4">
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[17px] font-semibold">{value.label}</span>
-            <span className="block text-[15px] text-[var(--text-secondary)]">
-              {value.kind === 'company' ? 'Firma' : 'Osoba'}
-              {value.phone ? ` · ${value.phone}` : ''}
+            <span className="block truncate text-[17px] font-semibold leading-5">{value.label}</span>
+            <span className="mt-0.5 block truncate text-[15px] leading-5 text-[var(--text-secondary)]">
+              {kindLabel}
+              {phonePart}
             </span>
           </span>
           <button
             type="button"
-            className="flex size-10 items-center justify-center rounded-full text-[var(--text-secondary)]"
-            aria-label="Wyczyść klienta"
+            className="shrink-0 text-[15px] font-semibold text-[var(--accent)]"
             onClick={() => onChange(null)}
           >
-            <X size={18} />
+            Zmień
           </button>
         </div>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+            onClick={() => openCreate('person')}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            Nowa osoba
+          </button>
+          <button
+            type="button"
+            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+            onClick={() => openCreate('company')}
+          >
+            <Plus size={14} strokeWidth={2.2} />
+            Nowa firma
+          </button>
+        </div>
+        <CustomerCreateSheet
+          open={createOpen}
+          kind={createKind}
+          onKindChange={setCreateKind}
+          phone={phone}
+          name={name}
+          nip={nip}
+          error={error}
+          busy={busy}
+          canSubmit={canSubmit}
+          onPhoneChange={setPhone}
+          onNameChange={setName}
+          onNipChange={setNip}
+          onClose={resetCreate}
+          onSubmit={() => void submitCreate()}
+        />
       </div>
     )
   }
@@ -169,7 +215,9 @@ export function CustomerPicker({
         <p className="mb-2 text-[15px] font-medium">
           Klient
           {required ? <span className="text-[var(--danger)]"> *</span> : null}
-          {!required ? <span className="font-normal text-[var(--text-secondary)]"> (opcjonalnie)</span> : null}
+          {!required ? (
+            <span className="font-normal text-[var(--text-secondary)]"> (opcjonalnie)</span>
+          ) : null}
         </p>
         <input
           value={query}
@@ -197,20 +245,19 @@ export function CustomerPicker({
             <button
               key={item.id}
               type="button"
-              className="flex min-h-[60px] w-full items-start gap-2.5 border-b border-[var(--separator)] px-4 py-2 text-left last:border-0"
+              className="flex min-h-[60px] w-full items-center gap-2.5 border-b border-[var(--separator)] px-4 py-2.5 text-left last:border-0"
               onClick={() => {
                 onChange(item)
                 setQuery('')
                 setItems([])
-                resetCreate()
               }}
             >
-              <span className="mt-0.5 text-[var(--text-secondary)]">
+              <span className="shrink-0 text-[var(--text-secondary)]">
                 {item.kind === 'company' ? <Building2 size={18} /> : <UserRound size={18} />}
               </span>
-              <span className="min-w-0">
-                <span className="block truncate text-[16px] font-semibold">{item.label}</span>
-                <span className="block truncate text-[15px] text-[var(--text-secondary)]">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[16px] font-semibold leading-5">{item.label}</span>
+                <span className="block truncate text-[15px] leading-5 text-[var(--text-secondary)]">
                   {item.description || item.phone || (item.kind === 'company' ? 'firma' : 'osoba')}
                 </span>
               </span>
@@ -219,79 +266,148 @@ export function CustomerPicker({
         </div>
       ) : null}
 
-      {!createOpen ? (
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
-            onClick={() => {
-              setCreateKind('person')
-              setNip('')
-              setError(null)
-              setCreateOpen(true)
-            }}
-          >
-            <Plus size={14} strokeWidth={2.2} />
-            Nowa osoba
-          </button>
-          <button
-            type="button"
-            className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
-            onClick={() => {
-              setCreateKind('company')
-              setError(null)
-              setCreateOpen(true)
-            }}
-          >
-            <Plus size={14} strokeWidth={2.2} />
-            Nowa firma
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-3 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-4">
-          <p className="text-[17px] font-semibold">
-            {createKind === 'company' ? 'Nowa firma' : 'Nowa osoba'}
-          </p>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+          onClick={() => openCreate('person')}
+        >
+          <Plus size={14} strokeWidth={2.2} />
+          Nowa osoba
+        </button>
+        <button
+          type="button"
+          className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-[var(--separator)] px-3.5 text-[15px] font-semibold"
+          onClick={() => openCreate('company')}
+        >
+          <Plus size={14} strokeWidth={2.2} />
+          Nowa firma
+        </button>
+      </div>
+
+      <CustomerCreateSheet
+        open={createOpen}
+        kind={createKind}
+        onKindChange={setCreateKind}
+        phone={phone}
+        name={name}
+        nip={nip}
+        error={error}
+        busy={busy}
+        canSubmit={canSubmit}
+        onPhoneChange={setPhone}
+        onNameChange={setName}
+        onNipChange={setNip}
+        onClose={resetCreate}
+        onSubmit={() => void submitCreate()}
+      />
+    </div>
+  )
+}
+
+function CustomerCreateSheet({
+  open,
+  kind,
+  onKindChange,
+  phone,
+  name,
+  nip,
+  error,
+  busy,
+  canSubmit,
+  onPhoneChange,
+  onNameChange,
+  onNipChange,
+  onClose,
+  onSubmit,
+}: {
+  open: boolean
+  kind: 'person' | 'company'
+  onKindChange: (kind: 'person' | 'company') => void
+  phone: string
+  name: string
+  nip: string
+  error: string | null
+  busy: boolean
+  canSubmit: boolean
+  onPhoneChange: (value: string) => void
+  onNameChange: (value: string) => void
+  onNipChange: (value: string) => void
+  onClose: () => void
+  onSubmit: () => void
+}) {
+  return (
+    <BottomSheet
+      open={open}
+      onClose={onClose}
+      title="Nowy klient"
+      titleClassName="text-[26px] leading-8"
+    >
+      <div className="space-y-4">
+        <SegmentedControl
+          value={kind}
+          onChange={onKindChange}
+          options={[
+            { id: 'person', label: 'Osoba' },
+            { id: 'company', label: 'Firma' },
+          ]}
+        />
+
+        {kind === 'company' ? (
           <TextField
-            label="Telefon"
-            inputMode="tel"
-            autoComplete="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="504 013 184"
-            required
+            label="NIP"
+            inputMode="numeric"
+            autoComplete="off"
+            value={nip}
+            onChange={(e) => onNipChange(e.target.value)}
+            placeholder="676 102 03 45"
+            error={
+              nip && nip.replace(/\D/g, '').length !== 10 ? 'NIP jest wymagany (10 cyfr).' : null
+            }
           />
-          {createKind === 'company' ? (
+        ) : null}
+
+        <TextField
+          label="Telefon"
+          inputMode="tel"
+          autoComplete="tel"
+          value={phone}
+          onChange={(e) => onPhoneChange(e.target.value)}
+          placeholder="601 234 567"
+          required
+        />
+
+        {kind === 'company' ? (
+          <>
             <TextField
-              label="NIP"
-              inputMode="numeric"
-              autoComplete="off"
-              value={nip}
-              onChange={(e) => setNip(e.target.value)}
-              placeholder="10 cyfr"
-              error={
-                nip && nip.replace(/\D/g, '').length !== 10 ? 'NIP jest wymagany (10 cyfr).' : null
-              }
+              label="Nazwa firmy"
+              labelHint="opcjonalnie"
+              value={name}
+              onChange={(e) => onNameChange(e.target.value)}
+              placeholder="Hotel Stary Sp. z o.o."
+              autoComplete="organization"
             />
-          ) : null}
+            <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
+              Dane firmy uzupełni CRM na podstawie NIP.
+            </p>
+          </>
+        ) : (
           <TextField
-            label={createKind === 'company' ? 'Nazwa firmy' : 'Imię i nazwisko'}
+            label="Imię i nazwisko"
+            labelHint="opcjonalnie"
             value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Opcjonalnie"
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="Np. Anna Wiśniewska"
             autoComplete="name"
           />
-          {error ? <p className="text-[15px] text-[var(--danger)]">{error}</p> : null}
-          <div className="grid grid-cols-2 gap-2">
-            <Button variant="secondary" size="md" disabled={busy} onClick={resetCreate}>
-              Anuluj
-            </Button>
-            <Button size="md" loading={busy} disabled={!canSubmit} onClick={() => void submitCreate()}>
-              Zapisz klienta
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {error ? <p className="text-[15px] text-[var(--danger)]">{error}</p> : null}
+
+        <Button className="mt-2" loading={busy} disabled={!canSubmit} onClick={onSubmit}>
+          Dodaj klienta
+        </Button>
+      </div>
+    </BottomSheet>
   )
 }

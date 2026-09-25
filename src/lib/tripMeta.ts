@@ -198,13 +198,22 @@ export const TRIP_TYPE_OPTIONS = [
 ] as const
 
 export const PAYMENT_OPTIONS = [
-  { id: 'cash', label: 'Gotówka', icon: 'banknote' },
+  { id: 'cash', label: 'Gotówka', icon: 'wallet' },
   { id: 'card', label: 'Karta', icon: 'credit-card' },
-  { id: 'electronic', label: 'Przelew', icon: 'smartphone' },
-  { id: 'transfer', label: 'BLIK', icon: 'nfc' },
-  { id: 'loyalty_program', label: 'Lojalność', icon: 'star' },
-  { id: 'platform_app', label: 'Aplikacja platformy', icon: 'smartphone' },
+  { id: 'transfer', label: 'Przelew', icon: 'landmark' },
+  { id: 'electronic', label: 'PayPal', icon: 'smartphone' },
+  { id: 'loyalty_program', label: 'Program lojalnościowy', icon: 'star' },
 ] as const
+
+const PAYMENT_LABELS: Record<string, string> = {
+  cash: 'Gotówka',
+  card: 'Karta',
+  transfer: 'Przelew',
+  electronic: 'PayPal',
+  loyalty_program: 'Program lojalnościowy',
+  platform_app: 'Aplikacja platformy',
+  other: 'Inne',
+}
 
 export const COST_TYPE_OPTIONS = [
   { id: 'fuel', label: 'Paliwo' },
@@ -221,8 +230,7 @@ export function tripTypeLabel(type: unknown) {
 
 export function paymentMethodLabel(method: unknown) {
   if (!method || typeof method !== 'string') return null
-  const found = PAYMENT_OPTIONS.find((t) => t.id === method)
-  return found?.label || null
+  return PAYMENT_LABELS[method] || null
 }
 
 export function tripPaymentLabel(trip: Record<string, unknown> | null | undefined) {
