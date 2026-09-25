@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { Plus, Receipt, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -16,6 +15,7 @@ import { receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/R
 import { StatusChip } from '@/components/ui/StatusChip'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, formatTime, startOfDayIso } from '@/lib/format'
+import { useListSearchParams } from '@/lib/useListSearchParams'
 import {
   isAppScopedTrip,
   readTripMeta,
@@ -93,11 +93,10 @@ function TripListCard({ trip }: { trip: Record<string, unknown> }) {
 }
 
 function TripsInner() {
-  const search = useSearchParams()
-  const [scope, setScope] = useState<'today' | 'all'>('today')
+  const { get, patch } = useListSearchParams()
+  const scope = get('scope') === 'all' || get('missing') === '1' ? 'all' : 'today'
+  const missingOnly = get('missing') === '1'
   const [items, setItems] = useState<Record<string, unknown>[]>([])
-  const [missingOverride, setMissingOverride] = useState<boolean | null>(null)
-  const missingOnly = missingOverride ?? search.get('missing') === '1'
   const [missingCount, setMissingCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -217,8 +216,8 @@ function TripsInner() {
           <SegmentedControl
             value={scope}
             onChange={(v) => {
-              setScope(v)
-              if (v === 'today') setMissingOverride(false)
+              if (v === 'today') patch({ scope: null, missing: null })
+              else patch({ scope: 'all', missing: null })
             }}
             options={[
               { id: 'today', label: 'Dziś' },
@@ -230,9 +229,8 @@ function TripsInner() {
               tone="warning"
               active={missingOnly}
               onClick={() => {
-                const next = !missingOnly
-                setMissingOverride(next)
-                if (next) setScope('all')
+                if (missingOnly) patch({ missing: null, scope: scope === 'all' ? 'all' : null })
+                else patch({ missing: '1', scope: 'all' })
               }}
               icon={<Receipt size={16} strokeWidth={2} />}
             >

@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -16,6 +16,7 @@ import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { formatTime, endOfDayIso, startOfDayIso } from '@/lib/format'
+import { useListSearchParams } from '@/lib/useListSearchParams'
 import { isAppScopedTrip, tripRouteLabel } from '@/lib/tripMeta'
 
 type Assignment = Record<string, unknown>
@@ -115,12 +116,12 @@ function metaLine(item: Assignment) {
 }
 
 function ShiftsInner() {
-  const router = useRouter()
   const search = useSearchParams()
+  const { get, patch } = useListSearchParams()
   const { me, refreshMe } = useAuth()
   const toast = useToast()
   const { openStartShift } = useStartShift()
-  const [scope, setScope] = useState<'week' | 'all'>('week')
+  const scope = get('scope') === 'all' ? 'all' : 'week'
   const [items, setItems] = useState<Assignment[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -175,9 +176,10 @@ function ShiftsInner() {
   useEffect(() => {
     if (search.get('start') === '1') {
       openStartShift()
-      router.replace('/app/shifts', { scroll: false })
+      // Drop only the start flag; keep scope/filter query params.
+      patch({ start: null })
     }
-  }, [search, openStartShift, router])
+  }, [search, openStartShift, patch])
 
   const todayKey = me?.today || toDateKey(new Date().toISOString())
 
@@ -251,7 +253,9 @@ function ShiftsInner() {
       <div className="px-5">
         <SegmentedControl
           value={scope}
-          onChange={(v) => setScope(v)}
+          onChange={(v) => {
+            patch({ scope: v === 'all' ? 'all' : null })
+          }}
           options={[
             { id: 'week', label: 'Ten tydzień' },
             { id: 'all', label: 'Wszystkie' },

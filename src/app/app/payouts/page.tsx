@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
@@ -12,6 +12,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { omClient } from '@/lib/om/client'
 import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/cn'
+import { useListSearchParams } from '@/lib/useListSearchParams'
 import {
   formatMonthTitle,
   formatWeekTitle,
@@ -20,8 +21,9 @@ import {
   settlementStatusTone,
 } from '@/lib/settlementUi'
 
-export default function PayoutsPage() {
-  const [tab, setTab] = useState<'monthly' | 'weekly'>('monthly')
+function PayoutsInner() {
+  const { get, patch } = useListSearchParams()
+  const tab = get('tab') === 'weekly' ? 'weekly' : 'monthly'
   const [monthly, setMonthly] = useState<Record<string, unknown>[]>([])
   const [weekly, setWeekly] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
@@ -49,7 +51,9 @@ export default function PayoutsPage() {
         <div className="px-5 pb-28">
           <SegmentedControl
             value={tab}
-            onChange={setTab}
+            onChange={(v) => {
+              patch({ tab: v === 'weekly' ? 'weekly' : null })
+            }}
             options={[
               { id: 'monthly', label: 'Miesięczne' },
               { id: 'weekly', label: 'Tygodniowe' },
@@ -80,11 +84,9 @@ export default function PayoutsPage() {
                     ? formatMonthTitle(item.monthStart || item.periodLabel || item.monthLabel)
                     : formatWeekTitle(item.weekStart || item.periodLabel || item.weekLabel)
                 const label =
-                  tab === 'monthly' ? monthlyListLabel(item.status) : 'Netto (kontrolne)'
+                  tab === 'monthly' ? monthlyListLabel(item.status) : 'Wypłata końcowa'
                 const amount =
-                  tab === 'monthly'
-                    ? item.payoutAmount ?? item.totalPayout ?? item.netPayout ?? item.amount
-                    : item.netAmount ?? item.netPayout ?? item.payoutAmount
+                  item.payoutAmount ?? item.totalPayout ?? item.netPayout ?? item.amount
                 const status = settlementStatusLabel(item.status)
                 const tone = settlementStatusTone(item.status)
 
@@ -121,5 +123,19 @@ export default function PayoutsPage() {
         </div>
       </PullToRefresh>
     </AppShell>
+  )
+}
+
+export default function PayoutsPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <LoadingBlock className="px-5 py-16" />
+        </AppShell>
+      }
+    >
+      <PayoutsInner />
+    </Suspense>
   )
 }

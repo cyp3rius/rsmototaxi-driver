@@ -189,6 +189,24 @@ export function PullToRefresh({
     }
   }, [lastOk, onRefresh, setPullBoth])
 
+  // Lock document rubber-band while pulling so header/nav stay put (iOS).
+  useEffect(() => {
+    if (phase !== 'pulling' && phase !== 'refreshing') return
+    const html = document.documentElement
+    const body = document.body
+    const prevHtml = html.style.overflow
+    const prevBody = body.style.overflow
+    const prevOverscroll = html.style.overscrollBehaviorY
+    html.style.overflow = 'hidden'
+    body.style.overflow = 'hidden'
+    html.style.overscrollBehaviorY = 'none'
+    return () => {
+      html.style.overflow = prevHtml
+      body.style.overflow = prevBody
+      html.style.overscrollBehaviorY = prevOverscroll
+    }
+  }, [phase])
+
   const onTouchStart = useCallback(
     (e: ReactTouchEvent) => {
       if (!canStartPull()) {
@@ -234,7 +252,9 @@ export function PullToRefresh({
       }
       const next = Math.min(MAX_PULL, dy * RESISTANCE)
       setPullBoth(next)
-      if (next > 8) e.preventDefault()
+      // Block native overscroll as soon as pull starts — otherwise iOS rubber-bands
+      // the whole page (header + fixed nav) along with our transform.
+      if (next > 0) e.preventDefault()
     }
 
     el.addEventListener('touchmove', onMove, { passive: false })

@@ -182,8 +182,7 @@ export function monthlyListLabel(status: unknown): string {
 export function weeklyDetailNote(weekStart: unknown): string {
   const d = parseDay(weekStart)
   if (!d) return 'Kontrolnie, wchodzi do wypłaty miesięcznej.'
-  // Week contributes to the month of the week start (typical payroll rule).
-  const month = MONTHS_GEN[d.getMonth()]
+  const month = MONTHS_NOM[d.getMonth()].toLowerCase()
   return `Kontrolnie, wchodzi do wypłaty za ${month}.`
 }
 

@@ -10,7 +10,7 @@ import { useAuth } from '@/lib/om/AuthProvider'
 import { isAppScopedTrip } from '@/lib/tripMeta'
 import {
   forceFixedBottomReflow,
-  readVisualViewportBottomY,
+  readVisualViewportBottomInset,
   syncVisualViewportCssVars,
 } from '@/lib/visualViewport'
 
@@ -51,16 +51,10 @@ export function BottomNav() {
 
     const pin = () => {
       syncVisualViewportCssVars()
-      const vvBottom = readVisualViewportBottomY()
-      const height = el.offsetHeight
-      if (!window.visualViewport) {
-        el.style.top = ''
-        el.style.bottom = '0px'
-        return
-      }
-      // Pin the nav’s bottom edge to the visual viewport bottom (not stale layout bottom).
-      el.style.bottom = 'auto'
-      el.style.top = `${Math.max(0, vvBottom - height)}px`
+      // Pin with `bottom` only — never `top` from offsetTop+height (that tracks iOS
+      // rubber-band / pull-to-refresh and lifts the nav mid-screen).
+      el.style.top = ''
+      el.style.bottom = `${readVisualViewportBottomInset()}px`
     }
 
     pin()
@@ -72,7 +66,6 @@ export function BottomNav() {
       pin()
       raf2 = requestAnimationFrame(pin)
     })
-    // After morph → dashboard, Safari often settles VV one tick later.
     const t1 = window.setTimeout(pin, 50)
     const t2 = window.setTimeout(() => {
       forceFixedBottomReflow()

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ListFilter, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
@@ -15,6 +15,7 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { formatMoney } from '@/lib/format'
+import { useListSearchParams } from '@/lib/useListSearchParams'
 import {
   costTypeLabel,
   expenseAmountValue,
@@ -24,6 +25,8 @@ import {
 } from '@/lib/tripMeta'
 
 type SortMode = 'occurred_desc' | 'occurred_asc' | 'created_desc' | 'created_asc'
+
+const SORT_MODES: SortMode[] = ['occurred_desc', 'occurred_asc', 'created_desc', 'created_asc']
 
 const SORT_LABEL: Record<SortMode, string> = {
   occurred_desc: 'Data dokumentu',
@@ -39,6 +42,11 @@ function nextSort(mode: SortMode): SortMode {
   return 'occurred_desc'
 }
 
+function parseSort(raw: string | null): SortMode {
+  if (raw && (SORT_MODES as string[]).includes(raw)) return raw as SortMode
+  return 'occurred_desc'
+}
+
 function startOfWeek(date = new Date()) {
   const d = new Date(date)
   const day = d.getDay()
@@ -48,13 +56,14 @@ function startOfWeek(date = new Date()) {
   return d
 }
 
-export default function ExpensesPage() {
+function ExpensesInner() {
+  const { get, patch } = useListSearchParams()
+  const sort = parseSort(get('sort'))
   const [items, setItems] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteId, setDeleteId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const toast = useToast()
-  const [sort, setSort] = useState<SortMode>('occurred_desc')
 
   async function reload() {
     const res = await omClient.getExpenses({ pageSize: 50 })
@@ -136,7 +145,10 @@ export default function ExpensesPage() {
             </p>
             <button
               type="button"
-              onClick={() => setSort((s) => nextSort(s))}
+              onClick={() => {
+                const next = nextSort(sort)
+                patch({ sort: next === 'occurred_desc' ? null : next })
+              }}
               className="inline-flex h-10 flex-none items-center gap-1.5 rounded-[10px] bg-[var(--bg-surface-raised)] px-3 text-[15px] font-[500]"
             >
               <ListFilter
@@ -226,5 +238,19 @@ export default function ExpensesPage() {
         </div>
       </BottomSheet>
     </AppShell>
+  )
+}
+
+export default function ExpensesPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <LoadingBlock className="px-5 py-16" />
+        </AppShell>
+      }
+    >
+      <ExpensesInner />
+    </Suspense>
   )
 }
