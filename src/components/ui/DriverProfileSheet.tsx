@@ -16,7 +16,6 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import {
@@ -192,7 +191,7 @@ export function DriverProfileSheet({
       await clearOutbox().catch(() => undefined)
       await logout()
       onClose()
-      router.replace('/login')
+      router.replace('/')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Nie udało się wylogować')
       setBusy(false)
@@ -379,10 +378,11 @@ export function DriverProfileSheet({
         </div>
       </BottomSheet>
 
-      <ConfirmDialog
+      <BottomSheet
         open={logoutOpen}
         onClose={() => setLogoutOpen(false)}
         title="Wylogować się?"
+        zClassName="z-[60]"
       >
         <p className="text-[16px] leading-6 text-[var(--text-secondary)]">
           {onShift
@@ -416,7 +416,7 @@ export function DriverProfileSheet({
             {pending > 0 ? 'Wyloguj mimo to' : 'Wyloguj się'}
           </Button>
         </div>
-      </ConfirmDialog>
+      </BottomSheet>
     </>
   )
 }

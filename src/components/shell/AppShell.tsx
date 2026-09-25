@@ -12,7 +12,7 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
   const router = useRouter()
 
   useEffect(() => {
-    if (ready && !session) router.replace('/login')
+    if (ready && !session) router.replace('/')
   }, [ready, session, router])
 
   if (!ready) {

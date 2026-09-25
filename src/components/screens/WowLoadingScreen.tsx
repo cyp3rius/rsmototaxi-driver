@@ -108,6 +108,11 @@ export function WowLoadingScreen() {
 
   const name = driverFirstName(me?.member)
   const plate = me?.todayAssignment?.resourcePlate || me?.profile?.defaultResourcePlate
+  /** Plate flies into dashboard shift card only when that card hosts `driver-plate`. */
+  const plateLandsOnCard =
+    Boolean(plate) &&
+    (me?.dashboardState === 'B' ||
+      (me?.dashboardState === 'C' && !me?.nextTrip && !me?.liveTrip))
   const ctx = me
     ? contextLine(me, missingCount, nextTripLabel)
     : { primary: 'Przygotowujemy Twój dzień.', secondary: null }
@@ -147,7 +152,7 @@ export function WowLoadingScreen() {
   useEffect(() => {
     if (!ready) return
     if (!session) {
-      router.replace('/login')
+      router.replace('/')
       return
     }
     let cancelled = false
@@ -268,7 +273,7 @@ export function WowLoadingScreen() {
   const ctxTy = 8 * (1 - w3) - 20 * m
   // Hand VT to phantom header once morph is near destination (avoids landing too low)
   const vtOnHeader = mRaw >= 0.55
-  const vtOnPlate = !isRoute && mRaw >= 0.75
+  const vtOnPlate = !isRoute && plateLandsOnCard && mRaw >= 0.75
 
   // Phantom dashboard under morph (brief dashOp / hdrOp)
   const dashInStart = isRoute ? 4700 : 3900
@@ -299,9 +304,16 @@ export function WowLoadingScreen() {
   const barOp = eo(seg(tt, 300, 450)) * (1 - seg(tt, 1700, 1900))
   const plateOp = eo(seg(tt, 1900, 2350))
   const plateFromY = G0 + 112 + 26 + 18
-  const plateTop = lerp(plateFromY, plateTargetTop, m) + 8 * (1 - plateOp)
-  const plateLeft = lerp(G_LEFT, 40, m)
-  const plateFade = plateOp * (1 - seg(mRaw, 0.85, 1))
+  /** No shift card on dashboard → dissolve plate instead of snapping off. */
+  const plateDissolve = !plateLandsOnCard ? eo(seg(mRaw, 0.12, 0.78)) : 0
+  const plateTop = plateLandsOnCard
+    ? lerp(plateFromY, plateTargetTop, m) + 8 * (1 - plateOp)
+    : plateFromY - 18 * plateDissolve + 8 * (1 - plateOp)
+  const plateLeft = plateLandsOnCard ? lerp(G_LEFT, 40, m) : G_LEFT
+  const plateScale = plateLandsOnCard ? 1 : lerp(1, 0.86, plateDissolve)
+  const plateFade = plateLandsOnCard
+    ? plateOp * (1 - seg(mRaw, 0.85, 1))
+    : plateOp * (1 - plateDissolve)
   // Prefer real load progress once available; else timeline bar
   const barWidth = dataReady ? Math.max(bar, progress / 100) : bar
 
@@ -337,7 +349,7 @@ export function WowLoadingScreen() {
           <button
             type="button"
             className="flex h-14 w-full items-center justify-center text-[16px] font-medium text-[var(--text-secondary)]"
-            onClick={() => void logout().then(() => router.replace('/login'))}
+            onClick={() => void logout().then(() => router.replace('/'))}
           >
             Wyloguj się
           </button>
@@ -384,7 +396,7 @@ export function WowLoadingScreen() {
             </div>
           </div>
         </div>
-        {!isRoute && plate ? (
+        {!isRoute && plate && plateLandsOnCard ? (
           <div className="px-5 pt-3" style={{ opacity: Math.max(hdrOp, vtOnPlate ? 1 : 0) }}>
             <div className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
               <div className="flex justify-between text-[15px] text-[var(--text-secondary)] opacity-40">
@@ -570,15 +582,16 @@ export function WowLoadingScreen() {
         </div>
       ) : null}
 
-      {/* —— Path B: plate flies into shift-card slot —— */}
+      {/* —— Path B: plate flies into shift-card slot, or dissolves when no card —— */}
       {!isRoute && plate ? (
         <div
-          className="absolute"
+          className="absolute origin-left"
           style={{
             left: plateLeft,
             top: plateTop,
             opacity: plateFade,
-            viewTransitionName: vtOnPlate ? undefined : 'driver-plate',
+            transform: `scale(${plateScale})`,
+            viewTransitionName: plateLandsOnCard && !vtOnPlate ? 'driver-plate' : undefined,
           }}
         >
           <PlateBadge plate={plate} />
