@@ -1,57 +1,308 @@
 'use client'
 
-import { useCallback, useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { ArrowDown, Check } from 'lucide-react'
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type TouchEvent as ReactTouchEvent,
+} from 'react'
+import { cn } from '@/lib/cn'
+import { Spinner } from '@/components/ui/Spinner'
+import { PtrRefreshingContext } from '@/components/ui/ptrContext'
 
+const THRESHOLD = 72
+const HOLD = 64
+const RESISTANCE = 0.5
+const MAX_PULL = 120
+const PILL_MS = 1200
+const LAST_OK_KEY = 'rs-driver-ptr-last-ok'
+
+type Phase = 'idle' | 'pulling' | 'refreshing'
+
+type Pill = {
+  offline: boolean
+  at: Date
+}
+
+function readLastOk(): Date | null {
+  try {
+    const raw = localStorage.getItem(LAST_OK_KEY)
+    if (!raw) return null
+    const d = new Date(raw)
+    return Number.isNaN(d.getTime()) ? null : d
+  } catch {
+    return null
+  }
+}
+
+function writeLastOk(date: Date) {
+  try {
+    localStorage.setItem(LAST_OK_KEY, date.toISOString())
+  } catch {
+    // ignore
+  }
+}
+
+function formatPillTime(date: Date) {
+  return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
+}
+
+function ProgressRing({
+  progress,
+  armed,
+  refreshing,
+}: {
+  progress: number
+  armed: boolean
+  refreshing: boolean
+}) {
+  const size = 36
+  const stroke = 2.5
+  const r = (size - stroke) / 2
+  const c = 2 * Math.PI * r
+  const p = Math.max(0, Math.min(1, progress))
+
+  if (refreshing) {
+    return <Spinner aria-hidden />
+  }
+
+  return (
+    <span
+      className={cn(
+        'relative flex size-9 items-center justify-center rounded-full transition-colors duration-200',
+        armed ? 'bg-[var(--accent)]' : 'bg-transparent',
+      )}
+      aria-hidden
+    >
+      {!armed ? (
+        <svg width={size} height={size} className="absolute inset-0 -rotate-90" viewBox={`0 0 ${size} ${size}`}>
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="var(--separator)"
+            strokeWidth={stroke}
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={c}
+            strokeDashoffset={c * (1 - p)}
+          />
+        </svg>
+      ) : null}
+      <ArrowDown
+        size={18}
+        strokeWidth={2.2}
+        className={cn(
+          'relative transition-transform duration-200',
+          armed ? 'rotate-180 text-[var(--accent-on)]' : 'rotate-0 text-[var(--accent)]',
+        )}
+      />
+    </span>
+  )
+}
+
+/**
+ * Pull-to-refresh matching design 5.5:
+ * resistance 0.5, threshold 72, hold 64 with spinner, success/offline pill ~1.2s.
+ * Header must stay outside this component so it does not move.
+ */
 export function PullToRefresh({
   onRefresh,
   children,
+  className,
 }: {
   onRefresh: () => Promise<void>
   children: ReactNode
+  className?: string
 }) {
+  const rootRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
+  const tracking = useRef(false)
+  const pullRef = useRef(0)
+  const phaseRef = useRef<Phase>('idle')
+
   const [pull, setPull] = useState(0)
-  const [refreshing, setRefreshing] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
+  const [pill, setPill] = useState<Pill | null>(null)
+  const [lastOk, setLastOk] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setLastOk(readLastOk())
+  }, [])
+
+  useEffect(() => {
+    phaseRef.current = phase
+  }, [phase])
+
+  useEffect(() => {
+    pullRef.current = pull
+  }, [pull])
+
+  const setPullBoth = useCallback((value: number) => {
+    pullRef.current = value
+    setPull(value)
+  }, [])
+
+  const canStartPull = useCallback(() => {
+    if (phaseRef.current === 'refreshing') return false
+    if (typeof window === 'undefined') return false
+    if (window.scrollY > 1) return false
+    const scroller = rootRef.current?.closest('[data-scroll-root]') as HTMLElement | null
+    if (scroller && scroller.scrollTop > 1) return false
+    return true
+  }, [])
+
+  const finishRefresh = useCallback(async () => {
+    setPhase('refreshing')
+    setPullBoth(HOLD)
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+    let ok = false
+    try {
+      if (offline) throw new Error('offline')
+      await onRefresh()
+      ok = true
+      const now = new Date()
+      writeLastOk(now)
+      setLastOk(now)
+      setPill({ offline: false, at: now })
+    } catch {
+      const at = readLastOk() || lastOk || new Date()
+      setPill({ offline: true, at })
+    } finally {
+      setPullBoth(0)
+      setPhase('idle')
+      tracking.current = false
+      startY.current = 0
+      window.setTimeout(() => setPill(null), PILL_MS)
+      void ok
+    }
+  }, [lastOk, onRefresh, setPullBoth])
 
   const onTouchStart = useCallback(
-    (e: TouchEvent) => {
-      if (window.scrollY > 0 || refreshing) return
-      startY.current = e.touches[0]?.clientY ?? 0
-    },
-    [refreshing],
-  )
-
-  const onTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (window.scrollY > 0 || refreshing || !startY.current) return
-      const dy = (e.touches[0]?.clientY ?? 0) - startY.current
-      if (dy > 0) setPull(Math.min(88, dy * 0.45))
-    },
-    [refreshing],
-  )
-
-  const onTouchEnd = useCallback(async () => {
-    if (pull > 56 && !refreshing) {
-      setRefreshing(true)
-      try {
-        await onRefresh()
-      } finally {
-        setRefreshing(false)
+    (e: ReactTouchEvent) => {
+      if (!canStartPull()) {
+        tracking.current = false
+        return
       }
-    }
-    setPull(0)
+      tracking.current = true
+      startY.current = e.touches[0]?.clientY ?? 0
+      setPhase('pulling')
+    },
+    [canStartPull],
+  )
+
+  const onTouchEnd = useCallback(() => {
+    if (!tracking.current && phaseRef.current !== 'pulling') return
+    const current = pullRef.current
+    tracking.current = false
     startY.current = 0
-  }, [onRefresh, pull, refreshing])
+    if (current >= THRESHOLD && phaseRef.current !== 'refreshing') {
+      void finishRefresh()
+      return
+    }
+    setPullBoth(0)
+    setPhase('idle')
+  }, [finishRefresh, setPullBoth])
+
+  // Non-passive touchmove so we can prevent Safari page rubber-band while pulling.
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+
+    const onMove = (e: TouchEvent) => {
+      if (!tracking.current || phaseRef.current === 'refreshing') return
+      if (!canStartPull() && pullRef.current <= 0) {
+        tracking.current = false
+        return
+      }
+      const y = e.touches[0]?.clientY ?? 0
+      const dy = y - startY.current
+      if (dy <= 0) {
+        setPullBoth(0)
+        return
+      }
+      const next = Math.min(MAX_PULL, dy * RESISTANCE)
+      setPullBoth(next)
+      if (next > 8) e.preventDefault()
+    }
+
+    el.addEventListener('touchmove', onMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onMove)
+  }, [canStartPull, setPullBoth])
+
+  const offset = phase === 'refreshing' ? HOLD : pull
+  const progress = Math.min(1, pull / THRESHOLD)
+  const armed = pull >= THRESHOLD
+  const showHint = armed && phase === 'pulling'
+  const refreshing = phase === 'refreshing'
 
   return (
-    <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={() => void onTouchEnd()}>
+    <PtrRefreshingContext.Provider value={refreshing}>
+    <div
+      ref={rootRef}
+      className={cn('relative', className)}
+      style={{ overscrollBehaviorY: 'contain' }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchEnd}
+    >
+      {pill ? (
+        <div className="pointer-events-none absolute inset-x-0 top-1 z-30 flex justify-center px-5">
+          <div className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5 shadow-[var(--sheet-shadow)]">
+            {pill.offline ? null : (
+              <Check size={16} strokeWidth={2.4} className="text-[var(--success)]" aria-hidden />
+            )}
+            <span className="text-[15px] font-medium text-[var(--text-primary)]">
+              {pill.offline
+                ? `Ostatnie dane · ${formatPillTime(pill.at)}`
+                : `Zaktualizowano · ${formatPillTime(pill.at)}`}
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       <div
-        className="flex items-center justify-center overflow-hidden text-[15px] text-[var(--text-secondary)] transition-[height]"
-        style={{ height: refreshing ? 40 : pull }}
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden"
+        style={{ height: offset }}
       >
-        {refreshing || pull > 40 ? (refreshing ? 'Odświeżanie…' : 'Puść, aby odświeżyć') : null}
+        {offset > 10 ? (
+          <>
+            <ProgressRing
+              progress={refreshing ? 1 : progress}
+              armed={armed || refreshing}
+              refreshing={refreshing}
+            />
+            {showHint ? (
+              <span className="pb-1 text-[13px] font-medium text-[var(--text-secondary)]">
+                Puść, aby odświeżyć
+              </span>
+            ) : null}
+          </>
+        ) : null}
       </div>
-      {children}
+
+      <div
+        style={{
+          transform: offset > 0 ? `translate3d(0, ${offset}px, 0)` : undefined,
+          transition: phase === 'pulling' ? 'none' : 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)',
+          willChange: offset > 0 ? 'transform' : undefined,
+        }}
+      >
+        {children}
+      </div>
     </div>
+    </PtrRefreshingContext.Provider>
   )
 }

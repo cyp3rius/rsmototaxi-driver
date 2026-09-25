@@ -378,19 +378,14 @@ function CustomerCreateSheet({
         />
 
         {kind === 'company' ? (
-          <>
-            <TextField
-              label="Nazwa firmy"
-              labelHint="opcjonalnie"
-              value={name}
-              onChange={(e) => onNameChange(e.target.value)}
-              placeholder="Hotel Stary Sp. z o.o."
-              autoComplete="organization"
-            />
-            <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
-              Dane firmy uzupełni CRM na podstawie NIP.
-            </p>
-          </>
+          <TextField
+            label="Nazwa firmy"
+            labelHint="opcjonalnie"
+            value={name}
+            onChange={(e) => onNameChange(e.target.value)}
+            placeholder="Hotel Stary Sp. z o.o."
+            autoComplete="organization"
+          />
         ) : (
           <TextField
             label="Imię i nazwisko"

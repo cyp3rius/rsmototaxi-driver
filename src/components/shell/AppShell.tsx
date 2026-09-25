@@ -8,6 +8,8 @@ import {
 } from '@/components/shell/SystemBanners'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { Button } from '@/components/ui/Button'
+import { Spinner } from '@/components/ui/Spinner'
+import { forceFixedBottomReflow } from '@/lib/visualViewport'
 
 export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?: boolean }) {
   const { ready, session, me } = useAuth()
@@ -17,10 +19,17 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
     if (ready && !session) router.replace('/')
   }, [ready, session, router])
 
+  useEffect(() => {
+    if (hideNav || !ready || !session) return
+    forceFixedBottomReflow()
+    const t = window.setTimeout(forceFixedBottomReflow, 120)
+    return () => window.clearTimeout(t)
+  }, [hideNav, ready, session])
+
   if (!ready) {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-[#020407]">
-        <span className="sr-only">Ładowanie</span>
+        <Spinner />
       </div>
     )
   }
@@ -45,7 +54,7 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
   }
 
   return (
-        <SystemBannerProvider>
+    <SystemBannerProvider>
       <div
         className={`mx-auto min-h-dvh max-w-lg bg-[var(--bg-base)] ${readOnly ? 'pointer-events-none select-none' : ''}`}
       >

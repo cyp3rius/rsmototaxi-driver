@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button'
 import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
+import { LoadingBlock } from '@/components/ui/Spinner'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useToast } from '@/components/ui/toast/ToastProvider'
@@ -26,9 +27,9 @@ type SortMode = 'occurred_desc' | 'occurred_asc' | 'created_desc' | 'created_asc
 
 const SORT_LABEL: Record<SortMode, string> = {
   occurred_desc: 'Data dokumentu',
-  occurred_asc: 'Data dokumentu ↑',
+  occurred_asc: 'Data dokumentu',
   created_desc: 'Data dodania',
-  created_asc: 'Data dodania ↑',
+  created_asc: 'Data dodania',
 }
 
 function nextSort(mode: SortMode): SortMode {
@@ -124,12 +125,7 @@ export default function ExpensesPage() {
       />
       <PullToRefresh
         onRefresh={async () => {
-          setLoading(true)
-          try {
-            await reload()
-          } finally {
-            setLoading(false)
-          }
+          await reload()
         }}
       >
         <div className="px-5 pb-28">
@@ -143,13 +139,18 @@ export default function ExpensesPage() {
               onClick={() => setSort((s) => nextSort(s))}
               className="inline-flex h-10 flex-none items-center gap-1.5 rounded-[10px] bg-[var(--bg-surface-raised)] px-3 text-[15px] font-[500]"
             >
-              <ListFilter size={16} strokeWidth={2} />
+              <ListFilter
+                size={16}
+                strokeWidth={2}
+                className={`transition-transform duration-200 ${sort.endsWith('_asc') ? 'rotate-180' : ''}`}
+                aria-hidden
+              />
               {SORT_LABEL[sort]}
             </button>
           </div>
 
-          {loading ? (
-            <p className="mt-6 text-[var(--text-secondary)]">Ładowanie…</p>
+          {loading && items.length === 0 ? (
+            <LoadingBlock className="mt-6" />
           ) : items.length === 0 ? (
             <p className="mt-6 text-[var(--text-secondary)]">Brak kosztów.</p>
           ) : (

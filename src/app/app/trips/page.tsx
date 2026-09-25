@@ -7,6 +7,8 @@ import { useSearchParams } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
+import { LoadingBlock } from '@/components/ui/Spinner'
+import { InfiniteScrollSentinel, INFINITE_PAGE_SIZE } from '@/components/ui/InfiniteScrollSentinel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { FilterChip } from '@/components/ui/FilterChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -101,12 +103,12 @@ function TripsInner() {
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [loadingMore, setLoadingMore] = useState(false)
-  const pageSize = 20
+  const pageSize = INFINITE_PAGE_SIZE
 
   const load = useCallback(
-    async (pageNum = 1, append = false) => {
+    async (pageNum = 1, append = false, silent = false) => {
       if (append) setLoadingMore(true)
-      else setLoading(true)
+      else if (!silent) setLoading(true)
       try {
         const params: Parameters<typeof omClient.getTrips>[0] = {
           page: pageNum,
@@ -124,8 +126,15 @@ function TripsInner() {
             : Promise.resolve(null),
         ])
         const scopedItems = list.items.filter(isAppScopedTrip)
-        setItems((prev) => (append ? [...prev, ...scopedItems] : scopedItems))
-        setTotal(list.total)
+        const reachedEnd = scopedItems.length < pageSize
+        setItems((prev) => {
+          const next = append ? [...prev, ...scopedItems] : scopedItems
+          // Prefer short-page as end signal (client filter can shrink rows vs server total).
+          if (reachedEnd) setTotal(next.length)
+          else if (typeof list.total === 'number') setTotal(Math.max(list.total, next.length + 1))
+          else setTotal(next.length + pageSize)
+          return next
+        })
         setPage(pageNum)
         if (missing) {
           setMissingCount(missing.items.filter(isAppScopedTrip).length)
@@ -133,11 +142,11 @@ function TripsInner() {
           setMissingCount(scopedItems.length)
         }
       } finally {
-        setLoading(false)
+        if (!silent) setLoading(false)
         setLoadingMore(false)
       }
     },
-    [missingOnly, scope],
+    [missingOnly, scope, pageSize],
   )
 
   useEffect(() => {
@@ -203,7 +212,7 @@ function TripsInner() {
           </Link>
         }
       />
-      <PullToRefresh onRefresh={() => load(1, false)}>
+      <PullToRefresh onRefresh={() => load(1, false, true)}>
         <div className="px-5 pb-28 max-[390px]:px-5 sm:px-6">
           <SegmentedControl
             value={scope}
@@ -231,8 +240,8 @@ function TripsInner() {
             </FilterChip>
           </div>
 
-          {loading ? (
-            <p className="mt-6 text-[var(--text-secondary)]">Ładowanie…</p>
+          {loading && items.length === 0 ? (
+            <LoadingBlock className="mt-6" />
           ) : items.length === 0 ? (
             <p className="mt-6 text-[var(--text-secondary)]">
               {scope === 'today' && !missingOnly
@@ -259,16 +268,14 @@ function TripsInner() {
               ))}
             </div>
           )}
-          {hasMore && !loading ? (
-            <button
-              type="button"
-              disabled={loadingMore}
-              onClick={() => void load(page + 1, true)}
-              className="mt-5 flex h-14 w-full items-center justify-center rounded-full border border-[var(--separator)] text-[17px] font-medium"
-            >
-              {loadingMore ? 'Ładowanie…' : 'Pokaż więcej'}
-            </button>
-          ) : null}
+          <InfiniteScrollSentinel
+            hasMore={hasMore}
+            loading={loadingMore}
+            disabled={loading}
+            onLoadMore={() => {
+              void load(page + 1, true)
+            }}
+          />
         </div>
       </PullToRefresh>
     </AppShell>
@@ -280,7 +287,7 @@ export default function TripsPage() {
     <Suspense
       fallback={
         <AppShell>
-          <div className="px-5 py-6 text-[var(--text-secondary)]">Ładowanie…</div>
+          <LoadingBlock className="px-5 py-16" />
         </AppShell>
       }
     >

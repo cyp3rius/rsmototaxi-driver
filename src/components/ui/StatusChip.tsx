@@ -8,12 +8,13 @@ export function StatusChip({
   className,
 }: {
   children: ReactNode
-  tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent'
+  tone?: 'neutral' | 'success' | 'warning' | 'danger' | 'accent' | 'ink'
   pulse?: boolean
   className?: string
 }) {
   const tones = {
     neutral: 'bg-[var(--bg-surface-raised)] text-[var(--text-secondary)]',
+    ink: 'bg-[var(--bg-surface-raised)] text-[var(--text-primary)]',
     success: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]',
     warning: 'tint-warning text-[var(--warning)]',
     danger: 'tint-danger text-[var(--danger)]',

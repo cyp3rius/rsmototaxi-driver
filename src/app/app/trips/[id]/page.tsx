@@ -7,6 +7,7 @@ import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { LoadingBlock } from '@/components/ui/Spinner'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { ReceiptSheet, receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
@@ -206,7 +207,7 @@ export default function TripDetailPage() {
       <PageHeader title={detailTitle} onBack={() => router.back()} />
 
       {!trip ? (
-        <p className="px-5 text-[var(--text-secondary)]">Ładowanie…</p>
+        <LoadingBlock className="px-5" />
       ) : (
         <div className={`space-y-3 px-5 ${showActionBar ? 'pb-36' : 'pb-28'}`}>
           {isInProgress && onShift ? (

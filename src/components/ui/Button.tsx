@@ -2,6 +2,7 @@
 
 import { cn } from '@/lib/cn'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import { Spinner } from '@/components/ui/Spinner'
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
@@ -43,7 +44,7 @@ export function Button({
       {...rest}
     >
       {loading ? (
-        <span className="inline-block size-5 animate-spin rounded-full border-2 border-current border-r-transparent" />
+        <Spinner size="sm" aria-hidden className="border-current border-t-transparent" />
       ) : (
         children
       )}

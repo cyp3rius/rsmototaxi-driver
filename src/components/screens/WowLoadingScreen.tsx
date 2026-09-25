@@ -167,6 +167,15 @@ export function WowLoadingScreen() {
     if (finished.current) return
     finished.current = true
     markWowSeen(!returning)
+    // Reset scroll / overflow so iOS does not leave fixed bottom nav floating
+    // after the fullscreen morph (gap under tab bar until user scrolls).
+    try {
+      document.documentElement.style.overflow = ''
+      document.body.style.overflow = ''
+      window.scrollTo(0, 0)
+    } catch {
+      // ignore
+    }
     // Morph already painted dashboard chrome — plain replace avoids VT geometry jump.
     router.replace('/app')
   }, [returning, router])

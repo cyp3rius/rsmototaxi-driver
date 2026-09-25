@@ -6,6 +6,8 @@ import { AppShell } from '@/components/shell/AppShell'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PullToRefresh } from '@/components/ui/PullToRefresh'
+import { LoadingBlock } from '@/components/ui/Spinner'
+import { InfiniteScrollSentinel, INFINITE_PAGE_SIZE } from '@/components/ui/InfiniteScrollSentinel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -79,9 +81,14 @@ function shiftChip(item: Assignment): {
 }
 
 function planRange(item: Assignment) {
-  const start = item.plannedShiftStart || item.shiftStart
-  const end = item.plannedShiftEnd || item.shiftEnd
-  return `${formatTime(String(start || ''))}–${formatTime(String(end || ''))}`
+  const active = Boolean(item.shiftStart && !item.shiftEnd)
+  const start = active
+    ? item.shiftStart || item.plannedShiftStart
+    : item.plannedShiftStart || item.shiftStart
+  const end = active ? item.plannedShiftEnd : item.plannedShiftEnd || item.shiftEnd
+  const startLabel = formatTime(String(start || ''))
+  if (active && !end) return `${startLabel}–…`
+  return `${startLabel}–${formatTime(String(end || ''))}`
 }
 
 function metaLine(item: Assignment) {
@@ -118,32 +125,44 @@ function ShiftsInner() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [busy, setBusy] = useState(false)
   const [endOpen, setEndOpen] = useState(false)
   const [missingTrips, setMissingTrips] = useState<Array<{ id: string; label: string }>>([])
 
-  const pageSize = 20
+  const pageSize = INFINITE_PAGE_SIZE
 
   const load = useCallback(
     async (nextPage: number, replace: boolean) => {
-      const params: {
-        page: number
-        pageSize: number
-        dateFrom?: string
-        dateTo?: string
-      } = { page: nextPage, pageSize }
-      if (scope === 'week') {
-        params.dateFrom = toDateKey(startOfWeek().toISOString())
-        params.dateTo = toDateKey(endOfWeek().toISOString())
+      if (!replace) setLoadingMore(true)
+      try {
+        const params: {
+          page: number
+          pageSize: number
+          dateFrom?: string
+          dateTo?: string
+        } = { page: nextPage, pageSize }
+        if (scope === 'week') {
+          params.dateFrom = toDateKey(startOfWeek().toISOString())
+          params.dateTo = toDateKey(endOfWeek().toISOString())
+        }
+        const res = await omClient.getAssignments(params)
+        const payload = res as { items?: Assignment[]; total?: number }
+        const list = payload.items || (Array.isArray(res) ? (res as Assignment[]) : [])
+        const reachedEnd = list.length < pageSize
+        setItems((prev) => {
+          const next = replace ? list : [...prev, ...list]
+          if (reachedEnd) setTotal(next.length)
+          else if (typeof payload.total === 'number') setTotal(Math.max(payload.total, next.length + 1))
+          else setTotal(next.length + pageSize)
+          return next
+        })
+        setPage(nextPage)
+      } finally {
+        setLoadingMore(false)
       }
-      const res = await omClient.getAssignments(params)
-      const payload = res as { items?: Assignment[]; total?: number }
-      const list = payload.items || (Array.isArray(res) ? (res as Assignment[]) : [])
-      setTotal(typeof payload.total === 'number' ? payload.total : list.length)
-      setPage(nextPage)
-      setItems((prev) => (replace ? list : [...prev, ...list]))
     },
-    [scope],
+    [scope, pageSize],
   )
 
   useEffect(() => {
@@ -224,7 +243,7 @@ function ShiftsInner() {
     }
   }
 
-  const canShowMore = items.length < total
+  const hasMore = items.length < total
 
   return (
     <AppShell>
@@ -242,17 +261,12 @@ function ShiftsInner() {
 
       <PullToRefresh
         onRefresh={async () => {
-          setLoading(true)
-          try {
-            await Promise.all([refreshMe(), load(1, true)])
-          } finally {
-            setLoading(false)
-          }
+          await Promise.all([refreshMe(), load(1, true)])
         }}
       >
         <div className="px-5 pb-28 pt-4">
           {loading && items.length === 0 ? (
-            <p className="text-[var(--text-secondary)]">Ładowanie…</p>
+            <LoadingBlock className="py-16" />
           ) : groups.length === 0 ? (
             <p className="text-[var(--text-secondary)]">Brak zmian w tym zakresie.</p>
           ) : (
@@ -317,15 +331,14 @@ function ShiftsInner() {
             </div>
           )}
 
-          {canShowMore ? (
-            <button
-              type="button"
-              className="mt-4 flex h-14 w-full items-center justify-center rounded-full border border-[var(--separator)] text-[17px] font-[500]"
-              onClick={() => void load(page + 1, false)}
-            >
-              Pokaż więcej
-            </button>
-          ) : null}
+          <InfiniteScrollSentinel
+            hasMore={hasMore}
+            loading={loadingMore}
+            disabled={loading}
+            onLoadMore={() => {
+              void load(page + 1, false)
+            }}
+          />
         </div>
       </PullToRefresh>
 
@@ -345,7 +358,7 @@ function ShiftsInner() {
 
 export default function ShiftsPage() {
   return (
-    <Suspense fallback={<div className="p-6">Ładowanie…</div>}>
+    <Suspense fallback={<LoadingBlock className="min-h-dvh py-24" />}>
       <ShiftsInner />
     </Suspense>
   )

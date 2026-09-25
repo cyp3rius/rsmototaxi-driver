@@ -4,74 +4,86 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { LoadingBlock } from '@/components/ui/Spinner'
+import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { omClient } from '@/lib/om/client'
 import { formatMoney } from '@/lib/format'
-
-function rowsFromSettlement(data: Record<string, unknown> | null) {
-  if (!data) return []
-  const candidates: Array<[string, unknown]> = [
-    ['Przychód', data.revenueAmount ?? data.grossRevenue ?? data.totalRevenue],
-    ['Koszty', data.expensesAmount ?? data.totalExpenses ?? data.costsAmount],
-    ['Netto', data.netAmount ?? data.netRevenue],
-    ['Procent wypłaty', data.payoutPercent != null ? `${data.payoutPercent}%` : null],
-    ['Udział kierowcy', data.driverShare ?? data.shareAmount],
-    ['Bonus', data.bonusAmount ?? data.bonus],
-    ['Rekompensata', data.compensationAmount ?? data.compensation],
-    ['Wypłata końcowa', data.payoutAmount ?? data.totalPayout ?? data.netPayout ?? data.amount],
-  ]
-  return candidates.filter(([, v]) => v != null && v !== '')
-}
+import { cn } from '@/lib/cn'
+import {
+  formatMonthTitle,
+  monthlyBreakdownRows,
+  monthlyDetailNote,
+  settlementStatusLabel,
+  settlementStatusTone,
+} from '@/lib/settlementUi'
 
 export default function MonthlyPayoutDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
   const [data, setData] = useState<Record<string, unknown> | null>(null)
+  const [error, setError] = useState(false)
 
   useEffect(() => {
-    void omClient.getMonthlySettlement(params.id).then((res) => setData(res as Record<string, unknown>))
+    void omClient
+      .getMonthlySettlement(params.id)
+      .then((res) => setData(res as Record<string, unknown>))
+      .catch(() => setError(true))
   }, [params.id])
 
   const amount = data?.payoutAmount ?? data?.totalPayout ?? data?.netPayout ?? null
-  const rows = useMemo(() => rowsFromSettlement(data), [data])
+  const rows = useMemo(() => (data ? monthlyBreakdownRows(data) : []), [data])
+  const title = data ? formatMonthTitle(data.monthStart || data.periodLabel || data.monthLabel) : '—'
+  const status = settlementStatusLabel(data?.status)
+  const tone = settlementStatusTone(data?.status)
+  const note = data ? monthlyDetailNote(data) : ''
 
   return (
     <AppShell hideNav>
       <PageHeader title="Wypłata miesięczna" onBack={() => router.back()} />
       <div className="px-5 pb-10">
-        <p className="text-[15px] text-[var(--text-secondary)]">
-          {String(data?.monthLabel || data?.periodLabel || '—')}
-        </p>
-        <p
-          className="mt-2 font-[family-name:var(--font-display)] text-[40px] font-semibold text-[var(--accent)]"
-          style={{ fontStretch: '118%' }}
-        >
-          {formatMoney(amount)}
-        </p>
-
-        {data ? (
-          <SurfaceCard className="mt-6 overflow-hidden !p-0">
-            {rows.map(([label, value], index) => {
-              const isFinal = label === 'Wypłata końcowa' || label === 'Netto'
-              return (
-                <div
-                  key={`${label}-${index}`}
-                  className="flex justify-between gap-3 border-b border-[var(--separator)] px-4 py-3.5 text-[15px] last:border-0"
-                >
-                  <span className="text-[var(--text-secondary)]">{label}</span>
-                  <span className={`text-right font-medium tabular-nums ${isFinal ? 'font-semibold text-[var(--text-primary)]' : ''}`}>
-                    {typeof value === 'string' && value.includes('%') ? value : formatMoney(value)}
-                  </span>
-                </div>
-              )
-            })}
-            <div className="flex justify-between gap-3 px-4 py-3.5 text-[15px]">
-              <span className="text-[var(--text-secondary)]">Status</span>
-              <span className="font-medium">{String(data.status || '—')}</span>
-            </div>
-          </SurfaceCard>
+        {error ? (
+          <p className="mt-6 text-[15px] text-[var(--text-secondary)]">Nie udało się wczytać wypłaty.</p>
+        ) : !data ? (
+          <LoadingBlock className="mt-10" />
         ) : (
-          <p className="mt-4 text-[var(--text-secondary)]">Ładowanie…</p>
+          <>
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <span className="text-[17px] font-semibold">{title}</span>
+              <StatusChip tone={tone}>{status}</StatusChip>
+            </div>
+
+            <p className="mt-6 text-[15px] text-[var(--text-secondary)]">Wypłata końcowa</p>
+            <p
+              className="font-[family-name:var(--font-display)] text-[44px] font-semibold leading-[1.05] tabular-nums text-[var(--accent)]"
+              style={{ fontStretch: '125%' }}
+            >
+              {formatMoney(amount)}
+            </p>
+            {note ? <p className="mt-1.5 text-[15px] text-[var(--text-secondary)]">{note}</p> : null}
+
+            <SurfaceCard className="mt-6 overflow-hidden !rounded-[20px] !p-0">
+              {rows.map((row, index) => (
+                <div
+                  key={row.key}
+                  className={cn(
+                    'flex justify-between gap-3 px-4 py-3.5',
+                    index < rows.length - 1 ? 'border-b border-[var(--separator)]' : null,
+                    row.strong ? 'bg-[var(--bg-surface-raised)] text-[17px] font-semibold' : 'text-[16px] font-normal',
+                  )}
+                >
+                  <span className={row.strong ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}>
+                    {row.label}
+                  </span>
+                  <span className="tabular-nums">{row.value}</span>
+                </div>
+              ))}
+            </SurfaceCard>
+
+            <p className="mt-3 px-1 text-[15px] leading-5 text-[var(--text-secondary)]">
+              Rozliczenie akceptuje flota. Pytania o kwoty: koordynator, 508 222 321.
+            </p>
+          </>
         )}
       </div>
     </AppShell>
