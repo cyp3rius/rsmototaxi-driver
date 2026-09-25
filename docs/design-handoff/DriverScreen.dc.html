@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Mona+Sans:wdth,wght@75..125,200..900&family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>@keyframes rsSpin{to{transform:rotate(360deg)}}@keyframes rsPulse{0%{box-shadow:0 0 0 0 rgba(76,195,138,.55)}100%{box-shadow:0 0 0 9px rgba(76,195,138,0)}}</style>
+</helmet>
+<div style="{{ rootStyle }}">
+
+<sc-if value="{{ showChrome }}" hint-placeholder-val="{{ true }}">
+  <div style="{{ sbStyle }}">
+    <span style="font-size:16px;font-weight:600;letter-spacing:-.01em;">{{ clock }}</span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="18" height="12" viewBox="0 0 18 12" style="fill:currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg>
+      <svg width="16" height="12" viewBox="0 0 24 18" style="fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round"><path d="M2 6.5a15 15 0 0 1 20 0M5.5 10.2a10 10 0 0 1 13 0M9 13.8a5 5 0 0 1 6 0"></path></svg>
+      <span style="width:25px;height:12px;border-radius:4px;border:1.5px solid currentColor;opacity:.9;padding:1.5px;box-sizing:border-box;display:flex;"><span style="flex:1;border-radius:2px;background:currentColor;"></span></span>
+    </span>
+  </div>
+  <sc-if value="{{ island }}"><div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:90;"></div></sc-if>
+  <div style="{{ homeStyle }}"></div>
+</sc-if>
+
+<!-- ============ WELCOME ============ -->
+<sc-if value="{{ isWelcome }}">
+  <div style="position:absolute;inset:0;background:#020407;">
+    <sc-if value="{{ wFull }}">
+      <div style="{{ heroFilterStyle }}">
+        <img src="{{ heroSrc }}" alt="" style="{{ kbStyle }}">
+        <sc-if value="{{ wMotion }}">
+          <div style="{{ glowStyle }}"></div>
+          <div style="{{ flareStyle }}"></div>
+        </sc-if>
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,4,7,.5) 0%, rgba(2,4,7,0) 20%, rgba(2,4,7,0) 50%, rgba(2,4,7,.88) 67%, #020407 100%);"></div>
+      </div>
+      <div style="{{ welcomeContentStyle }}">
+        <div style="{{ logoStyle }}"><img src="assets/logo-light.svg" alt="RS Moto Taxi" style="height:68px;width:auto;display:block;"></div>
+        <div style="flex:1;"></div>
+        <div style="{{ headStyle }}">
+          <h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:118%;font-weight:600;font-size:34px;line-height:1.08;letter-spacing:-.01em;color:#FFFFFF;text-wrap:balance;">Spokój, klasa, przewidywalność.</h1>
+          <p style="margin:12px 0 0;font-size:17px;line-height:24px;color:rgba(242,244,246,.74);">Aplikacja kierowcy RS Moto Taxi</p>
+        </div>
+        <div style="{{ ctaStyle }}">
+          <div style="height:56px;border-radius:999px;background:var(--p-accent);color:var(--p-on);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;">Zaloguj się</div>
+          <div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:rgba(242,244,246,.8);">Problem z logowaniem?</div>
+        </div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ wSplit }}">
+      <div style="position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;">
+        <div style="{{ splitPhotoStyle }}">
+          <img src="{{ heroSrc }}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 46%;transform:scale(1.18);transform-origin:45% 50%;">
+          <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(2,4,7,.55) 0%, rgba(2,4,7,0) 30%, rgba(2,4,7,0) 80%, rgba(2,4,7,.35) 100%);"></div>
+          <div style="{{ splitLogoStyle }}"><img src="assets/logo-light.svg" alt="RS Moto Taxi" style="height:60px;width:auto;display:block;"></div>
+        </div>
+        <div style="{{ splitContentStyle }}">
+          <h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:118%;font-weight:600;font-size:32px;line-height:1.1;letter-spacing:-.01em;color:var(--fg);text-wrap:balance;">Spokój, klasa, przewidywalność.</h1>
+          <p style="margin:10px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Aplikacja kierowcy RS Moto Taxi</p>
+          <div style="margin-top:28px;height:56px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;">Zaloguj się</div>
+          <div style="height:48px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--fg2);">Problem z logowaniem?</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isLogin }}">
+      <div style="position:absolute;inset:0;background:rgba(2,4,7,.35);"></div>
+      <div style="{{ sheetStyle }}">
+        <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+        <div style="{{ loginFormStyle }}">
+          <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;color:var(--fg);">Zaloguj się</h2>
+          <p style="margin:6px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Użyj danych konta kierowcy.</p>
+          <sc-if value="{{ lOffline }}">
+            <div style="margin-top:16px;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 16px;border-radius:14px;background:color-mix(in srgb, var(--warning) 13%, var(--surface));border:1px solid color-mix(in srgb, var(--warning) 30%, transparent);">
+              <svg width="22" height="22" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--warning);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.1-1.6M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"></path></svg>
+              <span style="flex:1;font-size:15px;line-height:20px;color:var(--fg);">Brak połączenia z internetem. Logowanie wymaga sieci.</span>
+            </div>
+            <div style="margin-top:8px;height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;color:var(--fg);">
+              <svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg>Spróbuj ponownie</div>
+          </sc-if>
+          <div style="margin-top:24px;font-size:15px;font-weight:500;color:var(--fg);">E-mail</div>
+          <div style="{{ emailFieldStyle }}">
+            <sc-if value="{{ lEmpty }}"><span style="color:var(--fg3);">jan@rsmototaxi.pl</span></sc-if>
+            <sc-if value="{{ lHasVal }}"><span>slawek.nowak@rsmototaxi.pl</span></sc-if>
+          </div>
+          <div style="margin-top:16px;font-size:15px;font-weight:500;color:var(--fg);">Hasło</div>
+          <div style="{{ pwdFieldStyle }}">
+            <sc-if value="{{ lHasVal }}"><span style="letter-spacing:3px;font-size:20px;">••••••••••</span></sc-if>
+            <sc-if value="{{ lCaret }}"><span style="width:2px;height:22px;background:var(--accent-text);margin-left:2px;"></span></sc-if>
+            <span style="flex:1;"></span>
+            <svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"></path></svg>
+          </div>
+          <sc-if value="{{ lError }}">
+            <p style="margin:8px 0 0;font-size:15px;line-height:20px;color:var(--danger);">Nieprawidłowy e-mail lub hasło. Sprawdź dane albo skontaktuj się z koordynatorem.</p>
+          </sc-if>
+          <div style="{{ loginBtnStyle }}">
+            <sc-if value="{{ lLoading }}"><span style="width:22px;height:22px;border-radius:50%;border:2.5px solid var(--on-accent);border-right-color:transparent;animation:rsSpin .8s linear infinite;"></span></sc-if>
+            <sc-if value="{{ lNotLoading }}"><span>Zaloguj się</span></sc-if>
+          </div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--fg2);">Problem z logowaniem?</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isHelp }}">
+      <div style="position:absolute;inset:0;background:rgba(2,4,7,.35);"></div>
+      <div style="{{ sheetStyle }}">
+        <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+        <div style="padding:0 24px;">
+          <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Problem z logowaniem?</h2>
+          <p style="margin:8px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Skontaktuj się z koordynatorem floty. Pomoże odzyskać dostęp do konta kierowcy.</p>
+          <div style="margin-top:24px;display:flex;flex-direction:column;gap:8px;">
+            <div style="min-height:64px;border-radius:16px;background:var(--raised);display:flex;align-items:center;gap:14px;padding:0 16px;">
+              <span style="width:40px;height:40px;border-radius:50%;background:color-mix(in srgb, var(--accent) 16%, transparent);display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"></path></svg></span>
+              <span style="flex:1;display:flex;flex-direction:column;"><span style="font-size:15px;color:var(--fg2);">Zadzwoń</span><span style="font-size:17px;font-weight:600;color:var(--fg);font-variant-numeric:tabular-nums;">508 222 321</span></span>
+              <svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+            </div>
+            <div style="min-height:64px;border-radius:16px;background:var(--raised);display:flex;align-items:center;gap:14px;padding:0 16px;">
+              <span style="width:40px;height:40px;border-radius:50%;background:color-mix(in srgb, var(--accent) 16%, transparent);display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM22 6l-10 7L2 6"></path></svg></span>
+              <span style="flex:1;display:flex;flex-direction:column;"><span style="font-size:15px;color:var(--fg2);">Napisz</span><span style="font-size:17px;font-weight:600;color:var(--fg);">hello@rsmototaxi.pl</span></span>
+              <svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg3);stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+            </div>
+          </div>
+          <div style="margin-top:10px;height:56px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--fg2);">Zamknij</div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ============ DASHBOARD ============ -->
+<sc-if value="{{ isDash }}">
+  <div style="{{ dashWrapStyle }}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:8px 20px 10px;">
+      <div style="min-width:0;">
+        <div style="{{ hdrStyle }}">Witaj, <span style="color:var(--accent-text);">Sławek</span></div>
+        <div style="font-size:15px;color:var(--fg2);margin-top:2px;">{{ dateLabel }}</div>
+      </div>
+      <sc-if value="{{ sC }}">
+        <div style="flex:none;height:36px;padding:0 12px 0 10px;border-radius:999px;background:color-mix(in srgb, var(--success) 14%, transparent);display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:var(--success);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);animation:rsPulse 1.6s ease-out infinite;"></span>Na zmianie</div>
+      </sc-if>
+      <sc-if value="{{ offShift }}">
+        <div style="flex:none;height:36px;padding:0 12px;border-radius:999px;background:var(--raised);display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;color:var(--fg2);"><span style="width:8px;height:8px;border-radius:50%;border:1.5px solid var(--fg3);box-sizing:border-box;"></span>Poza zmianą</div>
+      </sc-if>
+    </div>
+    <sc-if value="{{ hasChips }}">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 20px 10px;">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="0">
+          <div style="{{ c.style }}"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="{{ c.icon }}"></path></svg>{{ c.label }}</div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <div style="flex:1;min-height:0;overflow:hidden;">
+      <div style="{{ dashContentStyle }}">
+        <sc-if value="{{ hasBig }}">
+          <div style="{{ big.style }}">
+            <svg width="22" height="22" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="{{ big.icon }}"></path></svg>
+            <div style="flex:1;min-width:0;">
+              <div style="{{ big.titleStyle }}">{{ big.title }}</div>
+              <sc-if value="{{ big.hasText }}"><div style="{{ big.textStyle }}">{{ big.text }}</div></sc-if>
+            </div>
+            <sc-if value="{{ big.hasAction }}"><div style="{{ big.actionStyle }}">{{ big.action }}</div></sc-if>
+            <sc-if value="{{ big.chevron }}"><svg width="20" height="20" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg></sc-if>
+          </div>
+        </sc-if>
+
+        <!-- C: timer hero -->
+        <sc-if value="{{ cTimer }}">
+          <section style="{{ cardStyle }}">
+            <div style="display:flex;justify-content:space-between;font-size:15px;color:var(--fg2);"><span>Czas zmiany</span><span>od 17:02</span></div>
+            <div style="margin-top:6px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--fg);">{{ timer }}</div>
+            <div style="margin-top:18px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <span style="display:inline-flex;align-items:stretch;height:32px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:18px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 9px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:18px;letter-spacing:.04em;">{{ veh.plate }}</span></span>
+              <span style="display:flex;align-items:center;gap:8px;font-size:15px;color:var(--fg2);"><span style="{{ veh.dotStyle }}"></span>{{ veh.model }}</span>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- C: next trip hero -->
+        <sc-if value="{{ cNext }}">
+          <div style="display:flex;align-items:center;gap:12px;height:56px;padding:0 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);">
+            <span style="font-size:15px;color:var(--fg2);">Zmiana</span>
+            <span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:22px;font-variant-numeric:tabular-nums;color:var(--fg);">{{ timer }}</span>
+            <span style="flex:1;"></span>
+            <span style="display:inline-flex;align-items:stretch;height:28px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:16px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:8px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 7px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:15px;letter-spacing:.04em;">{{ veh.plate }}</span></span>
+          </div>
+          <section style="{{ cardStyle }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:15px;font-weight:600;color:var(--accent-text);">Najbliższy kurs · za 26 min</span><span style="font-size:15px;color:var(--fg2);">450 zł</span></div>
+            <div style="margin-top:4px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:56px;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--fg);">19:40</div>
+            <div style="margin-top:14px;display:grid;grid-template-columns:14px 1fr;column-gap:12px;">
+              <span style="display:flex;flex-direction:column;align-items:center;padding-top:6px;"><span style="width:10px;height:10px;border-radius:50%;border:2px solid var(--accent-text);box-sizing:border-box;"></span><span style="flex:1;width:2px;background:var(--line);margin:4px 0;"></span><span style="width:10px;height:10px;border-radius:2px;background:var(--accent-text);"></span></span>
+              <span style="display:flex;flex-direction:column;gap:14px;">
+                <span><span style="display:block;font-size:17px;font-weight:600;color:var(--fg);">Kraków Airport (KRK)</span><span style="display:block;font-size:15px;color:var(--fg2);">Hala przylotów, tabliczka z nazwiskiem</span></span>
+                <span><span style="display:block;font-size:17px;font-weight:600;color:var(--fg);">Zakopane, ul. Kościeliska 18</span><span style="display:block;font-size:15px;color:var(--fg2);">ok. 110 km · 1 h 50 min</span></span>
+              </span>
+            </div>
+            <div style="margin-top:14px;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:var(--raised);">
+              <svg width="20" height="20" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--fg2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"></path></svg>
+              <span style="flex:1;font-size:15px;color:var(--fg);"><b style="font-weight:600;">LH 1622</b> z Monachium · planowo 19:25</span>
+            </div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Przedpłata</span>
+              <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Fotelik</span>
+              <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Kierowca EN</span>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ sB }}">
+          <section style="{{ cardStyle }}">
+            <span style="font-size:15px;font-weight:600;color:var(--accent-text);">Zmiana zaplanowana</span>
+            <div style="margin-top:8px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:46px;line-height:1;font-variant-numeric:tabular-nums;color:var(--fg);">17:00<span style="color:var(--fg3);">–</span>03:00</div>
+            <div style="margin-top:8px;font-size:15px;color:var(--fg2);">Możesz zacząć od 14:00</div>
+            <div style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <span style="display:inline-flex;align-items:stretch;height:32px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:18px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 9px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:18px;letter-spacing:.04em;">{{ veh.plate }}</span></span>
+              <span style="display:flex;align-items:center;gap:8px;font-size:15px;color:var(--fg2);"><span style="{{ veh.dotStyle }}"></span>{{ veh.model }}</span>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ sA }}">
+          <section style="{{ cardStyle }}">
+            <span style="font-size:15px;font-weight:500;color:var(--fg2);">Na dziś nie masz zaplanowanej zmiany</span>
+            <div style="margin-top:8px;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;color:var(--fg);">Brak zmiany na dziś</div>
+            <p style="margin:8px 0 0;font-size:16px;line-height:23px;color:var(--fg2);">Możesz zacząć zmianę ad hoc na jednym ze swoich pojazdów. Domyślny: <b style="color:var(--fg);font-weight:600;">{{ veh.plate }}</b>.</p>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ sA2 }}">
+          <section style="{{ cardStyle }}">
+            <span style="font-size:15px;font-weight:500;color:var(--fg2);">Poza zmianą</span>
+            <div style="margin-top:8px;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;color:var(--fg);">Brak wolnego pojazdu</div>
+            <p style="margin:8px 0 0;font-size:16px;line-height:23px;color:var(--fg2);">Wszystkie Twoje pojazdy są dziś przydzielone. Poproś dyspozytora o pojazd.</p>
+            <div style="margin-top:14px;display:flex;flex-direction:column;border-top:1px solid var(--line);">
+              <div style="display:flex;align-items:center;justify-content:space-between;height:52px;border-bottom:1px solid var(--line);"><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:17px;letter-spacing:.04em;color:var(--fg);">KR 5222G</span><span style="font-size:15px;color:var(--fg2);">Jacek M. do 18:00</span></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;height:52px;"><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:17px;letter-spacing:.04em;color:var(--fg);">KR 7H241</span><span style="font-size:15px;color:var(--fg2);">Serwis do jutra</span></div>
+            </div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ sD }}">
+          <section style="{{ cardStyle }}">
+            <span style="font-size:15px;font-weight:500;color:var(--fg2);">Zmiana zakończona</span>
+            <div style="margin-top:8px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:46px;line-height:1;font-variant-numeric:tabular-nums;color:var(--fg);">8 h 14 min</div>
+            <div style="margin-top:8px;font-size:15px;color:var(--fg2);">6:02–14:16 · {{ veh.plate }}</div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+              <div><div style="font-size:15px;color:var(--fg2);">Kursy</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">5</div></div>
+              <div><div style="font-size:15px;color:var(--fg2);">GPS</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">112 km</div></div>
+              <div><div style="font-size:15px;color:var(--fg2);">Przychód</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">890 zł</div></div>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- primary action -->
+        <div style="{{ primaryWrapStyle }}">
+          <sc-if value="{{ sC }}">
+            <div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:600;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj kurs</div>
+          </sc-if>
+          <sc-if value="{{ sB }}"><div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę</div></sc-if>
+          <sc-if value="{{ sA }}"><div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę ad hoc</div></sc-if>
+          <sc-if value="{{ sD }}"><div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij kolejną zmianę</div></sc-if>
+          <sc-if value="{{ sA2 }}"><div style="height:64px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface);color:var(--fg);display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"></path></svg>Zadzwoń do dyspozytora</div></sc-if>
+        </div>
+
+        <sc-if value="{{ sC }}">
+          <section style="padding:16px 20px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+            <div><div style="font-size:15px;color:var(--fg2);">Kursy</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">3</div></div>
+            <div><div style="font-size:15px;color:var(--fg2);">GPS</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">84,2 km</div></div>
+            <div><div style="font-size:15px;color:var(--fg2);">Przychód</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">355 zł</div></div>
+          </section>
+        </sc-if>
+
+        <sc-if value="{{ showMissing }}">
+          <div style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;border-radius:18px;background:color-mix(in srgb, var(--warning) 12%, var(--surface));border:1px solid color-mix(in srgb, var(--warning) 28%, transparent);">
+            <svg width="22" height="22" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--warning);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3l-2 1.5L15 3l-2 1.5L11 3 9 4.5 7 3zM9 8h6M9 12h6M9 16h4"></path></svg>
+            <span style="flex:1;font-size:16px;font-weight:500;color:var(--fg);">1 kurs bez paragonu</span>
+            <span style="font-size:16px;font-weight:600;color:var(--warning);">Dodaj</span>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showNextCard }}">
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:15px;font-weight:600;color:var(--fg2);padding:0 4px;">{{ nextHeading }}</div>
+            <div style="padding:16px;border-radius:22px;background:var(--surface);border:1px solid var(--line);">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;"><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:110%;font-weight:600;font-size:28px;font-variant-numeric:tabular-nums;color:var(--fg);">19:40</span><span style="font-size:15px;font-weight:600;color:var(--accent-text);">{{ nextRel }}</span></div>
+              <div style="margin-top:4px;font-size:17px;font-weight:600;line-height:24px;color:var(--fg);">Kraków Airport (KRK)</div>
+              <div style="font-size:16px;line-height:23px;color:var(--fg2);">do Zakopane, ul. Kościeliska 18</div>
+              <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;">
+                <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Przedpłata</span>
+                <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;gap:5px;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">LH 1622</span>
+                <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Tabliczka</span>
+                <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Fotelik</span>
+              </div>
+            </div>
+            <sc-if value="{{ offShiftNext }}"><div style="font-size:15px;color:var(--fg2);padding:0 4px;">Rozpocznij zmianę, żeby ruszyć w kurs.</div></sc-if>
+          </div>
+        </sc-if>
+
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+          <sc-if value="{{ offShiftB }}"><div style="height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg);">Podgląd kursów</div></sc-if>
+          <sc-if value="{{ sD }}"><div style="height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg);">Kursy z tej zmiany</div></sc-if>
+          <sc-if value="{{ notA2 }}">
+            <div style="height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px;font-size:17px;font-weight:500;color:var(--fg);"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path></svg>Zarejestruj koszt</div>
+          </sc-if>
+          <sc-if value="{{ sC }}"><div style="height:56px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--danger);">Zakończ zmianę</div></sc-if>
+          <sc-if value="{{ showGrafik }}"><div style="height:56px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg2);">Pokaż grafik</div></sc-if>
+        </div>
+      </div>
+    </div>
+
+    <nav style="{{ navStyle }}">
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:64px;">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--accent-text);font-size:15px;font-weight:600;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>Start</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17h14M6 17v2M18 17v2M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4H3zM7.5 14h.01M16.5 14h.01"></path></svg>Kursy</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path></svg>Koszty</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5M17 14h.01"></path></svg>Wypłaty</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg>Zmiany</div>
+      </div>
+    </nav>
+
+    <sc-if value="{{ hasToast }}">
+      <div style="{{ toastStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>{{ toastText }}</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ============ VEHICLE SHEET ============ -->
+<sc-if value="{{ isVehAlt }}">
+  <div style="position:absolute;inset:0;background:rgba(2,4,7,.5);z-index:40;"></div>
+  <div style="{{ sheetStyle }}">
+    <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+    <div style="padding:0 24px;">
+      <sc-if value="{{ vConfirm }}">
+        <div style="margin:8px 0 0;font-size:15px;font-weight:600;color:var(--accent-text);">Przypisany przez dyspozytora</div>
+        <h2 style="margin:6px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Potwierdź pojazd na tę zmianę</h2>
+        <div style="margin-top:16px;border-radius:22px;overflow:hidden;border:1px solid var(--line);background:var(--surface);">
+          <div style="position:relative;height:180px;overflow:hidden;background:#020407;"><img src="{{ selV.photo }}" alt="" style="position:absolute;left:0;top:-208px;width:100%;"></div>
+          <div style="padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+            <span style="display:inline-flex;align-items:stretch;height:42px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;flex:none;"><span style="width:22px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:10px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 11px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:24px;letter-spacing:.04em;">{{ selV.plate }}</span></span>
+            <span style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--fg2);"><span style="{{ selV.dotStyle }}"></span>{{ selV.color }}</span>
+          </div>
+        </div>
+        <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę</div>
+        <div style="margin-top:8px;height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:6px;font-size:17px;font-weight:500;color:var(--fg);">Wybierz inne auto<svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg></div>
+      </sc-if>
+
+      <sc-if value="{{ vCarousel }}">
+        <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Potwierdź pojazd na tę zmianę</h2>
+        <p style="margin:6px 0 0;font-size:16px;line-height:23px;color:var(--fg2);">{{ vehSub }}</p>
+        <div style="margin:16px -24px 0;padding:0 24px;display:flex;gap:12px;overflow:hidden;">
+          <sc-for list="{{ carItems }}" as="v" hint-placeholder-count="3">
+            <div style="{{ v.card }}">
+              <div style="position:relative;height:128px;overflow:hidden;background:#020407;">
+                <img src="{{ v.photo }}" alt="" style="position:absolute;left:0;top:-148px;width:100%;">
+                <sc-if value="{{ v.busy }}"><div style="position:absolute;inset:0;background:rgba(2,4,7,.55);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;color:#F2F4F6;">W użyciu</div></sc-if>
+                <sc-if value="{{ v.sel }}"><span style="{{ v.badge }}"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg></span></sc-if>
+              </div>
+              <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+                <span style="display:inline-flex;align-self:flex-start;align-items:stretch;height:38px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:20px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 10px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:22px;letter-spacing:.04em;">{{ v.plate }}</span></span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--fg);"><span style="{{ v.dotStyle }}"></span>{{ v.color }}</span>
+                <span style="font-size:15px;color:var(--fg2);">{{ v.sub }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:12px;display:flex;justify-content:center;gap:6px;"><span style="width:18px;height:6px;border-radius:3px;background:var(--fg);"></span><span style="width:6px;height:6px;border-radius:3px;background:var(--line);"></span><span style="width:6px;height:6px;border-radius:3px;background:var(--line);"></span></div>
+        <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę</div>
+        <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Anuluj</div>
+      </sc-if>
+
+      <sc-if value="{{ vCompact }}">
+        <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Potwierdź pojazd na tę zmianę</h2>
+        <p style="margin:6px 0 0;font-size:16px;line-height:23px;color:var(--fg2);">{{ vehSub }}</p>
+        <div style="{{ selV.bigStyle }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="display:inline-flex;align-items:stretch;height:50px;border-radius:7px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:26px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-size:11px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 14px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:30px;letter-spacing:.04em;">{{ selV.plate }}</span></span>
+            <span style="{{ selV.checkStyle }}"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg></span>
+          </div>
+          <span style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:16px;color:var(--fg);"><span style="{{ selV.dotStyle }}"></span>{{ selV.color }} · {{ selV.sub }}</span>
+        </div>
+        <div style="margin:16px 0 8px;font-size:15px;font-weight:600;color:var(--fg2);">Inne pojazdy</div>
+        <div style="border-radius:18px;border:1px solid var(--line);overflow:hidden;background:var(--surface);">
+          <sc-for list="{{ otherFree }}" as="v" hint-placeholder-count="1">
+            <div style="min-height:60px;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);">
+              <span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:19px;letter-spacing:.04em;color:var(--fg);">{{ v.plate }}</span>
+              <span style="flex:1;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--fg2);"><span style="{{ v.dotStyle }}"></span>{{ v.color }}</span>
+              <span style="width:26px;height:26px;border-radius:50%;border:1.5px solid var(--line);box-sizing:border-box;"></span>
+            </div>
+          </sc-for>
+          <sc-for list="{{ busyList }}" as="v" hint-placeholder-count="1">
+            <div style="min-height:52px;display:flex;align-items:center;gap:10px;padding:0 14px;color:var(--fg3);font-size:15px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>
+              <span style="color:var(--fg2);">{{ v.plate }} · {{ v.sub }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę</div>
+        <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Anuluj</div>
+      </sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isVehList }}">
+  <div style="position:absolute;inset:0;background:rgba(2,4,7,.5);z-index:40;"></div>
+  <div style="{{ sheetStyle }}">
+    <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+    <div style="padding:0 24px;">
+      <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Potwierdź pojazd na tę zmianę</h2>
+      <p style="margin:6px 0 0;font-size:16px;line-height:23px;color:var(--fg2);">{{ vehSub }}</p>
+      <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px;">
+        <sc-for list="{{ vehicles }}" as="v" hint-placeholder-count="3">
+          <div style="{{ v.style }}">
+            <span style="display:inline-flex;align-items:stretch;height:42px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;flex:none;"><span style="width:22px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:10px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 11px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:24px;letter-spacing:.04em;">{{ v.plate }}</span></span>
+            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;">
+              <span style="display:flex;align-items:center;gap:6px;font-size:15px;color:var(--fg);"><span style="{{ v.dotStyle }}"></span>{{ v.color }}</span>
+              <span style="font-size:15px;color:var(--fg2);">{{ v.sub }}</span>
+            </span>
+            <span style="{{ v.radioStyle }}"><sc-if value="{{ v.sel }}"><svg width="14" height="14" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg></sc-if></span>
+          </div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ isC }}"><p style="margin:12px 0 0;font-size:15px;line-height:20px;color:var(--fg2);">Po starcie aplikacja przyjmie kolor wybranego auta.</p></sc-if>
+      <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Rozpocznij zmianę</div>
+      <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Anuluj</div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ END SHIFT SHEET ============ -->
+<sc-if value="{{ isEnd }}">
+  <div style="position:absolute;inset:0;background:rgba(2,4,7,.5);z-index:40;"></div>
+  <div style="{{ sheetStyle }}">
+    <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+    <div style="padding:0 24px;">
+      <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Zakończyć zmianę?</h2>
+      <p style="margin:6px 0 0;font-size:16px;color:var(--fg2);">Od 17:02, trwa 2 h 12 min · {{ veh.plate }}</p>
+      <div style="margin-top:16px;padding:16px 20px;border-radius:18px;background:var(--raised);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+        <div><div style="font-size:15px;color:var(--fg2);">Kursy</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">3</div></div>
+        <div><div style="font-size:15px;color:var(--fg2);">GPS</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">84,2 km</div></div>
+        <div><div style="font-size:15px;color:var(--fg2);">Paragony</div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--warning);">2 z 3</div></div>
+      </div>
+      <p style="margin:16px 0 8px;font-size:15px;line-height:20px;font-weight:500;color:var(--warning);">Bez paragonu. Możesz dodać go teraz albo później.</p>
+      <div style="border-radius:18px;border:1px solid var(--line);overflow:hidden;">
+        <div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--surface);">
+          <span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--fg);">18:05</span>
+          <span style="flex:1;min-width:0;display:flex;flex-direction:column;"><span style="font-size:15px;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Kraków, ul. Basztowa 15</span><span style="font-size:15px;color:var(--fg2);">z ulicy · 95 zł</span></span>
+          <span style="display:flex;align-items:center;gap:4px;font-size:15px;font-weight:600;color:var(--accent-text);">Dodaj paragon<svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg></span>
+        </div>
+      </div>
+      <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Zakończ zmianę</div>
+      <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Wróć do zmiany</div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ UPDATE (blocking) ============ -->
+<sc-if value="{{ isUpdate }}">
+  <div style="position:absolute;inset:0;background:rgba(2,4,7,.62);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:40;"></div>
+  <div style="{{ sheetStyle }}">
+    <div style="padding:28px 24px 0;">
+      <span style="width:56px;height:56px;border-radius:18px;background:color-mix(in srgb, var(--accent) 16%, transparent);display:flex;align-items:center;justify-content:center;"><svg width="26" height="26" viewBox="0 0 24 24" style="fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg></span>
+      <h2 style="margin:18px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;line-height:32px;color:var(--fg);">Dostępna nowa wersja aplikacji</h2>
+      <p style="margin:8px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Wersja 2.4.0 jest wymagana do dalszej pracy. Aktualizacja trwa kilka sekund. Niezsynchronizowane zmiany zostaną zachowane.</p>
+      <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Zaktualizuj teraz</div>
+      <p style="margin:14px 0 8px;text-align:center;font-size:15px;color:var(--fg2);">Masz 2 zmiany do synchronizacji. Zapiszą się przed aktualizacją.</p>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ SEQUENCE OVERLAY ============ -->
+<sc-if value="{{ isSeq }}">
+  <div style="position:absolute;inset:0;pointer-events:none;z-index:30;">
+    <sc-if value="{{ isRoute }}">
+      <div style="{{ seq.glowStyle }}"></div>
+      <svg viewBox="0 0 320 220" style="{{ seq.svgStyle }}">
+        <g style="fill:none;stroke:var(--line);stroke-width:1.2">
+          <path d="M10 150 C 60 120, 90 170, 140 140 S 230 100, 310 130"></path>
+          <path d="M20 70 C 80 60, 120 95, 170 80 S 250 40, 300 60"></path>
+          <path d="M40 200 C 100 185, 160 205, 220 190 S 280 170, 310 185"></path>
+          <path d="M150 10 C 145 60, 170 110, 160 210"></path>
+          <path d="M240 20 C 230 70, 250 120, 235 210"></path>
+        </g>
+        <g style="fill:var(--fg3)"><circle cx="36" cy="40" r="1.6"></circle><circle cx="92" cy="176" r="1.6"></circle><circle cx="212" cy="36" r="1.6"></circle><circle cx="272" cy="168" r="1.6"></circle><circle cx="128" cy="58" r="1.6"></circle><circle cx="290" cy="98" r="1.6"></circle></g>
+        <path d="M62 132 C 95 132, 110 96, 150 100 S 215 128, 258 104" pathLength="1" style="{{ seq.routeStyle }}"></path>
+        <circle cx="62" cy="132" r="5" style="fill:var(--accent-text)"></circle>
+        <circle cx="258" cy="104" r="{{ seq.ringR }}" style="{{ seq.ringStyle }}"></circle>
+        <circle cx="258" cy="104" r="5" style="{{ seq.endStyle }}"></circle>
+        <text x="62" y="158" style="{{ seq.lab1 }}">Zabierzów</text>
+        <text x="258" y="86" style="{{ seq.lab2 }}">Balice</text>
+      </svg>
+    </sc-if>
+    <sc-if value="{{ isGreetSeq }}">
+      <div style="{{ seq.trackStyle }}"><div style="{{ seq.barStyle }}"></div></div>
+      <div style="{{ seq.plateStyle }}"><span style="display:inline-flex;align-items:stretch;height:32px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:18px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 9px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:18px;letter-spacing:.04em;">{{ veh.plate }}</span></span></div>
+    </sc-if>
+    <div style="{{ seq.gStyle }}">
+      <div style="{{ seq.g1 }}">Witaj,</div>
+      <div style="{{ seq.g2 }}">Sławek</div>
+    </div>
+    <div style="{{ seq.ctxStyle }}">
+      <div style="font-size:18px;line-height:26px;color:var(--fg);">Twoja zmiana zaczyna się o 17:00.</div>
+      <sc-if value="{{ isRoute }}"><div style="font-size:17px;line-height:25px;color:var(--fg2);">Pierwszy kurs o 19:40, Kraków Airport.</div></sc-if>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ COMPONENT KIT ============ -->
+<sc-if value="{{ isKit }}">
+  <div style="padding:40px;display:flex;flex-direction:column;gap:44px;color:var(--fg);">
+    <div>
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:120%;font-weight:600;font-size:30px;">Arkusz komponentów · {{ kitTitle }}</div>
+      <div style="margin-top:6px;font-size:16px;color:var(--fg2);">Wszystkie wartości z tokenów kierunku. Wysokości: akcja główna 64, akcje w pracy 56, pola 56.</div>
+    </div>
+
+    <div>
+      <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Przyciski</div>
+      <div style="display:grid;grid-template-columns:140px repeat(4,minmax(0,1fr));gap:14px 18px;align-items:center;">
+        <span></span><span style="font-size:15px;color:var(--fg2);">Domyślny</span><span style="font-size:15px;color:var(--fg2);">Wciśnięty</span><span style="font-size:15px;color:var(--fg2);">Nieaktywny</span><span style="font-size:15px;color:var(--fg2);">Ładowanie</span>
+
+        <span style="font-size:15px;">Główny · 64</span>
+        <div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Dodaj kurs</div>
+        <div style="height:64px;border-radius:999px;background:color-mix(in srgb, var(--accent) 86%, #000);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;transform:scale(.98);">Dodaj kurs</div>
+        <div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;opacity:.38;">Dodaj kurs</div>
+        <div style="height:64px;border-radius:999px;background:var(--accent);display:flex;align-items:center;justify-content:center;"><span style="width:22px;height:22px;border-radius:50%;border:2.5px solid var(--on-accent);border-right-color:transparent;animation:rsSpin .8s linear infinite;"></span></div>
+
+        <span style="font-size:15px;">Drugorzędny · 56</span>
+        <div style="height:56px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;">Zarejestruj koszt</div>
+        <div style="height:56px;border-radius:999px;border:1px solid var(--line);background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;transform:scale(.98);">Zarejestruj koszt</div>
+        <div style="height:56px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;opacity:.38;">Zarejestruj koszt</div>
+        <div style="height:56px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;"><span style="width:20px;height:20px;border-radius:50%;border:2.5px solid var(--fg);border-right-color:transparent;animation:rsSpin .8s linear infinite;"></span></div>
+
+        <span style="font-size:15px;">Ghost · 56</span>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg2);">Pokaż grafik</div>
+        <div style="height:56px;border-radius:999px;background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg);transform:scale(.98);">Pokaż grafik</div>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg2);opacity:.38;">Pokaż grafik</div>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;"><span style="width:20px;height:20px;border-radius:50%;border:2.5px solid var(--fg2);border-right-color:transparent;animation:rsSpin .8s linear infinite;"></span></div>
+
+        <span style="font-size:15px;">Destrukcyjny · 56</span>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--danger);">Zakończ zmianę</div>
+        <div style="height:56px;border-radius:999px;background:color-mix(in srgb, var(--danger) 12%, transparent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--danger);transform:scale(.98);">Zakończ zmianę</div>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--danger);opacity:.38;">Zakończ zmianę</div>
+        <div style="height:56px;border-radius:999px;display:flex;align-items:center;justify-content:center;"><span style="width:20px;height:20px;border-radius:50%;border:2.5px solid var(--danger);border-right-color:transparent;animation:rsSpin .8s linear infinite;"></span></div>
+
+        <span style="font-size:15px;">Fokus klawiatury</span>
+        <div style="height:56px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;box-shadow:0 0 0 3px var(--bg), 0 0 0 6px color-mix(in srgb, var(--accent) 55%, transparent);">Zaloguj się</div>
+        <span style="grid-column:span 3;font-size:15px;color:var(--fg2);">Pierścień 3 px w kolorze akcentu z odstępem od tła. Wciśnięcie: skala 0,98 i ciemniejsze tło, bez haptyki.</span>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Pola formularza</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;">
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">E-mail</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;color:var(--fg3);">jan@rsmototaxi.pl</div><div style="margin-top:6px;font-size:15px;color:var(--fg2);">Pusty</div></div>
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">E-mail</div><div style="height:56px;border-radius:14px;background:var(--surface);border:1.5px solid var(--accent-text);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);display:flex;align-items:center;padding:0 16px;font-size:17px;">slawek.no<span style="width:2px;height:22px;background:var(--accent-text);margin-left:1px;"></span></div><div style="margin-top:6px;font-size:15px;color:var(--fg2);">Fokus</div></div>
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Kwota brutto</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">250,00<span style="font-size:17px;font-weight:500;color:var(--fg2);">zł</span></div><div style="margin-top:6px;font-size:15px;color:var(--fg2);">Wypełniony</div></div>
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">E-mail</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1.5px solid var(--danger);display:flex;align-items:center;padding:0 16px;font-size:17px;">slawek.nowak@</div><div style="margin-top:6px;font-size:15px;line-height:20px;color:var(--danger);">Wpisz pełny adres e-mail, np. jan@rsmototaxi.pl</div></div>
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;color:var(--fg3);">Hasło</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:20px;letter-spacing:3px;color:var(--fg3);opacity:.7;">••••••••</div><div style="margin-top:6px;font-size:15px;color:var(--fg2);">Zablokowany (ładowanie)</div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Chipy statusów</div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--warning) 14%, transparent);color:var(--warning);">Brak paragonu</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--accent) 16%, transparent);color:var(--accent-text);"><span style="width:6px;height:6px;border-radius:50%;background:currentColor;"></span>Przetwarzanie</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--danger) 13%, transparent);color:var(--danger);">Do sprawdzenia</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Zweryfikowany</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Czeka na synchronizację</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;border:1px solid color-mix(in srgb, var(--danger) 45%, transparent);color:var(--danger);">Błąd synchronizacji</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg);">Zaplanowany</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:600;background:var(--accent);color:var(--on-accent);">W trakcie</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Zakończony</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg3);text-decoration:line-through;">Anulowany</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Przedpłata</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">LH 1622</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Tabliczka</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">2 foteliki</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--warning) 14%, transparent);color:var(--warning);">Dopłata nocna</span>
+            <span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;border:1px solid var(--line);color:var(--fg2);">Bolt · tylko odczyt</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Tablica rejestracyjna</div>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+          <span style="display:inline-flex;align-items:stretch;height:28px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:16px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:8px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 7px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:15px;letter-spacing:.04em;">KR 5222G</span></span>
+          <span style="display:inline-flex;align-items:stretch;height:32px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:18px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 9px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:18px;letter-spacing:.04em;">KR 5222G</span></span>
+          <span style="display:inline-flex;align-items:stretch;height:42px;border-radius:6px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:22px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:10px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 11px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:24px;letter-spacing:.04em;">KR 5222G</span></span>
+        </div>
+        <p style="margin:10px 0 0;font-size:15px;line-height:20px;color:var(--fg2);">Biała w obu trybach, bo to realny obiekt. Rozmiary 28 / 32 / 42: pasek, karta, wybór pojazdu.</p>
+
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin:28px 0 14px;">Toast</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          <div style="height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--fg);color:var(--bg);display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>Zmiana rozpoczęta</div>
+          <div style="height:44px;padding:0 18px 0 14px;border-radius:999px;background:var(--fg);color:var(--bg);display:inline-flex;align-items:center;gap:8px;font-size:15px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M12 20h.01"></path></svg>Zapisano offline. Zsynchronizuje się po połączeniu.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:40px;align-items:start;">
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Karta kursu</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:16px;border-radius:22px;background:var(--surface);border:1px solid var(--line);">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;"><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:110%;font-weight:600;font-size:28px;font-variant-numeric:tabular-nums;">19:40</span><span style="font-size:15px;font-weight:600;color:var(--accent-text);">za 26 min</span></div>
+            <div style="margin-top:4px;font-size:17px;font-weight:600;">Kraków Airport (KRK)</div>
+            <div style="font-size:16px;color:var(--fg2);">do Zakopane, ul. Kościeliska 18</div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;"><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Przedpłata</span><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">LH 1622</span><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Tabliczka</span></div>
+          </div>
+          <div style="padding:16px;border-radius:22px;background:var(--surface);border:1px solid var(--line);">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;"><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">18:05–18:31</span><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">95 zł</span></div>
+            <div style="margin-top:4px;font-size:16px;color:var(--fg);">Kraków Airport (KRK) → Kraków, ul. Basztowa 15</div>
+            <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px;"><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--success) 14%, transparent);color:var(--success);">Zakończony</span><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:color-mix(in srgb, var(--warning) 14%, transparent);color:var(--warning);">Brak paragonu</span><span style="height:30px;padding:0 10px;border-radius:10px;display:inline-flex;align-items:center;font-size:15px;font-weight:500;background:var(--raised);color:var(--fg2);">Gotówka</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Bottom sheet</div>
+        <div style="border-radius:32px 32px 0 0;background:var(--surface);border:1px solid var(--line);border-bottom:none;padding:10px 20px 20px;box-shadow:0 -8px 24px rgba(2,4,7,.08);">
+          <div style="display:flex;justify-content:center;padding-bottom:12px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+          <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:24px;">Tytuł sheetu</div>
+          <div style="margin-top:4px;font-size:16px;color:var(--fg2);">Promień 32, grabber 40×5, margines 20–24. W jasnym cień, w ciemnym jaśniejsza powierzchnia.</div>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Akcja główna</div>
+        </div>
+        <div style="font-size:15px;font-weight:600;color:var(--fg2);margin:28px 0 14px;">Bottom nav</div>
+        <div style="border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(5,minmax(0,1fr));height:64px;">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--accent-text);font-size:15px;font-weight:600;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"></path></svg>Start</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;position:relative;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 17h14M6 17v2M18 17v2M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4H3zM7.5 14h.01M16.5 14h.01"></path></svg>Kursy<span style="position:absolute;top:8px;left:calc(50% + 6px);width:9px;height:9px;border-radius:50%;background:var(--warning);border:2px solid var(--surface);"></span></div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5"></path></svg>Koszty</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5M17 14h.01"></path></svg>Wypłaty</div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--fg2);font-size:15px;font-weight:500;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg>Zmiany</div>
+        </div>
+        <p style="margin:8px 0 0;font-size:15px;color:var(--fg2);">Etykiety 15 px. Kropka ostrzegawcza na Kursach = kursy bez paragonu.</p>
+      </div>
+    </div>
+
+    <div>
+      <div style="font-size:15px;font-weight:600;color:var(--fg2);margin-bottom:14px;">Skala typografii</div>
+      <div style="display:flex;flex-direction:column;border-top:1px solid var(--line);">
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">display.xl · Archivo 125 · 40/44</span><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:40px;line-height:44px;">Witaj, Sławek</span></div>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">display.l · Archivo 115 · 30/36</span><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Brak zmiany na dziś</span></div>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">numeric · Archivo 112 · 56</span><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;">2:12:08</span></div>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">title · system · 22/28</span><span style="font-size:22px;line-height:28px;font-weight:600;">Kraków Airport (KRK)</span></div>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">body · system · 17/24</span><span style="font-size:17px;line-height:24px;">Możesz zacząć zmianę ad hoc na jednym ze swoich pojazdów.</span></div>
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr);gap:20px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line);"><span style="font-size:15px;color:var(--fg2);">callout · system · 15/20</span><span style="font-size:15px;line-height:20px;font-weight:500;">Etykiety pól, metadane, chipy, nawigacja. Minimum w całej aplikacji.</span></div>
+      </div>
+      <p style="margin:10px 0 0;font-size:15px;line-height:20px;color:var(--fg2);">Rozmiary w rem od bazy -apple-system-body, więc rosną z ustawieniem tekstu w iOS. Caption 13 ze specyfikacji podniesiony do 15 zgodnie z briefem.</p>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;dir&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;],&quot;default&quot;:&quot;A&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;car&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;green&quot;,&quot;violet&quot;,&quot;none&quot;],&quot;default&quot;:&quot;green&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;welcome&quot;,&quot;login&quot;,&quot;help&quot;,&quot;dash&quot;,&quot;vehicle&quot;,&quot;end&quot;,&quot;update&quot;,&quot;seqRoute&quot;,&quot;seqGreet&quot;,&quot;kit&quot;],&quot;default&quot;:&quot;dash&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;welcome&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;split&quot;,&quot;motion&quot;],&quot;default&quot;:&quot;full&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;login&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;empty&quot;,&quot;filled&quot;,&quot;loading&quot;,&quot;error&quot;,&quot;offline&quot;],&quot;default&quot;:&quot;empty&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;A2&quot;,&quot;B&quot;,&quot;C&quot;,&quot;D&quot;],&quot;default&quot;:&quot;C&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;timer&quot;,&quot;next&quot;],&quot;default&quot;:&quot;timer&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;banners&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;device&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;std&quot;,&quot;se&quot;,&quot;max&quot;],&quot;default&quot;:&quot;std&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;freeze&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;toast&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;selected&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;clock&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { t: 0 };
+
+  componentDidMount() {
+    if (!this.isAnimated()) return;
+    const t0 = performance.now();
+    let last = 0;
+    const loop = (now) => {
+      if (now - last > 30) { last = now; this.setState({ t: now - t0 }); }
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
+  }
+  componentWillUnmount() { cancelAnimationFrame(this.raf); }
+
+  isAnimated() {
+    const p = this.props, s = p.screen;
+    const frozen = p.freeze != null && p.freeze !== '';
+    return !frozen && (s === 'seqRoute' || s === 'seqGreet' || (s === 'welcome' && p.welcome === 'motion'));
+  }
+
+  tokens(dir, mode, car) {
+    const A = {
+      light: { bg: '#F5F7F9', surface: '#FFFFFF', raised: '#EDF0F3', fg: '#0A0F14', fg2: '#5B6570', fg3: '#8A939C', line: '#DDE2E7', accent: '#8A6A30', accentText: '#8A6A30', onAccent: '#FFFFFF', success: '#1E7A4C', warning: '#9A5B00', danger: '#B3261E' },
+      dark: { bg: '#020407', surface: '#0B1016', raised: '#141B23', fg: '#F2F4F6', fg2: '#98A2AD', fg3: '#5F6873', line: '#1D2630', accent: '#D8B878', accentText: '#D8B878', onAccent: '#020407', success: '#4CC38A', warning: '#F0A93B', danger: '#FF6B61' }
+    };
+    const B = {
+      light: { bg: '#F4F4F1', surface: '#FFFFFF', raised: '#EBEBE7', fg: '#111214', fg2: '#5A5D64', fg3: '#8B8E95', line: '#DCDCD7', accent: '#72CC3C', accentText: '#3A7417', onAccent: '#0C0D10', success: '#0F7667', warning: '#9A5B00', danger: '#B3261E' },
+      dark: { bg: '#0C0D10', surface: '#16181C', raised: '#202227', fg: '#F3F4F5', fg2: '#A2A5AC', fg3: '#686B73', line: '#2A2C32', accent: '#86DC4E', accentText: '#86DC4E', onAccent: '#0C0D10', success: '#3CCFB4', warning: '#F0A93B', danger: '#FF6B61' }
+    };
+    const CA = {
+      green: { light: { accent: '#72CC3C', accentText: '#3A7417', onAccent: '#0A0F14', success: '#0F7667' }, dark: { accent: '#86DC4E', accentText: '#86DC4E', onAccent: '#020407', success: '#3CCFB4' } },
+      violet: { light: { accent: '#5B35D5', accentText: '#5B35D5', onAccent: '#FFFFFF' }, dark: { accent: '#A68CFF', accentText: '#A68CFF', onAccent: '#020407' } },
+      none: { light: { accent: '#0A0F14', accentText: '#0A0F14', onAccent: '#FFFFFF' }, dark: { accent: '#F2F4F6', accentText: '#F2F4F6', onAccent: '#020407' } }
+    };
+    if (dir === 'B') return B[mode];
+    if (dir === 'C') return Object.assign({}, A[mode], CA[car] ? CA[car][mode] : CA.none[mode]);
+    return A[mode];
+  }
+
+  renderVals() {
+    const p = this.props;
+    const dir = p.dir || 'A';
+    const mode = p.mode || 'dark';
+    const car = p.car || (dir === 'C' ? 'violet' : 'green');
+    const screen = p.screen || 'dash';
+    const device = p.device || 'std';
+    const tk = this.tokens(dir, mode, car);
+    const ptk = this.tokens(dir, 'dark', car === 'none' ? 'none' : car);
+    const [top, bot] = ({ std: [54, 34], se: [22, 8], max: [62, 34] })[device];
+    const frozen = p.freeze != null && p.freeze !== '';
+    const t = frozen ? Number(p.freeze) : this.state.t;
+
+    const clamp = (x) => Math.max(0, Math.min(1, x));
+    const seg = (x, a, b) => clamp((x - a) / (b - a));
+    const eo = (x) => 1 - Math.pow(1 - x, 3);
+    const eio = (x) => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+    const back = (x) => { const c1 = 1.4, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+    const lerp = (a, b, x) => a + (b - a) * x;
+
+    const isKit = screen === 'kit';
+    const isWelcome = ['welcome', 'login', 'help'].includes(screen);
+    const wv = p.welcome || 'full';
+    const isSeq = screen === 'seqRoute' || screen === 'seqGreet';
+    const isRoute = screen === 'seqRoute';
+    const isGreetSeq = screen === 'seqGreet';
+    const isDash = ['dash', 'vehicle', 'end', 'update'].includes(screen) || isSeq;
+    const photoTop = isWelcome && (wv === 'full' || wv === 'motion' || wv === 'split');
+    const state = isSeq ? 'B' : (p.state || 'C');
+    const layout = p.layout || 'next';
+
+    const rootStyle = {
+      '--bg': tk.bg, '--surface': tk.surface, '--raised': tk.raised, '--fg': tk.fg, '--fg2': tk.fg2, '--fg3': tk.fg3,
+      '--line': tk.line, '--accent': tk.accent, '--accent-text': tk.accentText, '--on-accent': tk.onAccent,
+      '--success': tk.success, '--warning': tk.warning, '--danger': tk.danger,
+      '--p-accent': ptk.accent, '--p-on': ptk.onAccent,
+      position: 'relative', width: '100%', height: isKit ? 'auto' : '100%', overflow: 'hidden',
+      background: 'var(--bg)', color: 'var(--fg)', colorScheme: mode,
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif',
+      WebkitFontSmoothing: 'antialiased'
+    };
+
+    const onPhoto = photoTop && !(screen === 'login' || screen === 'help') ? true : (photoTop && wv !== 'split' ? true : photoTop);
+    const sbColor = photoTop ? '#FFFFFF' : 'var(--fg)';
+    const sbStyle = { position: 'absolute', top: 0, left: 0, right: 0, height: top, zIndex: 80, display: 'flex', alignItems: device === 'se' ? 'center' : 'flex-end', justifyContent: 'space-between', padding: device === 'se' ? '0 16px' : '0 30px 16px 38px', boxSizing: 'border-box', color: sbColor, pointerEvents: 'none' };
+    const homeStyle = { position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: 134, height: 5, borderRadius: 3, background: (isWelcome && wv !== 'split' && screen === 'welcome') ? '#FFFFFF' : 'var(--fg)', opacity: device === 'se' ? 0 : .55, zIndex: 95 };
+    const clocks = { A: '9:12', A2: '9:12', B: '15:48', C: '19:14', D: '14:20' };
+    const clock = p.clock || (isWelcome || isSeq ? '15:41' : clocks[state]);
+
+    // welcome
+    const heroSrc = car === 'violet' ? 'assets/fleet-hero-violet.webp' : 'assets/fleet-hero-green.webp';
+    const sheetOpen = screen === 'login' || screen === 'help';
+    const wMotion = isWelcome && wv === 'motion';
+    let kb = 1, glowOp = 0, logoOp = 1, headOp = 1, ctaOp = 1;
+    if (wMotion) {
+      let x = (t % 28000) / 14000; if (x > 1) x = 2 - x;
+      kb = 1 + .06 * eio(x);
+      const on = seg(t, 700, 1400);
+      glowOp = on <= 0 ? 0 : (on < .12 ? .7 : on < .2 ? .05 : on < .3 ? .9 : .82 + .18 * Math.sin(t / 700));
+      logoOp = eo(seg(t, 0, 400)); headOp = eo(seg(t, 150, 650)); ctaOp = eo(seg(t, 300, 800));
+    }
+    const hl = car === 'violet' ? { x: 27, y: 39.8 } : { x: 36.5, y: 40.3 };
+    const heroFilterStyle = { position: 'absolute', inset: 0, overflow: 'hidden', filter: sheetOpen ? 'blur(10px) brightness(.55)' : 'none', transform: sheetOpen ? 'scale(1.04)' : 'none' };
+    const kbStyle = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 40%', transform: `scale(${kb})`, transformOrigin: `${hl.x}% ${hl.y}%` };
+    const glowStyle = { position: 'absolute', left: `calc(${hl.x}% - 120px)`, top: `calc(${hl.y}% - 46px)`, width: 240, height: 92, borderRadius: '50%', background: 'radial-gradient(ellipse at center, rgba(255,252,240,.95) 0%, rgba(255,244,214,.5) 16%, rgba(255,236,190,.12) 42%, rgba(255,236,190,0) 68%)', mixBlendMode: 'screen', opacity: glowOp, transform: `scale(${kb})` };
+    const flareStyle = { position: 'absolute', left: `calc(${hl.x}% - 170px)`, top: `calc(${hl.y}% - 1px)`, width: 340, height: 2, background: 'linear-gradient(90deg, rgba(255,248,230,0), rgba(255,248,230,.55), rgba(255,248,230,0))', mixBlendMode: 'screen', opacity: glowOp * .8 };
+    const welcomeContentStyle = { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', padding: `${top + 24}px 24px ${bot + 12}px`, boxSizing: 'border-box', opacity: sheetOpen ? .0 : 1 };
+    const logoStyle = { display: 'flex', justifyContent: 'center', opacity: logoOp };
+    const headStyle = { opacity: headOp, transform: `translateY(${12 * (1 - headOp)}px)` };
+    const ctaStyle = { marginTop: 28, display: 'flex', flexDirection: 'column', gap: 4, opacity: ctaOp, transform: `translateY(${12 * (1 - ctaOp)}px)` };
+    const splitPhotoStyle = { position: 'relative', height: device === 'se' ? '50%' : '58%', overflow: 'hidden', borderRadius: '0 0 32px 32px', background: '#020407', filter: sheetOpen ? 'blur(10px) brightness(.55)' : 'none', flex: 'none' };
+    const splitLogoStyle = { position: 'absolute', top: top + 18, left: 0, right: 0, display: 'flex', justifyContent: 'center' };
+    const splitContentStyle = { flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: `20px 24px ${bot + 12}px` };
+
+    // login
+    const lv = p.login || 'empty';
+    const lEmpty = lv === 'empty';
+    const lLoading = lv === 'loading';
+    const lError = lv === 'error';
+    const lOffline = lv === 'offline';
+    const sheetH = device === 'se' ? '100%' : (lOffline ? '82%' : '72%');
+    const sheetStyle = { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: device === 'se' ? `calc(100% - ${top}px)` : '88%', minHeight: (screen === 'login') ? (device === 'se' ? `calc(100% - ${top}px)` : sheetH) : 'auto', background: 'var(--surface)', borderRadius: '32px 32px 0 0', paddingBottom: bot + 16, boxSizing: 'border-box', zIndex: 50, boxShadow: mode === 'light' ? '0 -8px 24px rgba(2,4,7,.10)' : 'none', borderTop: mode === 'dark' ? '1px solid var(--line)' : 'none', overflow: 'hidden', transform: lError && screen === 'login' ? 'translateX(-6px)' : 'none' };
+    const loginFormStyle = { padding: '0 24px', opacity: 1 };
+    const fieldBase = { marginTop: 8, height: 56, borderRadius: 14, background: 'var(--raised)', border: '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '0 12px 0 16px', fontSize: 17, color: 'var(--fg)', boxSizing: 'border-box', opacity: lLoading ? .6 : 1 };
+    const emailFieldStyle = Object.assign({}, fieldBase);
+    const pwdFieldStyle = Object.assign({}, fieldBase, lError ? { border: '1.5px solid var(--danger)' } : (lv === 'filled' ? { border: '1.5px solid var(--accent-text)', background: 'var(--surface)', boxShadow: '0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)' } : {}));
+    const loginBtnStyle = { marginTop: 24, height: 56, borderRadius: 999, background: 'var(--accent)', color: 'var(--on-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 600, opacity: lEmpty ? .38 : 1 };
+
+    // dashboard
+    const sA = isDash && state === 'A', sA2 = isDash && state === 'A2', sB = isDash && state === 'B', sC = isDash && state === 'C', sD = isDash && state === 'D';
+    const cTimer = sC && layout === 'timer', cNext = sC && layout === 'next';
+    const banners = (p.banners || '').split(',').map(s => s.trim()).filter(Boolean);
+    const defs = {
+      impersonation: { tone: 'accent', icon: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', title: 'Podgląd tylko do odczytu', text: 'Operator: Anna Kowalczyk. Zmiany są wyłączone.', action: 'Zakończ', chip: 'Podgląd' },
+      live: { tone: 'filled', icon: 'M13 2 3 14h9l-1 8 10-12h-9l1-8z', title: 'Kurs live w trakcie · 0:17', text: 'Od 18:57, ul. Krakowska 12, Zabierzów', chevron: true, chip: 'Kurs live' },
+      gps: { tone: 'danger', icon: 'M3 11l19-9-9 19-2-8-8-2z', title: 'Włącz lokalizację', text: 'Bez niej nie policzymy kilometrów zmiany.', action: 'Włącz', chip: 'GPS wył.' },
+      push: { tone: 'warning', icon: 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0', title: 'Powiadomienia wyłączone', text: 'Nie zobaczysz nowego kursu ani przypomnienia godzinę przed.', action: 'Włącz', chip: 'Powiadomienia' },
+      offline: { tone: 'warning', icon: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.1-1.6M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 10.7 5M12 20h.01', title: 'Tryb offline. Dane z 18:52.', text: 'Zmiany zapiszą się i zsynchronizują po połączeniu.', chip: 'Offline' },
+      sync: { tone: 'neutral', icon: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5', title: '2 zmiany czekają na synchronizację', text: '', action: 'Synchronizuj', chip: '2 do synchronizacji' }
+    };
+    const order = ['impersonation', 'live', 'gps', 'push', 'offline', 'sync'];
+    const present = order.filter(k => banners.includes(k));
+    const toneVar = { accent: 'var(--accent-text)', danger: 'var(--danger)', warning: 'var(--warning)', neutral: 'var(--fg2)' };
+    let big = null;
+    if (present.length) {
+      const d = defs[present[0]];
+      const filled = d.tone === 'filled';
+      const c = toneVar[d.tone];
+      big = {
+        icon: d.icon, title: d.title, text: d.text, hasText: !!d.text, action: d.action, hasAction: !!d.action, chevron: !!d.chevron,
+        style: filled
+          ? { display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '10px 14px 10px 16px', borderRadius: 18, background: 'var(--accent)', color: 'var(--on-accent)', boxSizing: 'border-box' }
+          : { display: 'flex', alignItems: 'center', gap: 12, minHeight: 64, padding: '10px 10px 10px 16px', borderRadius: 18, boxSizing: 'border-box', color: c, background: d.tone === 'neutral' ? 'var(--raised)' : `color-mix(in srgb, ${c} 12%, var(--surface))`, border: d.tone === 'neutral' ? '1px solid var(--line)' : `1px solid color-mix(in srgb, ${c} 30%, transparent)` },
+        titleStyle: { fontSize: 16, fontWeight: 600, lineHeight: '21px', color: filled ? 'var(--on-accent)' : 'var(--fg)' },
+        textStyle: { fontSize: 15, lineHeight: '20px', color: filled ? 'var(--on-accent)' : 'var(--fg2)', opacity: filled ? .85 : 1 },
+        actionStyle: { flex: 'none', height: 44, padding: '0 16px', borderRadius: 999, display: 'flex', alignItems: 'center', fontSize: 15, fontWeight: 600, background: 'var(--surface)', color: 'var(--fg)', border: '1px solid var(--line)' }
+      };
+    }
+    const chips = present.slice(1).map(k => {
+      const d = defs[k]; const c = d.tone === 'filled' ? 'var(--accent-text)' : toneVar[d.tone];
+      return { label: d.chip, icon: d.icon, style: { height: 32, padding: '0 10px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 500, color: c, background: d.tone === 'neutral' ? 'var(--raised)' : `color-mix(in srgb, ${c} 13%, transparent)` } };
+    });
+    const readonly = banners.includes('impersonation');
+
+    const assigned = car === 'green'
+      ? { plate: 'KR 7H241', model: 'Toyota Corolla', swatch: '#6CCB2E' }
+      : { plate: 'KR 5222G', model: 'Toyota Corolla', swatch: '#6A3FE0' };
+    const veh = Object.assign({}, assigned, { dotStyle: { width: 10, height: 10, borderRadius: '50%', background: assigned.swatch, flex: 'none' } });
+    const cardStyle = { padding: 20, borderRadius: 22, background: 'var(--surface)', border: '1px solid var(--line)', boxShadow: mode === 'light' ? '0 1px 2px rgba(2,4,7,.04)' : 'none' };
+
+    // sequence
+    const seq = {};
+    let dashOp = 1, dashY = 0, hdrOp = 1;
+    if (isSeq) {
+      const L = isRoute ? 7400 : 6800;
+      const tt = frozen ? t : t % L;
+      const G0 = 332;
+      const m = eo(seg(tt, isRoute ? 4500 : 3700, isRoute ? 5150 : 4350));
+      const mRaw = seg(tt, isRoute ? 4500 : 3700, isRoute ? 5150 : 4350);
+      const endFade = 1 - seg(tt, L - 350, L);
+      const w1s = isRoute ? 2700 : 100, w2s = isRoute ? 2820 : 220, w3s = isRoute ? 2980 : 1750;
+      const w1 = eo(seg(tt, w1s, w1s + 450)), w2 = eo(seg(tt, w2s, w2s + 450)), w3 = eo(seg(tt, w3s, w3s + 450));
+      const disp = { fontFamily: "'Archivo',system-ui,sans-serif", fontStretch: '125%', fontWeight: 600, fontSize: 44, lineHeight: '46px', letterSpacing: '-.01em' };
+      const tgtTop = top + 17;
+      seq.gStyle = { position: 'absolute', left: 32, top: lerp(G0, tgtTop, m) - (1 - endFade) * 0, transformOrigin: '0 0', transform: `scale(${lerp(1, .5, m)})`, opacity: (1 - seg(mRaw, .7, 1)) * endFade, marginLeft: lerp(0, -12, m) };
+      seq.g1 = Object.assign({}, disp, { color: 'var(--fg)', opacity: w1, transform: `translateY(${8 * (1 - w1)}px)` });
+      seq.g2 = Object.assign({}, disp, { color: 'var(--accent-text)', opacity: w2, transform: `translate(${lerp(0, 176, m)}px, ${8 * (1 - w2) + lerp(0, -46, m)}px)` });
+      seq.ctxStyle = { position: 'absolute', left: 32, right: 32, top: G0 + 112, opacity: w3 * (1 - clamp(mRaw * 3)) * endFade, transform: `translateY(${8 * (1 - w3) - 20 * m}px)` };
+      dashOp = eo(seg(tt, isRoute ? 4700 : 3900, isRoute ? 5350 : 4550)) * endFade;
+      dashY = 36 * (1 - dashOp);
+      hdrOp = seg(mRaw, .55, 1) * endFade;
+      if (isRoute) {
+        const mapFade = 1 - eio(seg(tt, 2300, 2800));
+        const mapIn = eo(seg(tt, 0, 400));
+        const draw = eio(seg(tt, 200, 1500));
+        const ex = seg(tt, 1500, 1800);
+        const ring = seg(tt, 1500, 2150);
+        const gp = seg(tt, 2150, 2900);
+        seq.svgStyle = { position: 'absolute', left: 27, top: 300, width: 336, height: 231, opacity: mapIn * mapFade, overflow: 'visible' };
+        seq.routeStyle = { fill: 'none', stroke: 'var(--accent-text)', strokeWidth: 3, strokeLinecap: 'round', strokeDasharray: 1, strokeDashoffset: 1 - draw };
+        seq.endStyle = { fill: 'var(--accent-text)', transformBox: 'fill-box', transformOrigin: 'center', transform: `scale(${ex === 0 ? 0 : back(ex)})` };
+        seq.ringR = 5 + 22 * ring;
+        seq.ringStyle = { fill: 'none', stroke: 'var(--accent-text)', strokeWidth: 2, opacity: ring > 0 && ring < 1 ? .7 * (1 - ring) : 0 };
+        seq.lab1 = { fill: 'var(--fg2)', fontSize: 15, textAnchor: 'middle', opacity: eo(seg(tt, 250, 600)) };
+        seq.lab2 = { fill: 'var(--fg2)', fontSize: 15, textAnchor: 'middle', opacity: eo(seg(tt, 1650, 1950)) };
+        const size = 24 + 1100 * eo(gp);
+        seq.glowStyle = { position: 'absolute', left: 298 - size / 2, top: 409 - size / 2, width: size, height: size, borderRadius: '50%', background: 'radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent) 0%, color-mix(in srgb, var(--accent) 18%, transparent) 30%, transparent 65%)', opacity: gp > 0 ? eo(seg(tt, 2150, 2350)) * (1 - eio(seg(tt, 2600, 3400))) * .9 : 0 };
+      } else {
+        const bar = eio(seg(tt, 350, 1700));
+        const barOp = eo(seg(tt, 300, 450)) * (1 - seg(tt, 1700, 1900));
+        seq.trackStyle = { position: 'absolute', left: 32, top: G0 + 124, width: 140, height: 3, borderRadius: 2, background: 'var(--line)', overflow: 'hidden', opacity: barOp };
+        seq.barStyle = { height: '100%', width: `${bar * 100}%`, background: 'var(--accent-text)', borderRadius: 2 };
+        const pOp = eo(seg(tt, 1900, 2350));
+        const fromY = G0 + 112 + 26 + 18, toY = top + 222;
+        seq.plateStyle = { position: 'absolute', left: lerp(32, 40, m), top: lerp(fromY, toY, m) + 8 * (1 - pOp), opacity: pOp * (1 - seg(mRaw, .85, 1)) * endFade };
+      }
+    }
+    const dashWrapStyle = { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: 'var(--bg)', paddingTop: top + 4, boxSizing: 'border-box', opacity: dashOp, transform: `translateY(${dashY}px)` };
+    const hdrStyle = { fontFamily: "'Archivo',system-ui,sans-serif", fontStretch: '125%', fontWeight: 600, fontSize: 22, lineHeight: '28px', color: 'var(--fg)', opacity: hdrOp, whiteSpace: 'nowrap' };
+    const dashContentStyle = { display: 'flex', flexDirection: 'column', gap: 12, padding: `2px ${device === 'se' ? 16 : 20}px 24px` };
+    const primaryWrapStyle = { paddingTop: 2, opacity: readonly ? .38 : 1 };
+    const navStyle = { flex: 'none', borderTop: '1px solid var(--line)', background: 'color-mix(in srgb, var(--surface) 92%, transparent)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: bot };
+    const toastText = p.toast || '';
+    const toastStyle = { position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: bot + 80, height: 44, padding: '0 18px 0 14px', borderRadius: 999, background: 'var(--fg)', color: 'var(--bg)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', zIndex: 20, boxShadow: '0 8px 24px rgba(2,4,7,.25)' };
+
+    // vehicles
+    const isC = dir === 'C';
+    const selPlate = p.selected || assigned.plate;
+    const vlist = [
+      { plate: 'KR 5222G', color: 'Toyota Corolla', swatch: '#6A3FE0', sub: 'Pojazd domyślny', busy: false },
+      { plate: 'KR 7H241', color: 'Toyota Corolla', swatch: '#6CCB2E', sub: 'Pojazd domyślny', busy: false },
+      { plate: 'KR 9C118', color: 'Toyota Corolla', swatch: '#6CCB2E', sub: 'W użyciu · Marek W. do 18:00', busy: true }
+    ];
+    const vehicles = vlist.map(v => {
+      const sel = v.plate === selPlate && !v.busy;
+      const ring = isC ? v.swatch : 'var(--accent-text)';
+      return Object.assign({}, v, {
+        sel,
+        dotStyle: { width: 10, height: 10, borderRadius: '50%', background: v.swatch, flex: 'none' },
+        style: { minHeight: 76, display: 'flex', alignItems: 'center', gap: 14, padding: '0 14px', borderRadius: 18, boxSizing: 'border-box', background: sel ? `color-mix(in srgb, ${ring} 9%, var(--surface))` : 'var(--surface)', border: sel ? `2px solid ${ring}` : '1px solid var(--line)', opacity: v.busy ? .5 : 1 },
+        radioStyle: { width: 26, height: 26, borderRadius: '50%', flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', background: sel ? ring : 'transparent', color: sel ? (isC ? '#FFFFFF' : 'var(--on-accent)') : 'transparent', border: sel ? 'none' : '1.5px solid var(--line)', boxSizing: 'border-box' }
+      });
+    });
+
+    const vv = p.vvariant || 'list';
+    const isVeh = screen === 'vehicle';
+    const photoOf = (sw) => sw === '#6A3FE0' ? 'assets/fleet-hero-violet.webp' : 'assets/fleet-hero-green.webp';
+    const ringOf = (v) => isC ? v.swatch : 'var(--accent-text)';
+    const selRaw = vehicles.find(v => v.sel) || vehicles[0];
+    const sRing = ringOf(selRaw);
+    const selV = Object.assign({}, selRaw, {
+      photo: photoOf(selRaw.swatch),
+      bigStyle: { marginTop: 16, padding: 18, borderRadius: 22, border: `2px solid ${sRing}`, background: `color-mix(in srgb, ${sRing} 9%, var(--surface))` },
+      checkStyle: { width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: sRing, color: isC ? '#FFFFFF' : 'var(--on-accent)' }
+    });
+    const carItems = vehicles.map(v => {
+      const r = ringOf(v);
+      return Object.assign({}, v, {
+        photo: photoOf(v.swatch),
+        card: { width: 250, flex: 'none', borderRadius: 20, overflow: 'hidden', background: 'var(--surface)', boxSizing: 'border-box', border: v.sel ? `2px solid ${r}` : '1px solid var(--line)' },
+        badge: { position: 'absolute', top: 10, right: 10, width: 30, height: 30, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: r, color: isC ? '#FFFFFF' : 'var(--on-accent)' }
+      });
+    });
+    const otherFree = vehicles.filter(v => !v.sel && !v.busy);
+    const busyList = vehicles.filter(v => v.busy).map(v => Object.assign({}, v, { sub: v.sub.replace('W użyciu · ', 'w użyciu, ') }));
+
+    return {
+      isVehList: isVeh && vv === 'list', isVehAlt: isVeh && vv !== 'list', vConfirm: vv === 'confirm', vCarousel: vv === 'carousel', vCompact: vv === 'compact',
+      selV, carItems, otherFree, busyList,
+      rootStyle, sbStyle, homeStyle, clock, island: device !== 'se', showChrome: !isKit,
+      isWelcome, wFull: isWelcome && (wv === 'full' || wv === 'motion'), wSplit: isWelcome && wv === 'split', wMotion,
+      heroSrc, heroFilterStyle, kbStyle, glowStyle, flareStyle, welcomeContentStyle, logoStyle, headStyle, ctaStyle,
+      splitPhotoStyle, splitLogoStyle, splitContentStyle,
+      isLogin: screen === 'login', isHelp: screen === 'help', sheetStyle, loginFormStyle,
+      lEmpty, lHasVal: !lEmpty, lCaret: lv === 'filled', lLoading, lNotLoading: !lLoading, lError, lOffline,
+      emailFieldStyle, pwdFieldStyle, loginBtnStyle,
+      isDash, dashWrapStyle, hdrStyle, dashContentStyle, dateLabel: 'Czwartek, 24 września',
+      sA, sA2, sB, sC, sD, cTimer, cNext, offShift: isDash && !sC,
+      hasChips: chips.length > 0, chips, hasBig: !!big, big: big || {},
+      veh, cardStyle, timer: '2:12:08', primaryWrapStyle,
+      showMissing: sC || sD,
+      showNextCard: cTimer || sB, nextHeading: sB ? 'Zaplanowane na dziś' : 'Następny kurs', nextRel: sB ? 'za 3 h 52 min' : 'za 26 min', offShiftNext: sB,
+      offShiftB: sB, notA2: !sA2, showGrafik: sA || sA2 || sB || sD,
+      navStyle, hasToast: !!toastText, toastText, toastStyle,
+      vehicles, isC, vehSub: state === 'B' ? 'Dyspozytor przypisał Ci ten pojazd. Możesz wybrać inny.' : 'Wybierz jeden ze swoich pojazdów.',
+      isEnd: screen === 'end', isUpdate: screen === 'update',
+      isSeq, isRoute, isGreetSeq, seq,
+      isKit, kitTitle: ({ A: 'A · Neutralne premium', B: 'B · Kolor marki', C: 'C · Akcent auta' })[dir] + (mode === 'dark' ? ', ciemny' : ', jasny')
+    };
+  }
+}
+</script>
+</body>
+</html>

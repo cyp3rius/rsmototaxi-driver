@@ -1,26 +1,176 @@
-@import "tailwindcss";
-
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light dark;
+  --bg-base: #f5f7f9;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #edf0f3;
+  --text-primary: #0a0f14;
+  --text-secondary: #5b6570;
+  --text-tertiary: #8a939c;
+  --separator: #dde2e7;
+  --accent: #8a6a30;
+  --accent-on: #ffffff;
+  --success: #1e7a4c;
+  --warning: #9a5b00;
+  --danger: #b3261e;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --radius-sheet: 32px;
+  --radius-card: 22px;
+  --radius-card-sm: 18px;
+  --radius-field: 14px;
+  --radius-chip: 10px;
+  --font-display: var(--font-archivo), system-ui, sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg-base: #020407;
+    --bg-surface: #0b1016;
+    --bg-surface-raised: #141b23;
+    --text-primary: #f2f4f6;
+    --text-secondary: #98a2ad;
+    --text-tertiary: #5f6873;
+    --separator: #1d2630;
+    --accent: #d8b878;
+    --accent-on: #020407;
+    --success: #4cc38a;
+    --warning: #f0a93b;
+    --danger: #ff6b61;
   }
 }
 
+html {
+  font: -apple-system-body;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 24px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 125%;
+  font-size: 40px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.display-l {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 115%;
+  font-size: 30px;
+  line-height: 36px;
+}
+
+.numeric-xl {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-variant-numeric: tabular-nums;
+  font-size: 56px;
+  line-height: 1;
+}
+
+.plate {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-stretch: 112%;
+  font-size: 28px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.kenburns {
+  animation: kenburns 28s ease-in-out infinite alternate;
+  transform-origin: 55% 45%;
+}
+@keyframes kenburns {
+  from { transform: scale(1); }
+  to { transform: scale(1.06); }
+}
+.headlights {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 35% 55%, rgba(255, 240, 200, 0.35), transparent 40%),
+    radial-gradient(ellipse at 65% 55%, rgba(255, 240, 200, 0.28), transparent 38%);
+  mix-blend-mode: screen;
+  animation: breath 4.4s ease-in-out infinite;
+  animation-delay: 0.7s;
+  opacity: 0;
+}
+@keyframes breath {
+  0%, 100% { opacity: 0.64; }
+  8% { opacity: 0.95; }
+  50% { opacity: 0.82; }
+}
+.enter-1, .enter-2, .enter-3 {
+  animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.enter-2 { animation-delay: 150ms; }
+.enter-3 { animation-delay: 300ms; }
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.route-draw {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: draw 1.3s ease forwards;
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 50%, transparent));
+}
+@keyframes draw {
+  to { stroke-dashoffset: 0; }
+}
+.tint-accent {
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-surface));
+}
+.tint-accent-soft {
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-surface));
+}
+.tint-warning {
+  background: color-mix(in srgb, var(--warning) 14%, var(--bg-surface));
+}
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }

@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>@keyframes rfSpin{to{transform:rotate(360deg)}}@keyframes rfPulse{0%{box-shadow:0 0 0 0 rgba(76,195,138,.55)}100%{box-shadow:0 0 0 9px rgba(76,195,138,0)}}</style>
+</helmet>
+<div style="{{ rootStyle }}">
+  <div style="{{ sbStyle }}">
+    <span style="font-size:16px;font-weight:600;">{{ clock }}</span>
+    <span style="display:flex;align-items:center;gap:6px;">
+      <svg width="18" height="12" viewBox="0 0 18 12" style="fill:currentColor"><rect x="0" y="8" width="3" height="4" rx="1"></rect><rect x="5" y="5.5" width="3" height="6.5" rx="1"></rect><rect x="10" y="3" width="3" height="9" rx="1"></rect><rect x="15" y="0" width="3" height="12" rx="1"></rect></svg>
+      <svg width="16" height="12" viewBox="0 0 24 18" style="fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round"><path d="M2 6.5a15 15 0 0 1 20 0M5.5 10.2a10 10 0 0 1 13 0M9 13.8a5 5 0 0 1 6 0"></path></svg>
+      <span style="width:25px;height:12px;border-radius:4px;border:1.5px solid currentColor;padding:1.5px;box-sizing:border-box;display:flex;"><span style="flex:1;border-radius:2px;background:currentColor;"></span></span>
+    </span>
+  </div>
+  <div style="position:absolute;top:11px;left:50%;transform:translateX(-50%);width:124px;height:36px;border-radius:20px;background:#000;z-index:90;"></div>
+
+  <div style="{{ bodyStyle }}">
+
+    <!-- 5.00 INSTALACJA iOS / ANDROID -->
+    <sc-if value="{{ s.install }}">
+      <div style="height:100%;display:flex;flex-direction:column;padding:16px 24px 0;box-sizing:border-box;">
+        <img src="{{ logoSrc }}" alt="RS Moto Taxi" style="height:56px;width:auto;align-self:flex-start;">
+        <h1 style="margin:28px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;color:var(--fg);">Dodaj aplikację do ekranu początkowego</h1>
+        <p style="margin:10px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Powiadomienia o kursach, pełny ekran i praca offline działają dopiero po dodaniu aplikacji.</p>
+        <sc-if value="{{ s.installIos }}">
+          <div style="margin-top:28px;display:flex;flex-direction:column;gap:18px;">
+            <div style="display:flex;gap:14px;align-items:center;"><span style="width:36px;height:36px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-weight:600;font-variant-numeric:tabular-nums;flex:none;">1</span><span style="font-size:17px;line-height:24px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">Stuknij <span style="display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:10px;background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent-text);font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3v13M7 8l5-5 5 5M5 12v8h14v-8"></path></svg>Udostępnij</span></span></div>
+            <div style="display:flex;gap:14px;align-items:center;"><span style="width:36px;height:36px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;">2</span><span style="font-size:17px;line-height:24px;">Wybierz <b style="font-weight:600;">„Do ekranu początkowego”</b></span></div>
+            <div style="display:flex;gap:14px;align-items:center;"><span style="width:36px;height:36px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;font-weight:600;flex:none;">3</span><span style="font-size:17px;line-height:24px;">Otwórz RS Driver z ekranu telefonu</span></div>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Kontynuuj w przeglądarce</div>
+          <div style="margin:0 -24px;padding:10px 16px 34px;background:var(--surface);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px;">
+            <div style="height:44px;border-radius:12px;background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--fg2);">crm.rsmotoconcierge.pl/driver</div>
+            <div style="display:flex;justify-content:space-around;align-items:center;height:36px;color:var(--fg3);">
+              <svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"></path></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+              <span style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent-text);background:color-mix(in srgb, var(--accent) 16%, transparent);box-shadow:0 0 0 6px color-mix(in srgb, var(--accent) 12%, transparent);"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3v13M7 8l5-5 5 5M5 12v8h14v-8"></path></svg></span>
+              <svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 19V5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14l-8-4z"></path></svg>
+              <svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"></path></svg>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.installAndroid }}">
+          <div style="margin-top:28px;padding:18px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:flex;gap:14px;align-items:center;">
+            <span style="width:56px;height:56px;border-radius:14px;background:#020407;display:flex;align-items:center;justify-content:center;flex:none;"><img src="assets/logo-light.svg" alt="" style="height:38px;"></span>
+            <span style="display:flex;flex-direction:column;"><span style="font-size:17px;font-weight:600;">RS Driver</span><span style="font-size:15px;color:var(--fg2);">crm.rsmotoconcierge.pl/driver</span></span>
+          </div>
+          <div style="flex:1;"></div>
+          <div style="height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>Zainstaluj aplikację</div>
+          <div style="height:56px;margin-bottom:34px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Kontynuuj w przeglądarce</div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 5.0 SPLASH -->
+    <sc-if value="{{ s.splash }}">
+      <div style="height:100%;display:flex;align-items:center;justify-content:center;"><img src="{{ logoSrc }}" alt="RS Moto Taxi" style="width:120px;height:auto;"></div>
+    </sc-if>
+
+    <!-- 5.3 BŁĘDY ŁADOWANIA -->
+    <sc-if value="{{ s.loadState }}">
+      <div style="height:100%;display:flex;flex-direction:column;justify-content:center;padding:0 28px 60px;box-sizing:border-box;">
+        <span style="width:64px;height:64px;border-radius:20px;background:color-mix(in srgb, var(--warning) 14%, transparent);color:var(--warning);display:flex;align-items:center;justify-content:center;"><svg width="30" height="30" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2.1-1.6M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 10.7 5M12 20h.01"></path></svg></span>
+        <sc-if value="{{ s.loadErr }}">
+          <h1 style="margin:24px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Nie udało się pobrać zleceń</h1>
+          <p style="margin:10px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Ładowanie trwa ponad 15 sekund. Sprawdź połączenie albo pracuj na danych zapisanych dziś o 18:52.</p>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Spróbuj ponownie</div>
+          <div style="margin-top:8px;height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;">Otwórz dane z pamięci</div>
+        </sc-if>
+        <sc-if value="{{ s.noCache }}">
+          <h1 style="margin:24px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Brak połączenia</h1>
+          <p style="margin:10px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Brak zapisanego profilu na tym urządzeniu. Połącz się raz, żeby pobrać pojazdy i dane zmian.</p>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Spróbuj ponownie</div>
+          <div style="margin-top:8px;height:56px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;color:var(--fg2);">Wyloguj się</div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 5.6 ZMIANY -->
+    <sc-if value="{{ s.shifts }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px;"><h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Zmiany</h1></div>
+      <div style="margin:0 20px;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--raised);"><div style="height:44px;border-radius:11px;background:var(--surface);box-shadow:0 1px 3px rgba(2,4,7,.12);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;">Ten tydzień</div><div style="height:44px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--fg2);">Wszystkie</div></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ shiftGroups }}" as="g" hint-placeholder-count="3">
+          <div style="font-size:15px;font-weight:600;color:var(--fg2);padding:12px 4px 0;">{{ g.title }}</div>
+          <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="1">
+            <div style="{{ it.cardStyle }}">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:17px;font-weight:600;">{{ it.date }}</span><span style="{{ it.chip }}">{{ it.status }}</span></div>
+              <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:24px;font-variant-numeric:tabular-nums;">{{ it.plan }}</div>
+              <div style="font-size:15px;color:var(--fg2);">{{ it.meta }}</div>
+              <sc-if value="{{ it.end }}"><div style="margin-top:4px;height:56px;border-radius:999px;border:1px solid color-mix(in srgb, var(--danger) 40%, transparent);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:var(--danger);">Zakończ zmianę</div></sc-if>
+            </div>
+          </sc-for>
+        </sc-for>
+        <div style="margin-top:4px;height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;">Pokaż więcej</div>
+      </div>
+    </sc-if>
+
+    <!-- 5.10 KURSY -->
+    <sc-if value="{{ s.trips }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px;"><h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Kursy</h1><span style="height:48px;padding:0 18px 0 14px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round"><path d="M12 5v14M5 12h14"></path></svg>Nowy kurs</span></div>
+      <div style="margin:0 20px;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--raised);"><div style="{{ segL }}">Dziś</div><div style="{{ segR }}">Wszystkie</div></div>
+      <div style="padding:16px 20px 0;display:flex;gap:8px;"><span style="{{ missingChip }}"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3l-2 1.5L15 3l-2 1.5L11 3 9 4.5 7 3z"></path></svg>Brak paragonu · {{ missingCount }}</span></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ tripGroups }}" as="g" hint-placeholder-count="2">
+          <div style="font-size:15px;font-weight:600;color:var(--fg2);padding:12px 4px 0;">{{ g.title }}</div>
+          <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="2">
+            <div style="padding:16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;justify-content:space-between;gap:10px;"><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">{{ t.time }}</span><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">{{ t.amount }}</span></div>
+              <div style="font-size:16px;line-height:22px;">{{ t.route }}</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"><sc-for list="{{ t.chips }}" as="c" hint-placeholder-count="2"><span style="{{ c.style }}">{{ c.label }}</span></sc-for></div>
+            </div>
+          </sc-for>
+        </sc-for>
+        <sc-if value="{{ s.tripsMissing }}"><div style="margin-top:4px;height:56px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;">Pokaż więcej</div></sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 5.7 NOWY KURS: WYBÓR TRYBU -->
+    <sc-if value="{{ s.choose }}">
+      <div style="height:52px;display:flex;align-items:center;padding:0 12px 0 20px;"><span style="flex:1;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Nowy kurs</span><span style="width:44px;height:44px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><path d="M6 6l12 12M18 6 6 18"></path></svg></span></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-if value="{{ s.chooseOn }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 6px;"><span style="font-size:15px;color:var(--fg2);">Pojazd na zmianie</span><span style="display:inline-flex;align-items:stretch;height:32px;border-radius:5px;overflow:hidden;background:#fff;border:1px solid rgba(2,4,7,.3);color:#0A0F14;"><span style="width:18px;background:#003399;color:#fff;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font-size:9px;font-weight:700;">PL</span><span style="display:flex;align-items:center;padding:0 9px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:18px;letter-spacing:.04em;">KR 7H241</span></span></div>
+          <div style="min-height:96px;padding:18px;border-radius:22px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;gap:14px;box-sizing:border-box;">
+            <svg width="28" height="28" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+            <span style="flex:1;display:flex;flex-direction:column;gap:2px;"><span style="font-size:19px;font-weight:600;">Kurs live</span><span style="font-size:15px;opacity:.85;">Start teraz, trasa z GPS</span></span>
+            <svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.chooseOff }}">
+          <div style="padding:16px;border-radius:18px;background:var(--raised);font-size:16px;line-height:23px;">Jesteś poza zmianą. Możesz zaplanować kurs albo dodać zakończony kurs z poprzedniej zmiany.</div>
+          <div style="padding:18px;border-radius:22px;border:1px dashed var(--line);display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:14px;color:var(--fg3);"><svg width="28" height="28" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"></path></svg><span style="display:flex;flex-direction:column;gap:2px;"><span style="font-size:19px;font-weight:600;color:var(--fg2);">Kurs live</span><span style="font-size:15px;color:var(--fg2);">Rozpocznij zmianę, żeby jechać na żywo</span></span></div>
+            <div style="height:56px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;">Rozpocznij zmianę</div>
+          </div>
+        </sc-if>
+        <div style="min-height:88px;padding:18px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;gap:14px;box-sizing:border-box;">
+          <svg width="26" height="26" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"></path></svg>
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px;"><span style="font-size:19px;font-weight:600;">Zaplanuj kurs</span><span style="font-size:15px;color:var(--fg2);">Rezerwacja z godziną w przyszłości</span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg3);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+        </div>
+        <div style="min-height:88px;padding:18px;border-radius:22px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;gap:14px;box-sizing:border-box;">
+          <svg width="26" height="26" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5M12 7v5l3 2"></path></svg>
+          <span style="flex:1;display:flex;flex-direction:column;gap:2px;"><span style="font-size:19px;font-weight:600;">Kurs przeszły</span><span style="font-size:15px;color:var(--fg2);">Zakończony kurs z tej lub poprzedniej zmiany</span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg3);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M9 6l6 6-6 6"></path></svg>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 5.7 KROK 1: TRASA I CZASY -->
+    <sc-if value="{{ s.route }}">
+      <div style="height:52px;display:flex;align-items:center;gap:6px;padding:0 12px;"><span style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"></path></svg></span><span style="flex:1;text-align:center;font-size:17px;font-weight:600;">{{ routeTitle }}</span><span style="width:44px;"></span></div>
+      <div style="padding:0 24px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><span style="height:4px;border-radius:2px;background:var(--accent-text);"></span><span style="height:4px;border-radius:2px;background:var(--line);"></span></div><div style="margin-top:8px;font-size:15px;color:var(--fg2);">Krok 1 z 2 · Trasa i czasy</div></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Skąd</div>
+          <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 14px 0 16px;gap:10px;font-size:17px;"><span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Kraków Airport (KRK)</span><svg width="20" height="20" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--accent-text);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 11l19-9-9 19-2-8-8-2z"></path></svg></div>
+        </div>
+        <sc-if value="{{ s.routeAuto }}">
+          <div style="position:relative;">
+            <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Dokąd</div>
+            <div style="height:56px;border-radius:14px;background:var(--surface);border:1.5px solid var(--accent-text);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);display:flex;align-items:center;padding:0 16px;font-size:17px;">Wielicz<span style="width:2px;height:22px;background:var(--accent-text);margin-left:1px;"></span></div>
+            <div style="margin-top:6px;border-radius:18px;background:var(--surface);border:1px solid var(--line);box-shadow:0 12px 30px rgba(2,4,7,.14);overflow:hidden;">
+              <div style="min-height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--line);color:var(--accent-text);font-size:16px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 11l19-9-9 19-2-8-8-2z"></path></svg>Użyj mojej lokalizacji</div>
+              <div style="min-height:60px;display:flex;flex-direction:column;justify-content:center;padding:6px 16px;border-bottom:1px solid var(--line);"><span style="font-size:16px;"><b style="font-weight:600;">Wielicz</b>ka, Kopalnia Soli</span><span style="font-size:15px;color:var(--fg2);">ul. Daniłowicza 10, Wieliczka</span></div>
+              <div style="min-height:60px;display:flex;flex-direction:column;justify-content:center;padding:6px 16px;border-bottom:1px solid var(--line);"><span style="font-size:16px;"><b style="font-weight:600;">Wielicz</b>ka, Rynek Górny</span><span style="font-size:15px;color:var(--fg2);">Wieliczka, małopolskie</span></div>
+              <div style="min-height:60px;display:flex;flex-direction:column;justify-content:center;padding:6px 16px;"><span style="font-size:16px;">Hotel Grand Sal, <b style="font-weight:600;">Wielicz</b>ka</span><span style="font-size:15px;color:var(--fg2);">ul. Powstania Warszawskiego 1</span></div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ s.routeFull }}">
+          <div>
+            <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Przystanek</div>
+            <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 8px 0 16px;gap:10px;font-size:17px;"><span style="flex:1;">Kraków, ul. Karmelicka 22</span><span style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--fg2);"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><path d="M6 6l12 12M18 6 6 18"></path></svg></span></div>
+            <div style="height:44px;display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;color:var(--accent-text);"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round"><path d="M12 5v14M5 12h14"></path></svg>Dodaj przystanek</div>
+          </div>
+          <div>
+            <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Dokąd</div>
+            <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;">Wieliczka, ul. Daniłowicza 10</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Start</div><div style="{{ timeFieldStyle }}">Dziś, 16:05</div></div>
+            <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Koniec</div><div style="{{ timeFieldStyle }}">Dziś, 16:48</div></div>
+          </div>
+          <sc-if value="{{ s.routeErr }}">
+            <div style="margin-top:-6px;font-size:15px;line-height:20px;color:var(--danger);">Czas kursu musi mieścić się w jednej z Twoich zmian. Dziś jesteś na zmianie od 17:02, wczoraj 5:58–14:10.</div>
+          </sc-if>
+          <div style="display:flex;gap:6px;margin-top:-4px;"><span style="height:36px;padding:0 14px;border-radius:10px;background:var(--raised);display:inline-flex;align-items:center;font-size:15px;font-weight:500;">Teraz</span><span style="height:36px;padding:0 14px;border-radius:10px;background:var(--raised);display:inline-flex;align-items:center;font-size:15px;font-weight:500;">Dziś</span><span style="height:36px;padding:0 14px;border-radius:10px;background:var(--raised);display:inline-flex;align-items:center;font-size:15px;font-weight:500;">Wczoraj</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border-radius:18px;background:var(--surface);border:1px solid var(--line);">
+            <span style="display:flex;flex-direction:column;"><span style="font-size:15px;color:var(--fg2);">Dystans i czas</span><span style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">21,6 km · 43 min</span></span>
+            <span style="height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;gap:6px;font-size:15px;font-weight:600;"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"></path></svg>Przelicz</span>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 5.7 KROK 2: SZCZEGÓŁY -->
+    <sc-if value="{{ s.commercial }}">
+      <div style="height:52px;display:flex;align-items:center;gap:6px;padding:0 12px;"><span style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"></path></svg></span><span style="flex:1;text-align:center;font-size:17px;font-weight:600;">Kurs przeszły</span><span style="width:44px;"></span></div>
+      <div style="padding:0 24px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><span style="height:4px;border-radius:2px;background:var(--accent-text);"></span><span style="height:4px;border-radius:2px;background:var(--accent-text);"></span></div><div style="margin-top:8px;font-size:15px;color:var(--fg2);">Krok 2 z 2 · Szczegóły kursu</div></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:16px;">
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Typ kursu</div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+            <sc-for list="{{ tripTypes }}" as="ty" hint-placeholder-count="5"><div style="{{ ty.style }}"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="{{ ty.icon }}"></path></svg>{{ ty.label }}</div></sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Klient</div>
+          <div style="min-height:64px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:8px 14px 8px 16px;gap:10px;box-sizing:border-box;"><span style="flex:1;display:flex;flex-direction:column;"><span style="font-size:17px;font-weight:600;">Anna Wiśniewska</span><span style="font-size:15px;color:var(--fg2);">osoba · +48 601 234 567</span></span><span style="font-size:15px;font-weight:600;color:var(--accent-text);">Zmień</span></div>
+          <div style="display:flex;gap:8px;margin-top:8px;"><span style="height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;font-size:15px;font-weight:600;">+ Nowa osoba</span><span style="height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;font-size:15px;font-weight:600;">+ Nowa firma</span></div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Płatność</div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;"><sc-for list="{{ payments }}" as="pm" hint-placeholder-count="5"><div style="{{ pm.style }}"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="{{ pm.icon }}"></path></svg>{{ pm.label }}</div></sc-for></div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Kwota</div>
+          <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;">160,00<span style="font-size:17px;font-weight:500;color:var(--fg2);">zł</span></div>
+          <div style="margin-top:8px;height:40px;padding:0 12px;border-radius:10px;display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:600;background:color-mix(in srgb, var(--accent) 14%, transparent);color:var(--accent-text);"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>Sugerowana cena: 160 zł</div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Paragon <span style="color:var(--fg2);font-weight:400;">(wymagany)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="height:56px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>Zrób zdjęcie</div>
+            <div style="height:56px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"></path></svg>Wybierz plik</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- 5.7 KURS LIVE -->
+    <sc-if value="{{ s.live }}">
+      <div style="margin:4px 20px 0;display:flex;align-items:center;gap:10px;height:52px;padding:0 14px;border-radius:18px;background:var(--surface);border:1px solid var(--line);"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);animation:rfPulse 1.6s ease-out infinite;"></span><span style="font-size:15px;font-weight:600;color:var(--success);">Na zmianie</span><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">2:31:40</span><span style="flex:1;"></span><span style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:16px;letter-spacing:.04em;">KR 7H241</span></div>
+      <div style="margin:12px 20px 0;padding:20px;border-radius:26px;background:var(--surface);border:1px solid var(--line);">
+        <div style="font-size:15px;font-weight:600;color:var(--accent-text);">Kurs live w trakcie</div>
+        <div style="margin-top:6px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:64px;line-height:1;font-variant-numeric:tabular-nums;">0:17:22</div>
+        <div style="margin-top:24px;font-size:15px;color:var(--fg2);">Skąd · od 18:57</div>
+        <div style="font-size:19px;font-weight:600;line-height:26px;">ul. Krakowska 12, Zabierzów</div>
+        <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:15px;color:var(--fg2);">Dystans z GPS</div><div style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;">9,4 km</div></div>
+          <div><div style="font-size:15px;color:var(--fg2);">Punkty GPS</div><div style="font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;">142</div></div>
+        </div>
+      </div>
+      <p style="margin:16px 24px 0;font-size:15px;line-height:20px;color:var(--fg2);">Po zakończeniu uzupełnisz trasę i szczegóły kursu. Nie zamykaj aplikacji: GPS działa tylko przy otwartym ekranie.</p>
+    </sc-if>
+
+    <!-- 5.7 KURS ZAPLANOWANY / W TRAKCIE / ZAKOŃCZONY / PLATFORMA -->
+    <sc-if value="{{ s.detail }}">
+      <div style="height:52px;display:flex;align-items:center;gap:6px;padding:0 12px;"><span style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"></path></svg></span><span style="flex:1;text-align:center;font-size:17px;font-weight:600;">{{ detailTitle }}</span><span style="width:44px;"></span></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-if value="{{ s.platform }}">
+          <div style="display:flex;gap:12px;align-items:center;padding:12px 14px;border-radius:18px;background:var(--raised);border:1px solid var(--line);font-size:15px;line-height:20px;"><svg width="20" height="20" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--fg2);stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>Kurs z aplikacji platformy. Nie można go edytować.</div>
+        </sc-if>
+        <div style="padding:20px;border-radius:22px;background:var(--surface);border:1px solid var(--line);">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="{{ dStatusStyle }}">{{ dStatus }}</span><span style="font-size:15px;color:var(--fg2);">{{ dWhen }}</span></div>
+          <div style="margin-top:8px;font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:52px;line-height:1.05;font-variant-numeric:tabular-nums;">{{ dTime }}</div>
+          <div style="margin-top:14px;display:grid;grid-template-columns:14px 1fr;column-gap:12px;">
+            <span style="display:flex;flex-direction:column;align-items:center;padding-top:6px;"><span style="width:10px;height:10px;border-radius:50%;border:2px solid var(--accent-text);box-sizing:border-box;"></span><span style="flex:1;width:2px;background:var(--line);margin:4px 0;"></span><span style="width:10px;height:10px;border-radius:2px;background:var(--accent-text);"></span></span>
+            <span style="display:flex;flex-direction:column;gap:14px;">
+              <span><span style="display:block;font-size:17px;font-weight:600;">{{ dFrom }}</span><span style="display:block;font-size:15px;color:var(--fg2);">{{ dFromSub }}</span></span>
+              <span><span style="display:block;font-size:17px;font-weight:600;">{{ dTo }}</span><span style="display:block;font-size:15px;color:var(--fg2);">{{ dToSub }}</span></span>
+            </span>
+          </div>
+          <div style="margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;"><sc-for list="{{ dChips }}" as="c" hint-placeholder-count="3"><span style="{{ c.style }}">{{ c.label }}</span></sc-for></div>
+        </div>
+
+        <sc-if value="{{ s.scheduledAny }}">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;color:var(--fg2);">Cena</div><div style="height:56px;border-radius:14px;background:var(--raised);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--fg2);"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4"></path></svg>450 zł</div></div>
+            <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Dystans</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;">110<span style="font-size:16px;font-weight:500;color:var(--fg2);">km</span></div></div>
+          </div>
+          <div style="font-size:15px;line-height:20px;color:var(--fg2);margin-top:-4px;">Przedpłata online: można zmienić tylko dystans.</div>
+          <sc-if value="{{ s.inProgress }}"><div style="padding:16px;border-radius:18px;background:color-mix(in srgb, var(--accent) 12%, var(--surface));border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);font-size:16px;line-height:23px;">Kurs trwa. Zakończ, gdy pasażer wysiądzie. Zmieni się tylko godzina końca.</div></sc-if>
+          <div style="min-height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-radius:18px;border:1px solid var(--line);font-size:16px;font-weight:600;">Więcej szczegółów<svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M6 9l6 6 6-6"></path></svg></div>
+          <sc-if value="{{ s.scheduled }}"><div style="min-height:56px;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:18px;border:1px solid var(--line);box-sizing:border-box;"><svg width="20" height="20" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--fg2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3l-2 1.5L15 3l-2 1.5L11 3 9 4.5 7 3z"></path></svg><span style="flex:1;display:flex;flex-direction:column;"><span style="font-size:16px;font-weight:600;">Dodaj paragon</span><span style="font-size:15px;color:var(--fg2);">Dodanie paragonu oznaczy kurs jako zakończony</span></span></div></sc-if>
+        </sc-if>
+
+        <sc-if value="{{ s.completed }}">
+          <div style="min-height:64px;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 16px;border-radius:18px;background:color-mix(in srgb, var(--warning) 12%, var(--surface));border:1px solid color-mix(in srgb, var(--warning) 30%, transparent);box-sizing:border-box;">
+            <svg width="22" height="22" viewBox="0 0 24 24" style="flex:none;fill:none;stroke:var(--warning);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="M5 3v18l2-1.5L9 21l2-1.5L13 21l2-1.5L17 21l2-1.5V3l-2 1.5L15 3l-2 1.5L11 3 9 4.5 7 3z"></path></svg>
+            <span style="flex:1;font-size:16px;font-weight:600;">Brak paragonu</span>
+            <span style="height:48px;padding:0 16px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;font-size:15px;font-weight:600;">Dodaj paragon</span>
+          </div>
+          <div style="border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden;">
+            <div style="min-height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:16px;font-weight:600;border-bottom:1px solid var(--line);">Więcej szczegółów<svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M18 15l-6-6-6 6"></path></svg></div>
+            <sc-for list="{{ moreRows }}" as="r" hint-placeholder-count="10">
+              <div style="display:flex;justify-content:space-between;gap:12px;padding:10px 16px;font-size:15px;border-bottom:1px solid var(--line);"><span style="color:var(--fg2);">{{ r.k }}</span><span style="text-align:right;font-weight:500;">{{ r.v }}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ s.platform }}">
+          <div style="border-radius:18px;border:1px solid var(--line);background:var(--surface);overflow:hidden;">
+            <sc-for list="{{ platformRows }}" as="r" hint-placeholder-count="5">
+              <div style="display:flex;justify-content:space-between;gap:12px;padding:12px 16px;font-size:15px;border-bottom:1px solid var(--line);"><span style="color:var(--fg2);">{{ r.k }}</span><span style="text-align:right;font-weight:500;">{{ r.v }}</span></div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- 5.11 KOSZTY -->
+    <sc-if value="{{ s.expenses }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 20px 12px;"><h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Koszty</h1><span style="height:48px;padding:0 18px 0 14px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;gap:6px;font-size:16px;font-weight:600;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round"><path d="M12 5v14M5 12h14"></path></svg>Koszt</span></div>
+      <div style="padding:0 20px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:15px;color:var(--fg2);">Ten tydzień · 5 kosztów · <b style="color:var(--fg);font-weight:600;">379,40 zł</b></span><span style="height:40px;padding:0 12px;border-radius:10px;background:var(--raised);display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:500;"><svg width="16" height="16" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M3 6h18M6 12h12M10 18h4"></path></svg>Data dokumentu</span></div>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ expenses }}" as="e" hint-placeholder-count="5">
+          <div style="padding:16px;border-radius:20px;background:var(--surface);border:1px solid var(--line);display:flex;gap:12px;">
+            <span style="width:44px;height:44px;border-radius:14px;background:var(--raised);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:var(--fg2);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="{{ e.icon }}"></path></svg></span>
+            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;">
+              <span style="display:flex;justify-content:space-between;gap:10px;"><span style="font-size:17px;font-weight:600;">{{ e.title }}</span><span style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;">{{ e.amount }}</span></span>
+              <span style="font-size:15px;color:var(--fg2);">{{ e.meta }}</span>
+              <span style="display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;"><span style="{{ e.chipStyle }}">{{ e.chip }}</span></span>
+              <sc-if value="{{ e.hasNote }}"><span style="font-size:15px;line-height:20px;color:var(--danger);">{{ e.note }}</span></sc-if>
+            </span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.expenseNew }}">
+      <div style="height:52px;display:flex;align-items:center;padding:0 12px 0 20px;"><span style="flex:1;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Zarejestruj koszt</span><span style="width:44px;height:44px;border-radius:50%;background:var(--raised);display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round"><path d="M6 6l12 12M18 6 6 18"></path></svg></span></div>
+      <p style="margin:2px 20px 0;font-size:15px;line-height:20px;color:var(--fg2);">Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie paragonu.</p>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:16px;">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+          <sc-for list="{{ expTypes }}" as="ty" hint-placeholder-count="5"><div style="{{ ty.style }}"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><path d="{{ ty.icon }}"></path></svg>{{ ty.label }}</div></sc-for>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Kwota brutto</div>
+          <div style="height:64px;border-radius:14px;background:var(--surface);border:1.5px solid var(--accent-text);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-family:'Archivo',system-ui,sans-serif;font-stretch:110%;font-size:30px;font-weight:600;font-variant-numeric:tabular-nums;">250,00<span style="font-family:system-ui;font-size:18px;font-weight:500;color:var(--fg2);">zł</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">VAT <span style="color:var(--fg2);font-weight:400;">opcjonalnie</span></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"><span style="height:56px;border-radius:14px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:500;">8%</span><span style="height:56px;border-radius:14px;border:2px solid var(--accent-text);background:color-mix(in srgb, var(--accent) 10%, var(--surface));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;">23%</span></div></div>
+          <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Kiedy</div><div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 14px;font-size:16px;">Dziś, 14:12</div></div>
+        </div>
+        <div>
+          <div style="font-size:15px;font-weight:500;margin-bottom:8px;">Paragon <span style="color:var(--fg2);font-weight:400;">(wymagany)</span></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="height:56px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>Zrób zdjęcie</div>
+            <div style="height:56px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;font-weight:600;"><svg width="20" height="20" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"></path></svg>Wybierz plik</div>
+          </div>
+        </div>
+        <div><div style="font-size:15px;font-weight:500;margin-bottom:8px;">Notatki</div><div style="height:80px;border-radius:14px;background:var(--raised);border:1px solid var(--line);padding:14px 16px;box-sizing:border-box;font-size:16px;color:var(--fg3);">Np. tankowanie przed kursem do Zakopanego</div></div>
+      </div>
+    </sc-if>
+
+    <!-- 5.12 WYPŁATY -->
+    <sc-if value="{{ s.settleList }}">
+      <div style="padding:6px 20px 12px;"><h1 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:30px;line-height:36px;">Wypłaty</h1></div>
+      <div style="margin:0 20px;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--raised);"><div style="{{ segL }}">Miesięczne</div><div style="{{ segR }}">Tygodniowe</div></div>
+      <p style="margin:12px 24px 0;font-size:15px;line-height:20px;color:var(--fg2);">{{ settleHint }}</p>
+      <div style="padding:16px 20px 24px;display:flex;flex-direction:column;gap:12px;">
+        <sc-for list="{{ settlements }}" as="st" hint-placeholder-count="4">
+          <div style="{{ st.card }}">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:17px;font-weight:600;">{{ st.title }}</span><span style="{{ st.chip }}">{{ st.status }}</span></div>
+            <div style="font-size:15px;color:var(--fg2);margin-top:8px;">{{ st.label }}</div>
+            <div style="{{ st.amountStyle }}">{{ st.amount }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ s.settleDetail }}">
+      <div style="height:52px;display:flex;align-items:center;gap:6px;padding:0 12px;"><span style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M15 6l-6 6 6 6"></path></svg></span><span style="flex:1;text-align:center;font-size:17px;font-weight:600;">{{ sdKind }}</span><span style="width:44px;"></span></div>
+      <div style="padding:14px 24px 0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:17px;font-weight:600;">{{ sdTitle }}</span><span style="{{ sdChip }}">{{ sdStatus }}</span></div>
+        <div style="margin-top:24px;font-size:15px;color:var(--fg2);">Wypłata końcowa</div>
+        <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:44px;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--accent-text);">{{ sdAmount }}</div>
+        <div style="margin-top:6px;font-size:15px;color:var(--fg2);">{{ sdNote }}</div>
+      </div>
+      <div style="margin:24px 20px 0;border-radius:20px;background:var(--surface);border:1px solid var(--line);overflow:hidden;">
+        <sc-for list="{{ sdRows }}" as="r" hint-placeholder-count="6">
+          <div style="{{ r.style }}"><span style="{{ r.kStyle }}">{{ r.k }}</span><span style="font-variant-numeric:tabular-nums;">{{ r.v }}</span></div>
+        </sc-for>
+      </div>
+      <p style="margin:12px 24px 0;font-size:15px;line-height:20px;color:var(--fg2);">Rozliczenie akceptuje flota. Pytania o kwoty: koordynator, 508 222 321.</p>
+    </sc-if>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <sc-if value="{{ hasBar }}">
+    <div style="{{ barStyle }}">
+      <sc-if value="{{ barBtn }}"><div style="{{ barBtnStyle }}">{{ barLabel }}</div></sc-if>
+      <sc-if value="{{ barSlide }}">
+        <div style="height:68px;border-radius:999px;background:color-mix(in srgb, var(--accent) 16%, var(--surface));border:1px solid color-mix(in srgb, var(--accent) 38%, transparent);position:relative;display:flex;align-items:center;justify-content:center;box-sizing:border-box;">
+          <span style="position:absolute;left:5px;top:5px;width:56px;height:56px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;"><svg width="24" height="24" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.3;stroke-linecap:round;stroke-linejoin:round"><path d="M6 6l6 6-6 6M13 6l6 6-6 6"></path></svg></span>
+          <span style="font-size:17px;font-weight:600;padding-left:44px;">{{ barLabel }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <!-- NAV -->
+  <sc-if value="{{ showNav }}">
+    <nav style="{{ navStyle }}">
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <div style="{{ n.style }}"><svg width="24" height="24" viewBox="0 0 24 24" style="{{ n.svg }}"><path d="{{ n.icon }}"></path></svg>{{ n.label }}</div>
+      </sc-for>
+    </nav>
+  </sc-if>
+
+  <!-- SHEETS -->
+  <sc-if value="{{ hasSheet }}">
+    <div style="position:absolute;inset:0;background:rgba(2,4,7,.5);z-index:40;"></div>
+    <div style="{{ sheetStyle }}">
+      <div style="display:flex;justify-content:center;padding:10px 0 6px;"><span style="width:40px;height:5px;border-radius:3px;background:var(--line);"></span></div>
+      <div style="padding:0 24px;">
+        <sc-if value="{{ s.customerNew }}">
+          <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Nowy klient</h2>
+          <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:var(--raised);"><div style="{{ cSegPerson }}">Osoba</div><div style="{{ cSegCompany }}">Firma</div></div>
+          <sc-if value="{{ custCompany }}">
+            <div style="margin-top:16px;font-size:15px;font-weight:500;margin-bottom:8px;">NIP</div>
+            <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;font-variant-numeric:tabular-nums;">676 102 03 45</div>
+          </sc-if>
+          <div style="margin-top:16px;font-size:15px;font-weight:500;margin-bottom:8px;">Telefon</div>
+          <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;font-variant-numeric:tabular-nums;">{{ custPhone }}</div>
+          <sc-if value="{{ custCompany }}">
+            <div style="margin-top:16px;font-size:15px;font-weight:500;margin-bottom:8px;">Nazwa firmy <span style="color:var(--fg2);font-weight:400;">opcjonalnie</span></div>
+            <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;">Hotel Stary Sp. z o.o.</div>
+            <div style="margin-top:8px;font-size:15px;line-height:20px;color:var(--fg2);">Dane firmy uzupełni CRM na podstawie NIP.</div>
+          </sc-if>
+          <sc-if value="{{ custPerson }}">
+            <div style="margin-top:16px;font-size:15px;font-weight:500;margin-bottom:8px;">Imię i nazwisko <span style="color:var(--fg2);font-weight:400;">opcjonalnie</span></div>
+            <div style="height:56px;border-radius:14px;background:var(--raised);border:1px solid var(--line);display:flex;align-items:center;padding:0 16px;font-size:17px;color:var(--fg3);">Np. Anna Wiśniewska</div>
+          </sc-if>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">Dodaj klienta</div>
+        </sc-if>
+        <sc-if value="{{ s.receiptSheet }}">
+          <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Dodaj paragon</h2>
+          <p style="margin:6px 0 0;font-size:16px;color:var(--fg2);">Kurs 18:05 · Kraków, ul. Basztowa 15 · 95 zł</p>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:600;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M3 8a2 2 0 0 1 2-2h2l2-2h6l2 2h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"></path></svg>Zrób zdjęcie</div>
+          <div style="margin-top:8px;height:64px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;gap:10px;font-size:18px;font-weight:600;"><svg width="22" height="22" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6"></path></svg>Wybierz plik<span style="font-weight:400;color:var(--fg2);font-size:15px;">zdjęcie lub PDF</span></div>
+          <p style="margin:16px 0 8px;font-size:15px;line-height:20px;color:var(--fg2);">Bez sieci paragon zapisze się w telefonie i wyśle po połączeniu.</p>
+        </sc-if>
+        <sc-if value="{{ s.receiptPreviewAny }}">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 0;"><h2 style="margin:0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Paragon</h2><span style="{{ rcChipStyle }}">{{ rcChip }}</span></div>
+          <div style="margin-top:14px;height:200px;border-radius:18px;background:repeating-linear-gradient(135deg, var(--raised) 0 12px, var(--surface) 12px 24px);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--fg2);font-family:ui-monospace,Menlo,monospace;">podgląd zdjęcia paragonu</div>
+          <div style="margin-top:16px;font-size:15px;font-weight:500;margin-bottom:8px;">Numer paragonu / faktury</div>
+          <div style="{{ rcFieldStyle }}">{{ rcNumber }}</div>
+          <sc-if value="{{ s.receiptReview }}"><div style="margin-top:8px;font-size:15px;line-height:20px;color:var(--danger);">Sprawdź wynik rozpoznania: kwota na paragonie 59,00 zł, kwota kursu 95 zł.</div></sc-if>
+          <sc-if value="{{ s.receiptPreview }}"><div style="margin-top:8px;font-size:15px;line-height:20px;color:var(--fg2);">Numer uzupełni się po rozpoznaniu. Możesz zamknąć, kurs zapisze się już teraz.</div></sc-if>
+          <div style="margin-top:24px;height:64px;border-radius:999px;background:var(--accent);color:var(--on-accent);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600;">{{ rcCta }}</div>
+          <div style="height:52px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--danger);">Usuń zdjęcie</div>
+        </sc-if>
+        <sc-if value="{{ s.expenseDelete }}">
+          <h2 style="margin:8px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:26px;">Usunąć ten koszt?</h2>
+          <p style="margin:6px 0 0;font-size:17px;line-height:24px;color:var(--fg2);">Serwis · Myjnia ręczna, Kraków · 60,00 zł. Tej operacji nie można cofnąć.</p>
+          <div style="margin-top:24px;height:56px;border-radius:999px;background:var(--danger);color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;">Usuń koszt</div>
+          <div style="height:56px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--fg2);">Anuluj</div>
+        </sc-if>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ hasToast }}"><div style="{{ toastStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M20 6 9 17l-5-5"></path></svg>{{ toast }}</div></sc-if>
+  <div style="{{ homeStyle }}"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;installIos&quot;,&quot;installAndroid&quot;,&quot;splash&quot;,&quot;loadErr&quot;,&quot;noCache&quot;,&quot;shifts&quot;,&quot;tripsToday&quot;,&quot;tripsMissing&quot;,&quot;chooseOn&quot;,&quot;chooseOff&quot;,&quot;routeAuto&quot;,&quot;route&quot;,&quot;routeErr&quot;,&quot;commercial&quot;,&quot;customerNew&quot;,&quot;live&quot;,&quot;scheduled&quot;,&quot;scheduledOff&quot;,&quot;inProgress&quot;,&quot;completed&quot;,&quot;platform&quot;,&quot;receiptSheet&quot;,&quot;receiptPreview&quot;,&quot;receiptReview&quot;,&quot;expenses&quot;,&quot;expenseNew&quot;,&quot;expenseDelete&quot;,&quot;settleMonthly&quot;,&quot;settleWeekly&quot;,&quot;settleWeek&quot;,&quot;settleMonth&quot;],&quot;default&quot;:&quot;tripsToday&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;toast&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;clock&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const p = this.props;
+    const mode = p.mode || 'light';
+    const screen = p.screen || 'tripsToday';
+    const T = mode === 'dark'
+      ? { bg: '#020407', surface: '#0B1016', raised: '#141B23', fg: '#F2F4F6', fg2: '#98A2AD', fg3: '#5F6873', line: '#1D2630', accent: '#D8B878', accentText: '#D8B878', onAccent: '#020407', success: '#4CC38A', warning: '#F0A93B', danger: '#FF6B61' }
+      : { bg: '#F5F7F9', surface: '#FFFFFF', raised: '#EDF0F3', fg: '#0A0F14', fg2: '#5B6570', fg3: '#8A939C', line: '#DDE2E7', accent: '#8A6A30', accentText: '#8A6A30', onAccent: '#FFFFFF', success: '#1E7A4C', warning: '#9A5B00', danger: '#B3261E' };
+    const top = 54, bot = 34;
+    const is = (...a) => a.includes(screen);
+
+    const s = {
+      install: is('installIos', 'installAndroid'), installIos: is('installIos'), installAndroid: is('installAndroid'),
+      splash: is('splash'), loadState: is('loadErr', 'noCache'), loadErr: is('loadErr'), noCache: is('noCache'),
+      shifts: is('shifts'),
+      trips: is('tripsToday', 'tripsMissing'), tripsMissing: is('tripsMissing'),
+      choose: is('chooseOn', 'chooseOff'), chooseOn: is('chooseOn'), chooseOff: is('chooseOff'),
+      route: is('route', 'routeErr', 'routeAuto'), routeAuto: is('routeAuto'), routeFull: is('route', 'routeErr'), routeErr: is('routeErr'),
+      commercial: is('commercial', 'customerNew', 'customerPerson'), customerNew: is('customerNew', 'customerPerson'),
+      live: is('live'),
+      detail: is('scheduled', 'scheduledOff', 'inProgress', 'completed', 'platform', 'receiptSheet', 'receiptPreview', 'receiptReview'),
+      scheduledAny: is('scheduled', 'scheduledOff', 'inProgress'), scheduled: is('scheduled', 'scheduledOff'), inProgress: is('inProgress'),
+      completed: is('completed', 'receiptSheet', 'receiptPreview', 'receiptReview'), platform: is('platform'),
+      receiptSheet: is('receiptSheet'), receiptPreviewAny: is('receiptPreview', 'receiptReview'), receiptPreview: is('receiptPreview'), receiptReview: is('receiptReview'),
+      expenses: is('expenses', 'expenseDelete'), expenseDelete: is('expenseDelete'), expenseNew: is('expenseNew'),
+      settleList: is('settleMonthly', 'settleWeekly'), settleDetail: is('settleWeek', 'settleMonth')
+    };
+
+    const navTab = s.trips ? 1 : s.expenses ? 2 : (s.settleList || s.settleDetail) ? 3 : s.shifts ? 4 : -1;
+    const showNav = navTab >= 0;
+    const splashDark = s.splash && mode === 'dark';
+    const rootStyle = {
+      '--bg': T.bg, '--surface': T.surface, '--raised': T.raised, '--fg': T.fg, '--fg2': T.fg2, '--fg3': T.fg3, '--line': T.line,
+      '--accent': T.accent, '--accent-text': T.accentText, '--on-accent': T.onAccent, '--success': T.success, '--warning': T.warning, '--danger': T.danger,
+      position: 'relative', width: '100%', height: '100%', overflow: 'hidden', background: 'var(--bg)', color: 'var(--fg)', colorScheme: mode,
+      fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif', WebkitFontSmoothing: 'antialiased'
+    };
+    const sbStyle = { position: 'absolute', top: 0, left: 0, right: 0, height: top, zIndex: 80, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 30px 16px 38px', boxSizing: 'border-box', color: 'var(--fg)', pointerEvents: 'none' };
+    const homeStyle = { position: 'absolute', bottom: 8, left: '50%', transform: 'translateX(-50%)', width: 134, height: 5, borderRadius: 3, background: 'var(--fg)', opacity: .5, zIndex: 95 };
+    const bars = {
+      route: ['btn', 'Dalej: szczegóły kursu'], routeAuto: ['btn', 'Dalej: szczegóły kursu'], routeErr: ['btnOff', 'Dalej: szczegóły kursu'],
+      commercial: ['btn', 'Zapisz kurs'], expenseNew: ['btn', 'Zapisz koszt'],
+      live: ['slide', 'Przesuń, aby zakończyć'], scheduled: ['slide', 'Przesuń, aby rozpocząć'], inProgress: ['slide', 'Przesuń, aby zakończyć'],
+      scheduledOff: ['sec', 'Rozpocznij zmianę, żeby ruszyć']
+    };
+    const bar = bars[screen];
+    const barH = bar ? 68 + 16 + bot : 0;
+    const navH = showNav ? 64 + bot : 0;
+    const bodyStyle = { position: 'absolute', left: 0, right: 0, top: 0, bottom: Math.max(navH, barH), paddingTop: top + 4, boxSizing: 'border-box', overflow: 'hidden' };
+    const barStyle = { position: 'absolute', left: 0, right: 0, bottom: 0, padding: `12px 20px ${bot + 4}px`, background: 'var(--bg)', borderTop: '1px solid var(--line)', zIndex: 30 };
+    const barBtnStyle = bar && bar[0] === 'sec'
+      ? { height: 64, borderRadius: 999, border: '1px solid var(--line)', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 600 }
+      : { height: 64, borderRadius: 999, background: 'var(--accent)', color: 'var(--on-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 600, opacity: bar && bar[0] === 'btnOff' ? .38 : 1 };
+
+    const nav = [
+      ['Start', 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z'],
+      ['Kursy', 'M5 17h14M6 17v2M18 17v2M3 13l2-5a2 2 0 0 1 1.9-1.3h10.2A2 2 0 0 1 19 8l2 5v4H3zM7.5 14h.01M16.5 14h.01'],
+      ['Koszty', 'M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5'],
+      ['Wypłaty', 'M19 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5M17 14h.01'],
+      ['Zmiany', 'M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z']
+    ];
+    const navItems = nav.map(([label, icon], i) => ({
+      label, icon,
+      style: { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 3, height: 64, fontSize: 15, fontWeight: i === navTab ? 600 : 500, color: i === navTab ? 'var(--accent-text)' : 'var(--fg2)' },
+      svg: { fill: 'none', stroke: 'currentColor', strokeWidth: i === navTab ? 2.1 : 1.8, strokeLinecap: 'round', strokeLinejoin: 'round' }
+    }));
+    const navStyle = { position: 'absolute', left: 0, right: 0, bottom: 0, display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))', borderTop: '1px solid var(--line)', background: 'color-mix(in srgb, var(--surface) 92%, transparent)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', paddingBottom: bot, zIndex: 30 };
+
+    const chip = (label, tone) => {
+      const base = { height: 30, padding: '0 10px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 500, whiteSpace: 'nowrap' };
+      const m = {
+        neutral: { background: 'var(--raised)', color: 'var(--fg2)' },
+        ink: { background: 'var(--raised)', color: 'var(--fg)' },
+        success: { background: 'color-mix(in srgb, var(--success) 14%, transparent)', color: 'var(--success)' },
+        warning: { background: 'color-mix(in srgb, var(--warning) 14%, transparent)', color: 'var(--warning)' },
+        danger: { background: 'color-mix(in srgb, var(--danger) 13%, transparent)', color: 'var(--danger)' },
+        accent: { background: 'color-mix(in srgb, var(--accent) 16%, transparent)', color: 'var(--accent-text)' },
+        filled: { background: 'var(--accent)', color: 'var(--on-accent)', fontWeight: 600 },
+        outline: { border: '1px solid var(--line)', color: 'var(--fg2)' }
+      };
+      return { label, style: Object.assign(base, m[tone] || m.neutral) };
+    };
+    const segOn = { height: 44, borderRadius: 11, background: 'var(--surface)', boxShadow: '0 1px 3px rgba(2,4,7,.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 600 };
+    const segOff = { height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 500, color: 'var(--fg2)' };
+    const rightSeg = is('tripsMissing', 'settleWeekly');
+
+    const tr = (time, amount, route, chips) => ({ time, amount, route, chips: chips.map(c => chip(c[0], c[1])) });
+    const tripGroups = s.tripsMissing ? [
+      { title: 'Dziś', items: [tr('18:05–18:31', '95 zł', 'Kraków Airport (KRK) → Kraków, ul. Basztowa 15', [['Z ulicy', 'neutral'], ['Brak paragonu', 'warning'], ['Gotówka', 'neutral']])] },
+      { title: 'Wtorek, 22 września', items: [
+        tr('14:10–14:42', '160 zł', 'Wieliczka, Rynek Górny → Kraków Airport (KRK)', [['Klient', 'neutral'], ['Brak paragonu', 'warning'], ['Karta', 'neutral']]),
+        tr('11:05–11:20', '—', 'Zabierzów, ul. Kolejowa 8 → Kraków, ul. Balicka 104', [['Prywatny', 'neutral'], ['Brak paragonu', 'warning']])] },
+      { title: 'Poniedziałek, 21 września', items: [tr('7:30–8:15', '210 zł', 'Kraków, ul. Wielicka 28 → Kraków Airport (KRK)', [['Klient', 'neutral'], ['Brak paragonu', 'warning'], ['Gotówka', 'neutral']])] }
+    ] : [
+      { title: 'Zaplanowane', items: [
+        tr('19:40', '450 zł', 'Kraków Airport (KRK) → Zakopane, ul. Kościeliska 18', [['Zaplanowany', 'ink'], ['Przedpłata', 'success'], ['LH 1622', 'neutral']]),
+        tr('21:15', '150 zł', 'Kraków, ul. Szczepańska 5 → Kraków Airport (KRK)', [['Zaplanowany', 'ink'], ['Karta', 'neutral']]),
+        tr('23:30', '520 zł', 'Zabierzów, ul. Śląska 2 → Katowice Airport (KTW)', [['Zaplanowany', 'ink'], ['Dopłata nocna', 'warning'], ['Tabliczka', 'neutral']])] },
+      { title: 'Zakończone', items: [
+        tr('19:10–19:22', '—', 'Kraków Airport (KRK) → Zabierzów, baza', [['Wewnętrzny', 'neutral'], ['Czeka na synchronizację', 'outline']]),
+        tr('18:40–19:08', '140 zł', 'Krzeszowice, ul. Daszyńskiego 7 → Kraków Airport (KRK)', [['Zakończony', 'success'], ['Przetwarzanie', 'accent']]),
+        tr('18:05–18:31', '95 zł', 'Kraków Airport (KRK) → Kraków, ul. Basztowa 15', [['Zakończony', 'success'], ['Brak paragonu', 'warning'], ['Gotówka', 'neutral']])] }
+    ];
+    const missingChip = Object.assign({ height: 40, padding: '0 12px', borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 600 },
+      s.tripsMissing ? { background: 'var(--warning)', color: mode === 'dark' ? '#020407' : '#FFFFFF' } : { border: '1px solid color-mix(in srgb, var(--warning) 45%, transparent)', color: 'var(--warning)' });
+
+    const sh = (date, status, tone, plan, meta, end, current) => ({ date, status, plan, meta, end: !!end, chip: chip(status, tone).style,
+      cardStyle: { padding: 16, borderRadius: 20, background: 'var(--surface)', border: current ? '2px solid var(--success)' : '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: 6 } });
+    const shiftGroups = [
+      { title: 'Dziś', items: [sh('Czwartek, 24 września', 'Na zmianie', 'success', '17:00–03:00', 'Start 17:02 · KR 7H241 · 84,2 km', true, true)] },
+      { title: 'Nadchodzące', items: [sh('Piątek, 25 września', 'Zaplanowana', 'ink', '17:00–03:00', 'KR 7H241'), sh('Sobota, 26 września', 'Zaplanowana', 'ink', '5:00–13:00', 'KR 5222G')] },
+      { title: 'Wcześniej', items: [sh('Środa, 23 września', 'Zakończona', 'neutral', '6:00–14:00', 'Rzeczywiście 5:58–14:10 · KR 5222G · 168 km'), sh('Wtorek, 22 września', 'Ad hoc', 'accent', '9:30–15:05', 'KR 7H241 · 121 km')] }
+    ];
+
+    const tile = (icon, label, on) => ({ icon, label, style: { minHeight: 72, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '8px 4px', textAlign: 'center', lineHeight: '18px', fontSize: 15, fontWeight: on ? 600 : 500, color: on ? 'var(--accent-text)' : 'var(--fg)', border: on ? '2px solid var(--accent-text)' : '1px solid var(--line)', background: on ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))' : 'var(--surface)', boxSizing: 'border-box' } });
+    const tripTypes = [
+      tile('M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z', 'Klient', true),
+      tile('M20 10c0 5-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 15 4 10a8 8 0 0 1 16 0zM15 10a3 3 0 1 1-6 0 3 3 0 0 1 6 0z', 'Z ulicy'),
+      tile('M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .71-1.53l7-6a2 2 0 0 1 2.58 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', 'Wewnętrzny'),
+      tile('M5 11h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2zM7 11V7a5 5 0 0 1 10 0v4', 'Prywatny'),
+      tile('M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM20 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0z', 'Inny')
+    ];
+    const payments = [
+      tile('M4 6h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2zM14 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM6 12h.01M18 12h.01', 'Gotówka'),
+      tile('M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM2 10h20', 'Karta', true),
+      tile('M3 22h18M6 18v-7M10 18v-7M14 18v-7M18 18v-7M11.12 2.2a2 2 0 0 1 1.76 0l7.87 3.85c.47.23.31.95-.22.95H3.47c-.53 0-.69-.72-.22-.95z', 'Przelew'),
+      tile('M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM12 18h.01', 'Elektroniczna'),
+      tile('M11.53 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.02a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .3-.9l5.16-.76a2.12 2.12 0 0 0 1.6-1.16z', 'Program lojalnościowy')
+    ];
+
+    const ICON = {
+      fuel: 'M3 22h12M4 9h10M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18M14 13h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 0 2-2V9.83a2 2 0 0 0-.59-1.42L18 5',
+      toll: 'M12 13v8M12 3v3M4 6a1 1 0 0 0-1 1v5a1 1 0 0 0 1 1h13a2 2 0 0 0 1.15-.37l3.43-2.31a1 1 0 0 0 0-1.64l-3.43-2.31A2 2 0 0 0 17 6z',
+      parking: 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM9 17V7h4a3 3 0 0 1 0 6H9',
+      maint: 'M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z',
+      other: 'M13 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM20 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0zM6 12a1 1 0 1 1-2 0 1 1 0 0 1 2 0z'
+    };
+    const ex = (icon, title, meta, amount, c, tone, note) => ({ icon: ICON[icon], title, meta, amount, chip: c, chipStyle: chip(c, tone).style, hasNote: !!note, note: note || '' });
+    const expenses = [
+      ex('fuel', 'Paliwo', 'Orlen, Zabierzów · dziś 14:12 · VAT 23%', '250,00 zł', 'Zweryfikowany', 'success'),
+      ex('parking', 'Parking', 'Kraków Airport P1 · dziś 11:40', '24,00 zł', 'Przetwarzanie', 'accent'),
+      ex('toll', 'Autostrada', 'A4 Balice–Mysłowice · wczoraj', '13,00 zł', 'Czeka na synchronizację', 'outline'),
+      ex('maint', 'Serwis', 'Myjnia ręczna, Kraków · 22 wrz', '60,00 zł', 'Do sprawdzenia', 'danger', 'Rozpoznanie paragonu nie powiodło się. Możesz usunąć koszt i dodać go ponownie.'),
+      ex('other', 'Inne', 'Woda dla pasażerów · 21 wrz · VAT 8%', '32,40 zł', 'Zweryfikowany', 'success')
+    ];
+    const etile = (icon, label, on) => ({ icon: ICON[icon], label, style: { minHeight: 72, borderRadius: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 15, fontWeight: on ? 600 : 500, color: on ? 'var(--accent-text)' : 'var(--fg)', border: on ? '2px solid var(--accent-text)' : '1px solid var(--line)', background: on ? 'color-mix(in srgb, var(--accent) 10%, var(--surface))' : 'var(--surface)', boxSizing: 'border-box' } });
+    const expTypes = [etile('fuel', 'Paliwo', true), etile('toll', 'Autostrada'), etile('parking', 'Parking'), etile('maint', 'Serwis'), etile('other', 'Inne')];
+
+    const stTone = { Szkic: 'neutral', Wysłane: 'accent', Zatwierdzone: 'ink', Wypłacone: 'success' };
+    const stc = (title, status, label, amount, hero) => ({ title, status, label, amount, chip: chip(status, stTone[status]).style,
+      card: { padding: hero ? 20 : 16, borderRadius: 20, background: 'var(--surface)', border: '1px solid var(--line)' },
+      amountStyle: { fontFamily: "'Archivo',system-ui,sans-serif", fontStretch: hero ? '125%' : '112%', fontWeight: 600, fontSize: hero ? 38 : 24, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums', color: hero ? 'var(--accent-text)' : 'var(--fg)' } });
+    const settlements = screen === 'settleWeekly' ? [
+      stc('22–28 września', 'Szkic', 'Netto (kontrolne)', '2 140,00 zł', true),
+      stc('15–21 września', 'Wysłane', 'Netto (kontrolne)', '3 707,60 zł'),
+      stc('8–14 września', 'Zatwierdzone', 'Netto (kontrolne)', '3 512,20 zł'),
+      stc('1–7 września', 'Zatwierdzone', 'Netto (kontrolne)', '3 288,00 zł')
+    ] : [
+      stc('Wrzesień 2026', 'Szkic', 'Wypłata, stan na dziś', '5 120,36 zł', true),
+      stc('Sierpień 2026', 'Wypłacone', 'Wypłata', '7 215,48 zł'),
+      stc('Lipiec 2026', 'Wypłacone', 'Wypłata', '6 980,10 zł'),
+      stc('Czerwiec 2026', 'Wypłacone', 'Wypłata', '6 402,75 zł')
+    ];
+    const row = (k, v, strong) => ({ k, v, style: { display: 'flex', justifyContent: 'space-between', gap: 12, padding: '14px 16px', fontSize: strong ? 17 : 16, fontWeight: strong ? 600 : 400, borderBottom: '1px solid var(--line)', background: strong ? 'var(--raised)' : 'transparent' }, kStyle: { color: strong ? 'var(--fg)' : 'var(--fg2)' } });
+    const week = screen === 'settleWeek';
+    const sdRows = week
+      ? [row('Przychód', '4 120,00 zł'), row('Koszty', '−412,40 zł'), row('Netto', '3 707,60 zł', true), row('Procent wypłaty', '45%'), row('Udział kierowcy', '1 668,42 zł'), row('Bonus', '+100,00 zł'), row('Rekompensata', '0,00 zł'), row('Wypłata końcowa', '1 768,42 zł', true)]
+      : [row('Przychód', '17 820,00 zł'), row('Koszty', '−1 785,60 zł'), row('Netto', '16 034,40 zł', true), row('Wypłata końcowa', '7 215,48 zł', true)];
+
+    // detail
+    const D = {
+      scheduled: { title: 'Kurs zaplanowany', status: 'Zaplanowany', tone: 'ink', when: 'Dziś · za 26 min', time: '19:40' },
+      scheduledOff: { title: 'Kurs zaplanowany', status: 'Zaplanowany', tone: 'ink', when: 'Jutro, pt 25 września', time: '19:40' },
+      inProgress: { title: 'Kurs w trakcie', status: 'W trakcie · od 19:44', tone: 'filled', when: 'Dziś', time: '19:44' },
+      completed: { title: 'Kurs zakończony', status: 'Zakończony', tone: 'success', when: 'Dziś', time: '18:05–18:31' },
+      platform: { title: 'Kurs z platformy', status: 'Bolt', tone: 'outline', when: 'Wczoraj', time: '16:20–16:41' }
+    };
+    const dk = is('receiptSheet', 'receiptPreview', 'receiptReview') ? 'completed' : screen;
+    const dd = D[dk] || D.scheduled;
+    const dRoute = dk === 'completed' ? ['Kraków Airport (KRK)', 'Hala przylotów', 'Kraków, ul. Basztowa 15', '14,2 km · 26 min']
+      : dk === 'platform' ? ['Kraków Główny', 'ul. Pawia 5a', 'Kraków, ul. Dietla 50', '3,1 km · 21 min']
+        : ['Kraków Airport (KRK)', 'Hala przylotów, tabliczka z nazwiskiem', 'Zakopane, ul. Kościeliska 18', 'ok. 110 km · 1 h 50 min'];
+    const dChips = (dk === 'completed' ? [['Z ulicy', 'neutral'], ['Gotówka', 'neutral'], ['95 zł', 'ink']]
+      : dk === 'platform' ? [['Aplikacja platformy', 'neutral'], ['38,40 zł', 'ink']]
+        : [['Przedpłata', 'success'], ['LH 1622 · 19:25', 'neutral'], ['Tabliczka', 'neutral'], ['Fotelik', 'neutral'], ['Kierowca EN', 'neutral']]).map(c => chip(c[0], c[1]));
+    const moreRows = [['Typ', 'Z ulicy'], ['Usługa', 'Standard'], ['Przystanki', 'brak'], ['Czas', '26 min'], ['Pasażerowie', '2'], ['Pojazd', 'KR 7H241'], ['Płatność', 'Gotówka'], ['Cena bazowa', '95 zł'], ['Dopłaty', 'brak'], ['Bagaż', '2 walizki'], ['Klient', 'nie podano']].map(r => ({ k: r[0], v: r[1] }));
+    const platformRows = [['Platforma', 'Bolt'], ['Płatność', 'Aplikacja platformy'], ['Kwota', '38,40 zł'], ['Pojazd', 'KR 7H241'], ['Paragon', 'nie dotyczy']].map(r => ({ k: r[0], v: r[1] }));
+
+    const rcReview = s.receiptReview;
+    const hasSheet = s.customerNew || s.receiptSheet || s.receiptPreviewAny || s.expenseDelete;
+    const sheetStyle = { position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '90%', background: 'var(--surface)', borderRadius: '32px 32px 0 0', paddingBottom: bot + 12, zIndex: 50, boxShadow: mode === 'light' ? '0 -8px 24px rgba(2,4,7,.10)' : 'none', borderTop: mode === 'dark' ? '1px solid var(--line)' : 'none', overflow: 'hidden' };
+    const toast = p.toast || '';
+    const toastStyle = { position: 'absolute', left: '50%', transform: 'translateX(-50%)', bottom: Math.max(navH, barH) + 16, height: 44, padding: '0 18px 0 14px', borderRadius: 999, background: 'var(--fg)', color: 'var(--bg)', display: 'flex', alignItems: 'center', gap: 8, fontSize: 15, fontWeight: 600, whiteSpace: 'nowrap', zIndex: 60, boxShadow: '0 8px 24px rgba(2,4,7,.25)' };
+    const fieldErr = { height: 56, borderRadius: 14, background: 'var(--raised)', border: s.routeErr ? '1.5px solid var(--danger)' : '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: 16, fontVariantNumeric: 'tabular-nums' };
+
+    const custPerson = screen === 'customerPerson';
+    return {
+      custPerson, custCompany: !custPerson, custPhone: custPerson ? '+48 601 234 567' : '+48 12 384 08 08',
+      cSegPerson: custPerson ? segOn : segOff, cSegCompany: custPerson ? segOff : segOn,
+      rootStyle, sbStyle, homeStyle, clock: p.clock || (s.splash || s.install ? '15:40' : '19:14'), s, bodyStyle,
+      logoSrc: mode === 'dark' ? 'assets/logo-light.svg' : 'assets/logo-ink.svg',
+      shiftGroups, tripGroups, missingChip, missingCount: 4,
+      segL: rightSeg ? segOff : segOn, segR: rightSeg ? segOn : segOff,
+      routeTitle: s.routeAuto ? 'Zaplanuj kurs' : 'Kurs przeszły', timeFieldStyle: fieldErr,
+      tripTypes, payments,
+      detailTitle: dd.title, dStatus: dd.status, dStatusStyle: chip(dd.status, dd.tone).style, dWhen: dd.when, dTime: dd.time,
+      dFrom: dRoute[0], dFromSub: dRoute[1], dTo: dRoute[2], dToSub: dRoute[3], dChips, moreRows, platformRows,
+      expenses, expTypes,
+      settlements, settleHint: screen === 'settleWeekly' ? 'Tygodniowe są kontrolne. Wypłata liczy się z rozliczenia miesięcznego.' : 'Tylko podgląd. Rozliczenia akceptuje flota.',
+      sdKind: week ? 'Rozliczenie tygodniowe' : 'Wypłata miesięczna', sdTitle: week ? '15–21 września 2026' : 'Sierpień 2026', sdStatus: week ? 'Wysłane' : 'Wypłacone',
+      sdChip: chip(week ? 'Wysłane' : 'Wypłacone', week ? 'accent' : 'success').style, sdAmount: week ? '1 768,42 zł' : '7 215,48 zł', sdNote: week ? 'Kontrolnie, wchodzi do wypłaty za wrzesień.' : 'Wypłacono 10 września 2026.', sdRows,
+      hasBar: !!bar, barStyle, barBtn: !!bar && bar[0] !== 'slide', barSlide: !!bar && bar[0] === 'slide', barLabel: bar ? bar[1] : '', barBtnStyle,
+      showNav, navItems, navStyle,
+      hasSheet: !!hasSheet, sheetStyle,
+      rcChip: rcReview ? 'Do sprawdzenia' : 'Przetwarzanie', rcChipStyle: chip(rcReview ? 'Do sprawdzenia' : 'Przetwarzanie', rcReview ? 'danger' : 'accent').style,
+      rcNumber: rcReview ? 'PAR 0412/09/2026' : 'Uzupełni się po rozpoznaniu',
+      rcFieldStyle: { height: 56, borderRadius: 14, background: 'var(--raised)', border: rcReview ? '1.5px solid var(--danger)' : '1px solid var(--line)', display: 'flex', alignItems: 'center', padding: '0 16px', fontSize: 17, color: rcReview ? 'var(--fg)' : 'var(--fg3)' },
+      rcCta: rcReview ? 'Zatwierdź paragon' : 'Gotowe',
+      hasToast: !!toast, toast, toastStyle
+    };
+  }
+}
+</script>
+</body>
+</html>

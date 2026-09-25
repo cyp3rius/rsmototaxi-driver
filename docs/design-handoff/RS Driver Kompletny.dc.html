@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#E4E6E9;} a{color:#8A6A30;} a:hover{color:#5E4820;}</style>
+</helmet>
+<div style="padding:80px;display:flex;flex-direction:column;gap:110px;background:#E4E6E9;color:#0A0F14;font-family:-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;width:max-content;min-width:100%;box-sizing:border-box;">
+
+  <header style="max-width:1160px;display:flex;flex-direction:column;gap:18px;">
+    <div style="display:flex;align-items:center;gap:20px;">
+      <img src="assets/logo-ink.svg" alt="RS Moto Taxi" style="height:84px;">
+      <div>
+        <div style="font-size:16px;color:#5B6570;">RS Moto Taxi Driver · PWA · crm.rsmotoconcierge.pl/driver</div>
+        <h1 style="margin:4px 0 0;font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:56px;line-height:1.05;">Aplikacja kierowcy: komplet ekranów</h1>
+      </div>
+    </div>
+    <p style="margin:0;font-size:19px;line-height:28px;color:#3A424B;max-width:960px;text-wrap:pretty;">Kierunek A (neutralne premium): granatowa czerń #020407, szampan w ciemnym, brąz w jasnym, kolor aut tylko na zdjęciach. Powitanie z ruchem, dashboard z najbliższym kursem jako bohaterem, nagłówki w Archivo, treść w foncie systemowym. Ekrany ułożone w kolejności przepływu, w trybie jasnym i ciemnym.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <sc-for list="{{ toc }}" as="t" hint-placeholder-count="15">
+        <a href="{{ t.href }}" style="height:40px;padding:0 16px;border-radius:999px;background:#fff;display:inline-flex;align-items:center;font-size:15px;font-weight:600;color:#0A0F14;text-decoration:none;">{{ t.label }}</a>
+      </sc-for>
+    </div>
+  </header>
+
+  <section id="tokeny" data-screen-label="Tokeny" style="display:flex;gap:40px;align-items:flex-start;">
+    <div style="width:620px;flex:none;display:flex;flex-direction:column;gap:14px;">
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:40px;">Tokeny i typografia</div>
+      <div style="background:#fff;border-radius:20px;padding:18px 20px;">
+        <div style="display:grid;grid-template-columns:150px 1fr 1fr;gap:8px;font-size:14px;font-weight:600;color:#5B6570;padding-bottom:8px;border-bottom:1px solid #E4E6E9;"><span>Token</span><span>Jasny</span><span>Ciemny</span></div>
+        <sc-for list="{{ palA }}" as="r" hint-placeholder-count="13">
+          <div style="display:grid;grid-template-columns:150px 1fr 1fr;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid #F0F1F3;font-size:14px;">
+            <span style="font-weight:500;">{{ r.name }}</span>
+            <span style="display:flex;align-items:center;gap:8px;"><span style="{{ r.ls }}"></span><span style="font-family:ui-monospace,Menlo,monospace;font-size:13px;">{{ r.l }}</span><span style="{{ r.lcs }}">{{ r.lr }}</span></span>
+            <span style="display:flex;align-items:center;gap:8px;"><span style="{{ r.ds }}"></span><span style="font-family:ui-monospace,Menlo,monospace;font-size:13px;">{{ r.d }}</span><span style="{{ r.dcs }}">{{ r.dr }}</span></span>
+          </div>
+        </sc-for>
+        <p style="margin:10px 0 0;font-size:13px;line-height:18px;color:#5B6570;">Kontrast: tekst względem bg.base i bg.surface (gorszy wynik), akcent = tekst na przycisku, statusy na bg.surface. Próg WCAG AA 4,5:1.</p>
+      </div>
+    </div>
+    <div style="width:640px;background:#fff;border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:14px;margin-top:62px;">
+      <div style="font-size:15px;font-weight:600;color:#5B6570;">Nagłówki · Archivo, oś szerokości 112–125</div>
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:48px;line-height:1.05;">Witaj, Sławek</div>
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:56px;line-height:1;font-variant-numeric:tabular-nums;">19:40 · 2:12:08</div>
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:112%;font-weight:600;font-size:28px;letter-spacing:.04em;">KR 7H241 · Zażółć</div>
+      <div style="height:1px;background:#E4E6E9;margin:6px 0;"></div>
+      <div style="font-size:15px;font-weight:600;color:#5B6570;">Treść · font systemowy (SF Pro na iPhonie)</div>
+      <div style="font-size:17px;line-height:24px;">Body 17/24. Etykiety, chipy i nawigacja 15/20, to minimum w całej aplikacji. Rozmiary w rem od bazy -apple-system-body, więc rosną z ustawieniem tekstu w iOS.</div>
+      <div style="font-size:15px;line-height:21px;color:#3A424B;">Wysokości: akcja główna 64, akcje w pracy i pola 56. Promienie: sheet 32, karta 22, pole 14, chip 10, przyciski w kształcie kapsuły. Ikony: Lucide.</div>
+    </div>
+  </section>
+
+  <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="14">
+    <section id="{{ sec.id }}" data-screen-label="{{ sec.title }}" style="display:flex;flex-direction:column;gap:24px;">
+      <div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:125%;font-weight:600;font-size:40px;">{{ sec.title }}</div>
+      <p style="margin:0;max-width:1040px;font-size:17px;line-height:26px;color:#3A424B;text-wrap:pretty;">{{ sec.note }}</p>
+      <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <sc-if value="{{ row.hasTitle }}"><div style="font-family:'Archivo',system-ui,sans-serif;font-stretch:115%;font-weight:600;font-size:24px;margin-top:8px;">{{ row.title }}</div></sc-if>
+          <div style="display:flex;gap:36px;align-items:flex-end;">
+            <sc-for list="{{ row.frames }}" as="f" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="font-size:15px;font-weight:600;color:#3A424B;">{{ f.label }}</div>
+                <div style="{{ f.box }}">
+                  <sc-if value="{{ f.isDs }}"><dc-import name="DriverScreen" dir="A" car="green" mode="{{ f.mode }}" screen="{{ f.screen }}" state="{{ f.state }}" layout="next" welcome="{{ f.welcome }}" login="{{ f.login }}" banners="{{ f.banners }}" vvariant="{{ f.vvariant }}" freeze="{{ f.freeze }}" toast="{{ f.toast }}" device="{{ f.device }}" style="{{ f.inner }}" hint-size="390px,844px"></dc-import></sc-if>
+                  <sc-if value="{{ f.isDf }}"><dc-import name="DriverFlows" mode="{{ f.mode }}" screen="{{ f.screen }}" toast="{{ f.toast }}" style="width:100%;height:100%;" hint-size="390px,844px"></dc-import></sc-if>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+  </sc-for>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  lum(h) {
+    const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+    return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+  }
+  ratio(a, b) { const x = this.lum(a), y = this.lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); }
+
+  palette() {
+    const L = { bg: '#F5F7F9', surface: '#FFFFFF', raised: '#EDF0F3', fg: '#0A0F14', fg2: '#5B6570', fg3: '#8A939C', line: '#DDE2E7', accent: '#8A6A30', onAccent: '#FFFFFF', success: '#1E7A4C', warning: '#9A5B00', danger: '#B3261E' };
+    const D = { bg: '#020407', surface: '#0B1016', raised: '#141B23', fg: '#F2F4F6', fg2: '#98A2AD', fg3: '#5F6873', line: '#1D2630', accent: '#D8B878', onAccent: '#020407', success: '#4CC38A', warning: '#F0A93B', danger: '#FF6B61' };
+    const sw = (hex) => ({ width: 22, height: 22, borderRadius: 6, background: hex, boxShadow: 'inset 0 0 0 1px rgba(2,4,7,.12)', flex: 'none' });
+    const fmt = (r) => r.toFixed(1).replace('.', ',');
+    const badge = (r, deco) => ({ fontSize: 12, fontWeight: 600, padding: '2px 6px', borderRadius: 6, marginLeft: 'auto', whiteSpace: 'nowrap', background: deco ? '#EDF0F3' : (r >= 4.5 ? '#E3F3EA' : '#FBE4E2'), color: deco ? '#5B6570' : (r >= 4.5 ? '#1E7A4C' : '#B3261E') });
+    const vsBg = (T, h) => Math.min(this.ratio(h, T.bg), this.ratio(h, T.surface));
+    const mk = (name, k, test, deco) => {
+      const r = { name, l: L[k], d: D[k], ls: sw(L[k]), ds: sw(D[k]), lr: '', dr: '', lcs: { display: 'none' }, dcs: { display: 'none' } };
+      if (test) {
+        const a = test(L, L[k]), b = test(D, D[k]);
+        r.lr = deco ? `${fmt(a)} · placeholder` : `${fmt(a)} AA`; r.dr = deco ? `${fmt(b)} · placeholder` : `${fmt(b)} AA`;
+        r.lcs = badge(a, deco); r.dcs = badge(b, deco);
+      }
+      return r;
+    };
+    return [
+      mk('bg.base', 'bg'), mk('bg.surface', 'surface'), mk('bg.surfaceRaised', 'raised'),
+      mk('text.primary', 'fg', vsBg), mk('text.secondary', 'fg2', (T, h) => Math.min(vsBg(T, h), this.ratio(h, T.raised))),
+      mk('text.tertiary', 'fg3', vsBg, true), mk('separator', 'line'),
+      mk('accent.primary', 'accent', (T) => this.ratio(T.onAccent, T.accent)), mk('accent.onPrimary', 'onAccent'),
+      mk('status.success', 'success', (T, h) => this.ratio(h, T.surface)), mk('status.warning', 'warning', (T, h) => this.ratio(h, T.surface)), mk('status.danger', 'danger', (T, h) => this.ratio(h, T.surface))
+    ];
+  }
+
+  renderVals() {
+    const phone = { width: 390, height: 844, borderRadius: 52, overflow: 'hidden', boxShadow: '0 0 0 9px #0E1116, 0 30px 60px rgba(2,4,7,.22)' };
+    const box = { std: phone, se: Object.assign({}, phone, { width: 375, height: 667, borderRadius: 30 }), max: Object.assign({}, phone, { width: 440, height: 956, borderRadius: 58 }), kit: { width: 1180, borderRadius: 28, overflow: 'hidden', boxShadow: '0 20px 50px rgba(2,4,7,.12)' } };
+    const ds = (label, mode, screen, o) => {
+      o = o || {};
+      const dev = o.device || 'std';
+      return {
+        label, mode, screen, isDs: true, isDf: false,
+        state: o.state || '', welcome: o.welcome || '', login: o.login || '', banners: o.banners || '', vvariant: o.vvariant || '',
+        freeze: o.freeze != null ? String(o.freeze) : '', toast: o.toast || '', device: dev === 'kit' ? '' : dev,
+        box: box[dev], inner: dev === 'kit' ? { width: '100%' } : { width: '100%', height: '100%' }
+      };
+    };
+    const df = (label, mode, screen, toast) => ({ label, mode, screen, toast: toast || '', isDs: false, isDf: true, box: phone });
+    const both = (arr) => [{ frames: arr.map(a => a('light', '')) }, { frames: arr.map(a => a('dark', ' · ciemny')) }].map(r => Object.assign(r, { hasTitle: false }));
+    const row = (title, frames) => ({ title, hasTitle: !!title, frames });
+
+    const sections = [
+      { id: 'start', title: 'Instalacja i splash · 5.00, 5.0', note: 'Pierwsza wizyta w Safari pokazuje instrukcję z podświetlonym przyciskiem Udostępnij; Android dostaje jeden przycisk instalacji. Po uruchomieniu z ekranu początkowego ten ekran się nie pojawia. Splash wygląda jak pierwsza klatka powitania, żeby nie było mrugnięcia.',
+        rows: both([(m, s) => df('iPhone (Safari)' + s, m, 'installIos'), (m, s) => df('Android (Chrome)' + s, m, 'installAndroid'), (m, s) => df('Splash' + s, m, 'splash')]) },
+      { id: 'powitanie', title: 'Ekran powitalny · 5.1', note: 'Pełny ekran ze zdjęciem floty, ciemny scrim w obu trybach (tekst na zdjęciu musi być czytelny zawsze). Ruch na żywo: Ken Burns 1,00 → 1,06 przez 14 s tam i z powrotem, reflektory zapalają się po 0,7 s i dalej delikatnie „oddychają”. Wejście treści: logo 0–400 ms, hasło 150–650 ms, przyciski 300–800 ms. Reduce Motion: bez zoomu i reflektorów.',
+        rows: [row('', [ds('Powitanie z ruchem (na żywo)', 'dark', 'welcome', { welcome: 'motion' }), ds('Powitanie · jasny tryb systemu', 'light', 'welcome', { welcome: 'full' })])] },
+      { id: 'logowanie', title: 'Logowanie · 5.2', note: 'E-mail i hasło w bottom sheecie nad rozmytym zdjęciem. Przycisk nieaktywny, dopóki pola są puste. Błąd: obramowanie hasła i komunikat pod polem, sheet wykonuje krótki shake. Bez przypominania hasła i biometrii: „Problem z logowaniem?” otwiera kontakt do koordynatora. Autouzupełnianie z Pęku kluczy dzięki prawdziwemu formularzowi.',
+        rows: [
+          row('', ['empty', 'filled', 'loading', 'error', 'offline'].map((l, i) => ds(['Pusty', 'Wypełniony', 'Ładowanie', 'Błąd danych', 'Brak sieci'][i], 'light', 'login', { login: l, welcome: 'full' })).concat([ds('Pomoc: koordynator', 'light', 'help', { welcome: 'full' })])),
+          row('', ['empty', 'filled', 'loading', 'error', 'offline'].map((l, i) => ds(['Pusty', 'Wypełniony', 'Ładowanie', 'Błąd danych', 'Brak sieci'][i] + ' · ciemny', 'dark', 'login', { login: l, welcome: 'full' })).concat([ds('Pomoc · ciemny', 'dark', 'help', { welcome: 'full' })]))
+        ] },
+      { id: 'wow', title: 'Ładowanie i „Witaj, Sławek” · 5.3–5.4', note: 'Dwie koncepcje do wyboru (bez decyzji w poprzedniej rundzie). A: linia trasy Zabierzów → Balice rysuje się 200–1500 ms, punkt Balice rozlewa się w poświatę, z której wychodzi powitanie; przy 4,5 s powitanie zmniejsza się do nagłówka dashboardu, treść wjeżdża od dołu. B: powitanie od razu, cienka linia postępu odpowiada realnemu ładowaniu, potem godzina zmiany i tablica auta, która przelatuje na swoje miejsce w karcie zmiany. Po prawej stany błędu ładowania.',
+        rows: [
+          row('A · Linia trasy', [ds('Na żywo (pętla 7,4 s)', 'dark', 'seqRoute'), ds('0,7 s · rysowanie', 'dark', 'seqRoute', { freeze: 700 }), ds('2,45 s · poświata', 'dark', 'seqRoute', { freeze: 2450 }), ds('3,5 s · Witaj, Sławek', 'dark', 'seqRoute', { freeze: 3500 }), ds('4,8 s · do nagłówka', 'dark', 'seqRoute', { freeze: 4800 })]),
+          row('B · Witaj z kontekstem', [ds('Na żywo (pętla 6,8 s)', 'light', 'seqGreet'), ds('0,9 s · imię i ładowanie', 'light', 'seqGreet', { freeze: 900 }), ds('2,5 s · kontekst i auto', 'light', 'seqGreet', { freeze: 2500 }), ds('4,2 s · tablica do karty', 'light', 'seqGreet', { freeze: 4200 }), ds('5,2 s · dashboard', 'light', 'seqGreet', { freeze: 5200 })]),
+          row('Błędy ładowania', [df('Ładowanie ponad 15 s', 'light', 'loadErr'), df('Offline bez zapisanych danych', 'light', 'noCache'), df('Ładowanie ponad 15 s · ciemny', 'dark', 'loadErr'), df('Offline bez danych · ciemny', 'dark', 'noCache')])
+        ] },
+      { id: 'dashboard', title: 'Dashboard · 5.5', note: 'Pięć stanów z kodu. Stan zmiany zawsze w nagłówku i steruje akcją główną 64 px. Na zmianie bohaterem jest najbliższy kurs (godzina, lot, adres, tabliczka), licznik zmiany schodzi do cienkiego paska nad nim.',
+        rows: both([['A', 'Brak zmiany na dziś'], ['A2', 'Brak wolnego pojazdu'], ['B', 'Zmiana zaplanowana'], ['C', 'Na zmianie'], ['D', 'Zmiana zakończona']].map(([st, l]) => (m, s) => ds(l + s, m, 'dash', { state: st }))) },
+      { id: 'banery', title: 'Banery i stany systemowe', note: 'Jeden duży baner, reszta jako chipy pod nagłówkiem. Kolejność: nowa wersja (blokuje całą aplikację) → podgląd operatora (akcje wyszarzone) → kurs live w trakcie → brak lokalizacji → brak powiadomień → offline z cache → zmiany do synchronizacji.',
+        rows: [row('', [['offline', 'Offline z cache', 'dark'], ['sync', 'Czeka na synchronizację', 'light'], ['gps', 'Brak lokalizacji', 'dark'], ['push', 'Brak powiadomień', 'light'], ['live', 'Kurs live w trakcie', 'dark'], ['impersonation', 'Podgląd operatora', 'light']].map(([b, l, m]) => ds(l, m, 'dash', { state: 'C', banners: b }))
+          .concat([ds('Nowa wersja (blokujący)', 'dark', 'update', { state: 'C' }), ds('Kilka naraz: podgląd + GPS + offline + sync', 'dark', 'dash', { state: 'C', banners: 'impersonation,gps,offline,sync' }), ds('Kilka naraz: live + powiadomienia + offline', 'light', 'dash', { state: 'C', banners: 'live,push,offline' })]))] },
+      { id: 'zmiany', title: 'Zmiany · 5.6', note: 'Start zaplanowanej zmiany: jedno przypisane auto ze zdjęciem, potwierdzane jednym tapnięciem, z opcją „Wybierz inne auto”. Start ad hoc: wybrane auto jako duża karta, pozostałe w krótkiej liście, zajęte w jednej linijce. Zakończenie zmiany z podsumowaniem i listą kursów bez paragonu (nie blokuje). Lista zmian z trwającą zmianą na górze.',
+        rows: both([(m, s) => ds('Start zaplanowanej zmiany' + s, m, 'vehicle', { state: 'B', vvariant: 'confirm' }), (m, s) => ds('Start zmiany ad hoc' + s, m, 'vehicle', { state: 'A', vvariant: 'compact' }), (m, s) => ds('Zakończ zmianę' + s, m, 'end', { state: 'C' }), (m, s) => df('Lista zmian' + s, m, 'shifts'), (m, s) => ds('Po starcie' + s, m, 'dash', { state: 'C', toast: 'Zmiana rozpoczęta · KR 7H241' })]) },
+      { id: 'kursy', title: 'Kursy · 5.10', note: 'Dziś: zaplanowane rosnąco, zakończone malejąco. Filtr „Brak paragonu” z licznikiem przełącza listę na wszystkie kursy wymagające paragonu, grupowane po dniach. Kurs wewnętrzny po zapisie: toast z kodu i znacznik synchronizacji.',
+        rows: both([(m, s) => df('Dziś' + s, m, 'tripsToday', 'Kurs zapisany. Czeka na autoryzację.'), (m, s) => df('Filtr: brak paragonu' + s, m, 'tripsMissing')]) },
+      { id: 'nowy-kurs', title: 'Nowy kurs · 5.7–5.8', note: 'Kurs live wyróżniony akcentem tylko na zmianie, poza zmianą bramka „Rozpocznij zmianę”. Dwa kroki z paskiem 1/2, 2/2. Typ kursu i płatność jako kafelki z ikoną, jak typ kosztu. Walidacje pod polem czasu z godzinami zmian. Nowy klient: telefon zawsze wymagany; osoba z opcjonalnym imieniem i nazwiskiem, firma z wymaganym NIP i opcjonalną nazwą (dane uzupełnia CRM).',
+        rows: both([['chooseOn', 'Wybór trybu · na zmianie'], ['chooseOff', 'Wybór trybu · poza zmianą'], ['routeAuto', 'Krok 1 · autouzupełnianie'], ['route', 'Krok 1 · trasa i czasy'], ['routeErr', 'Krok 1 · błąd: poza zmianą'], ['commercial', 'Krok 2 · szczegóły kursu'], ['customerPerson', 'Nowy klient · osoba'], ['customerNew', 'Nowy klient · firma']].map(([sc, l]) => (m, s) => df(l + s, m, sc))) },
+      { id: 'kurs', title: 'Kurs live, zaplanowany, zakończony, z platformy · 5.7', note: 'W trakcie kursu live nie ma dolnej nawigacji, tylko licznik, adres z GPS i „Przesuń, aby zakończyć”. Kurs zaplanowany: przy przedpłacie online edytowalny tylko dystans, start suwakiem na zmianie, poza zmianą przycisk bramki. Kurs zakończony tylko do odczytu poza dodaniem paragonu. Kurs z Bolt z neutralnym znacznikiem i blokadą edycji.',
+        rows: both([['live', 'Kurs live w trakcie'], ['scheduled', 'Zaplanowany · na zmianie'], ['scheduledOff', 'Zaplanowany · poza zmianą'], ['inProgress', 'Zaplanowany · w trakcie'], ['completed', 'Zakończony · szczegóły'], ['platform', 'Kurs z platformy']].map(([sc, l]) => (m, s) => df(l + s, m, sc))) },
+      { id: 'paragon', title: 'Paragon · 5.9', note: 'Dwa osobne wejścia: „Zrób zdjęcie” (aparat) i „Wybierz plik” (zdjęcie lub PDF). Po wyborze podgląd, status rozpoznania i numer dokumentu do poprawy. Ten sam sheet dla kursów i kosztów.',
+        rows: both([['receiptSheet', 'Dodaj paragon'], ['receiptPreview', 'Przetwarzanie'], ['receiptReview', 'Do sprawdzenia']].map(([sc, l]) => (m, s) => df(l + s, m, sc))) },
+      { id: 'koszty', title: 'Koszty · 5.11', note: 'Lista z sortowaniem, statusem paragonu i synchronizacji na każdej karcie. Nowy koszt na jednym ekranie: kafelki typu, duża kwota brutto, VAT opcjonalny, paragon wymagany. Usuwanie z potwierdzeniem.',
+        rows: both([['expenses', 'Lista kosztów'], ['expenseNew', 'Nowy koszt'], ['expenseDelete', 'Usuwanie']].map(([sc, l]) => (m, s) => df(l + s, m, sc))) },
+      { id: 'wyplaty', title: 'Wypłaty · 5.12', note: 'Kwota wypłaty w akcencie w szerokim Archivo, rozbicie jako prosta lista bez wykresów. Miesięczne to wypłata, tygodniowe są kontrolne; kierowca tylko przegląda.',
+        rows: both([['settleMonthly', 'Miesięczne'], ['settleWeekly', 'Tygodniowe'], ['settleWeek', 'Szczegóły tygodnia'], ['settleMonth', 'Szczegóły miesiąca']].map(([sc, l]) => (m, s) => df(l + s, m, sc))) },
+      { id: 'komponenty', title: 'Arkusz komponentów', note: 'Przyciski we wszystkich stanach, pola formularza, chipy statusów, karta kursu, tablica rejestracyjna, bottom sheet, toast, bottom nav i skala typografii.',
+        rows: [row('', [ds('Jasny', 'light', 'kit', { device: 'kit' }), ds('Ciemny', 'dark', 'kit', { device: 'kit' })])] },
+      { id: 'rozmiary', title: 'iPhone SE i Pro Max', note: 'SE 375×667: marginesy 16–20 px, sheet logowania na pełną wysokość, przycisk „Zaloguj się” widoczny bez przewijania. Pro Max 440×956: ten sam układ, więcej powietrza.',
+        rows: [row('', [ds('SE · powitanie', 'dark', 'welcome', { welcome: 'full', device: 'se' }), ds('SE · logowanie', 'light', 'login', { login: 'filled', welcome: 'full', device: 'se' }), ds('SE · na zmianie', 'dark', 'dash', { state: 'C', device: 'se' }), ds('Pro Max · powitanie', 'dark', 'welcome', { welcome: 'full', device: 'max' }), ds('Pro Max · logowanie', 'light', 'login', { login: 'filled', welcome: 'full', device: 'max' }), ds('Pro Max · na zmianie', 'dark', 'dash', { state: 'C', device: 'max' })])] }
+    ];
+    const toc = [{ href: '#tokeny', label: 'Tokeny' }].concat(sections.map(s => ({ href: '#' + s.id, label: s.title.split(' · ')[0] })));
+    return { palA: this.palette(), sections, toc };
+  }
+}
+</script>
+</body>
+</html>

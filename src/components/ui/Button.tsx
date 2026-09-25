@@ -1,0 +1,52 @@
+'use client'
+
+import { cn } from '@/lib/cn'
+import type { ButtonHTMLAttributes, ReactNode } from 'react'
+
+type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?: 'lg' | 'md'
+  loading?: boolean
+  children: ReactNode
+}
+
+export function Button({
+  variant = 'primary',
+  size = 'lg',
+  loading,
+  className,
+  disabled,
+  children,
+  type = 'button',
+  ...rest
+}: Props) {
+  const height = size === 'lg' ? 'h-16 text-[18px]' : 'h-14 text-[17px]'
+  const styles =
+    variant === 'primary'
+      ? 'bg-[var(--accent)] text-[var(--accent-on)]'
+      : variant === 'secondary'
+        ? 'bg-transparent border border-[var(--separator)] text-[var(--text-primary)]'
+        : variant === 'danger'
+          ? 'bg-[var(--danger)] text-white'
+          : 'bg-transparent text-[var(--text-primary)]'
+
+  return (
+    <button
+      type={type}
+      disabled={disabled || loading}
+      className={cn(
+        'inline-flex w-full items-center justify-center rounded-full font-semibold transition active:scale-[0.98] disabled:opacity-[0.38]',
+        height,
+        styles,
+        className,
+      )}
+      {...rest}
+    >
+      {loading ? (
+        <span className="inline-block size-5 animate-spin rounded-full border-2 border-current border-r-transparent" />
+      ) : (
+        children
+      )}
+    </button>
+  )
+}

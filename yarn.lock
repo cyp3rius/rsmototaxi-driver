@@ -2637,6 +2637,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"idb@npm:^8.0.3":
+  version: 8.0.3
+  resolution: "idb@npm:8.0.3"
+  checksum: 10c0/421cd9a3281b7564528857031cc33fd9e95753f8191e483054cb25d1ceea7303a0d1462f4f69f5b41606f0f066156999e067478abf2460dfcf9cab80dae2a2b2
+  languageName: node
+  linkType: hard
+
 "ignore@npm:^5.2.0":
   version: 5.3.2
   resolution: "ignore@npm:5.3.2"
@@ -3238,6 +3245,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"lucide-react@npm:^1.48.0":
+  version: 1.48.0
+  resolution: "lucide-react@npm:1.48.0"
+  peerDependencies:
+    react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+  checksum: 10c0/62c6703cdd6ff0a85f02414242f480d93a2ebf55ef10e42fc46eb9ef0dcb3c13925a199847e31245dd90d837a791b8670f16a817d0fe0d04c725aeae64d70574
+  languageName: node
+  linkType: hard
+
 "magic-string@npm:^0.30.21":
   version: 0.30.21
   resolution: "magic-string@npm:0.30.21"
@@ -3763,6 +3779,8 @@ __metadata:
     "@types/react-dom": "npm:^19"
     eslint: "npm:^9"
     eslint-config-next: "npm:16.3.6"
+    idb: "npm:^8.0.3"
+    lucide-react: "npm:^1.48.0"
     next: "npm:16.3.6"
     react: "npm:19.2.8"
     react-dom: "npm:19.2.8"

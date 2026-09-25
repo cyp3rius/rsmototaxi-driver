@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RS Moto Taxi — Driver PWA (v2)
 
-## Getting Started
+Zewnętrzna aplikacja kierowcy (Vercel). Przeglądarka gada **tylko z Next.js**; Next (BFF) woła Open Mercato.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+Browser ──same-origin──▶ Next /api/* ──server──▶ OM /api/taxi_fleet/driver-app/v2/*
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Stack
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js 16 (App Router) + React 19 + Tailwind 4 + Yarn 4
+- Design: `docs/design-handoff/`
+- BFF: `src/app/api/auth/*`, `src/app/api/om/[...path]`
+- Client: `src/lib/om/` → `/api/...` (bez CORS do OM)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Auth (trwała sesja)
 
-## Learn More
+- Login: `POST /api/auth/login` → OM `driver-app/v2/auth/login`
+- Tokeny w **HttpOnly cookies** na domenie Vercel (`om_access_token`, `om_refresh_token`)
+- Proxy przy 401 odświeża sesję przez OM `/api/auth/session/refresh`
+- Brak checkboxa „zapamiętaj”; refresh zawsze
 
-To learn more about Next.js, take a look at the following resources:
+## Dev
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+cp .env.example .env.local
+# OM_API_BASE=http://localhost:3000
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+. ~/.nvm/nvm.sh && nvm use
+yarn dev
+```
 
-## Deploy on Vercel
+CORS po stronie OM **nie jest wymagany** dla przeglądarki (serwer Next → OM).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deploy (Vercel)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Env: `OM_API_BASE`, `NEXT_PUBLIC_APP_VERSION`, opcjonalnie `REMEMBER_ME_DAYS`
+2. Cookies: `Secure` w production (`NODE_ENV=production`)
+
+## QA
+
+Patrz `docs/QA-CHECKLIST.md`.
