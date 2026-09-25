@@ -11,6 +11,7 @@ import { PlateBadge } from '@/components/ui/PlateBadge'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
+import { SystemBannerChips, SystemBannerPrimary } from '@/components/shell/SystemBanners'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, startOfDayIso } from '@/lib/format'
@@ -216,31 +217,10 @@ export function DashboardScreen() {
         )}
       </header>
 
-      {me?.impersonation?.active ? (
-        <div className="mb-2.5 flex items-start gap-3 rounded-[18px] tint-accent px-4 py-3.5">
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] font-semibold text-[var(--accent)]">Podgląd tylko do odczytu</p>
-            <p className="mt-0.5 text-[15px] text-[var(--text-secondary)]">
-              Operator: {me.impersonation.displayName || '—'}. Zmiany są wyłączone.
-            </p>
-          </div>
-        </div>
-      ) : null}
+      <SystemBannerChips />
 
       <div className="flex flex-1 flex-col gap-3 pt-0.5">
-        {state === 'C' && liveTrip ? (
-          <Link
-            href="/app/trips/live"
-            className="flex items-center gap-3 rounded-[18px] bg-[var(--accent)] px-4 py-3.5 text-[var(--accent-on)]"
-          >
-            <div className="min-w-0 flex-1">
-              <p className="text-[15px] font-semibold">Kurs live w trakcie</p>
-              <p className="mt-0.5 truncate text-[15px] opacity-80">
-                Od {formatTime(String(liveTrip.startedAt || ''))}
-              </p>
-            </div>
-          </Link>
-        ) : null}
+        <SystemBannerPrimary />
 
         {state === 'C' && nextTrip ? (
           <>

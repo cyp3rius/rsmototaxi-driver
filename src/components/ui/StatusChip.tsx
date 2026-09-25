@@ -14,13 +14,13 @@ export function StatusChip({
 }) {
   const tones = {
     neutral: 'bg-[var(--bg-surface-raised)] text-[var(--text-secondary)]',
-    success: 'tint-success text-[var(--success)]',
+    success: 'bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]',
     warning: 'tint-warning text-[var(--warning)]',
     danger: 'tint-danger text-[var(--danger)]',
     accent: 'tint-accent text-[var(--accent)]',
   }
 
-  const ring =
+  const dot =
     pulse === true
       ? 'bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]'
       : tone === 'success'
@@ -34,13 +34,13 @@ export function StatusChip({
   return (
     <span
       className={cn(
-        'inline-flex h-[30px] flex-none items-center gap-1.5 rounded-[10px] px-2.5 text-[15px]',
-        pulse ? 'font-semibold' : 'font-medium',
+        'inline-flex h-9 flex-none items-center gap-2 rounded-full text-[15px]',
+        pulse ? 'pl-2.5 pr-3 font-semibold' : 'px-3 font-medium',
         tones[tone],
         className,
       )}
     >
-      {pulse !== undefined ? <span className={cn('size-1.5 rounded-full', ring)} /> : null}
+      {pulse !== undefined ? <span className={cn('size-2 rounded-full', dot)} /> : null}
       {children}
     </span>
   )
