@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Share, ChevronLeft, ChevronRight, BookMarked, LayoutGrid } from 'lucide-react'
+import { Share } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 
@@ -132,27 +132,7 @@ export function InstallPrompt() {
         </button>
       </div>
 
-      {ios ? (
-        <div
-          className="border-t border-[var(--separator)] bg-[var(--bg-surface)] px-4 pt-2.5"
-          style={{ paddingBottom: 'calc(var(--safe-bottom) + 10px)' }}
-        >
-          <div className="flex h-11 items-center justify-center rounded-xl bg-[var(--bg-surface-raised)] text-[15px] text-[var(--text-secondary)]">
-            {host}
-          </div>
-          <div className="mt-2.5 flex h-9 items-center justify-around text-[var(--text-tertiary)]">
-            <ChevronLeft size={22} strokeWidth={2} />
-            <ChevronRight size={22} strokeWidth={2} />
-            <span className="flex size-12 items-center justify-center rounded-full text-[var(--accent)] tint-accent shadow-[0_0_0_6px_color-mix(in_srgb,var(--accent)_12%,transparent)]">
-              <Share size={22} strokeWidth={2} />
-            </span>
-            <BookMarked size={22} strokeWidth={2} />
-            <LayoutGrid size={22} strokeWidth={2} />
-          </div>
-        </div>
-      ) : (
-        <div style={{ height: 'var(--safe-bottom)' }} />
-      )}
+      <div style={{ height: 'var(--safe-bottom)' }} />
     </div>
   )
 }
