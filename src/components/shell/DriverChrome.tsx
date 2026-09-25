@@ -46,7 +46,7 @@ export function DriverChrome({ children }: { children: ReactNode }) {
   )
 
   const list = (
-    <div className="flex h-full min-h-0 flex-col bg-[var(--bg-base)]">
+    <div className="relative flex h-full min-h-0 flex-col bg-[var(--bg-base)]">
       <TabPanes active={active} panes={panes} className="min-h-0 flex-1" />
       <BottomNav
         activeIndex={active}

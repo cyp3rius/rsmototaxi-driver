@@ -57,12 +57,18 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
 
   return (
     <SystemBannerProvider>
-      <div
-        className={`mx-auto min-h-dvh max-w-lg bg-[var(--bg-base)] ${readOnly ? 'pointer-events-none select-none' : ''}`}
-      >
-        <div className={readOnly ? 'pointer-events-none opacity-90' : undefined}>{children}</div>
-        {!hideNav ? <BottomNav /> : null}
-      </div>
+      {hideNav ? (
+        <div className={readOnly ? 'pointer-events-none select-none opacity-90' : undefined}>
+          {children}
+        </div>
+      ) : (
+        <div
+          className={`mx-auto min-h-dvh max-w-lg bg-[var(--bg-base)] ${readOnly ? 'pointer-events-none select-none' : ''}`}
+        >
+          <div className={readOnly ? 'pointer-events-none opacity-90' : undefined}>{children}</div>
+          <BottomNav docked={false} />
+        </div>
+      )}
     </SystemBannerProvider>
   )
 }

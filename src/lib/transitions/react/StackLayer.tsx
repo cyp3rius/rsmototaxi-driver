@@ -17,6 +17,12 @@ import {
   pushDetail,
   type StackEls,
 } from '@/lib/transitions/stackTransition'
+import {
+  pinFixedChromeToVisualViewport,
+  requestViewportSettle,
+  syncVisualViewportCssVars,
+  VIEWPORT_SETTLE_EVENT,
+} from '@/lib/visualViewport'
 
 type StackBackFn = () => void
 
@@ -120,11 +126,45 @@ export function StackLayer({
     return attachEdgeSwipe(e, finishClose)
   }, [!!shown, els, finishClose])
 
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const el = rootRef.current
+    if (!el) return
+
+    const pin = () => {
+      pinFixedChromeToVisualViewport(el)
+      syncVisualViewportCssVars()
+    }
+
+    pin()
+    requestViewportSettle()
+    pin()
+
+    const timers = [50, 160, 400, 800, 1600].map((ms) => window.setTimeout(pin, ms))
+    const vv = window.visualViewport
+    vv?.addEventListener('resize', pin)
+    // Do not re-pin on vv.scroll — that fights rubber-band / address-bar and can leave a gap.
+    window.addEventListener('resize', pin)
+    window.addEventListener('orientationchange', pin)
+    window.addEventListener(VIEWPORT_SETTLE_EVENT, pin)
+    document.addEventListener('visibilitychange', pin)
+
+    return () => {
+      for (const t of timers) window.clearTimeout(t)
+      vv?.removeEventListener('resize', pin)
+      window.removeEventListener('resize', pin)
+      window.removeEventListener('orientationchange', pin)
+      window.removeEventListener(VIEWPORT_SETTLE_EVENT, pin)
+      document.removeEventListener('visibilitychange', pin)
+    }
+  }, [])
+
   return (
     <StackBackContext.Provider value={requestClose}>
-      {/* Fixed fill: abspos under min-height-only parents left the docked nav floating. */}
-      <div className="fixed inset-0 z-0 mx-auto w-full max-w-lg overflow-hidden bg-[var(--bg-base)]">
-        <div ref={listRef} className="absolute inset-0 flex h-full flex-col">
+      {/* Geometry: CSS fill-available + JS pinFixedChromeToVisualViewport (max frame). */}
+      <div ref={rootRef} className="rs-driver-chrome z-0">
+        <div ref={listRef} className="absolute inset-0 flex h-full min-h-0 flex-col">
           {list}
         </div>
         <div

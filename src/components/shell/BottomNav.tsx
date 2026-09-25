@@ -117,13 +117,12 @@ export function BottomNav({
       ref={navRef}
       className={cn(
         'rs-bottom-nav z-40 border-t border-[var(--separator)]',
-        docked ? 'relative flex-none' : 'fixed inset-x-0 bottom-0',
+        docked ? 'relative mt-auto flex-none' : 'fixed inset-x-0 bottom-0',
       )}
       style={{
-        paddingBottom: 'var(--safe-bottom)',
-        background: 'color-mix(in srgb, var(--bg-surface) 92%, transparent)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        background: 'var(--bg-surface)',
+        borderTopColor: 'var(--separator)',
       }}
     >
       <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
