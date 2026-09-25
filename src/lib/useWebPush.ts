@@ -20,8 +20,7 @@ function supportsPush() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
-function initialPushStatus(): PushStatus {
-  if (typeof window === 'undefined') return 'unavailable'
+function readPermissionStatus(): PushStatus {
   if (!supportsPush()) return 'unsupported'
   if (Notification.permission === 'denied') return 'denied'
   if (Notification.permission === 'granted') return 'ready'
@@ -29,8 +28,25 @@ function initialPushStatus(): PushStatus {
 }
 
 export function useWebPush() {
-  const [status, setStatus] = useState<PushStatus>(initialPushStatus)
+  const [status, setStatus] = useState<PushStatus>(readPermissionStatus)
   const [configured, setConfigured] = useState(false)
+
+  const refreshStatus = useCallback(() => {
+    setStatus(readPermissionStatus())
+  }, [])
+
+  useEffect(() => {
+    refreshStatus()
+    const onVis = () => {
+      if (document.visibilityState === 'visible') refreshStatus()
+    }
+    window.addEventListener('focus', refreshStatus)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('focus', refreshStatus)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [refreshStatus])
 
   useEffect(() => {
     if (!supportsPush()) return
@@ -44,7 +60,10 @@ export function useWebPush() {
   }, [])
 
   const requestAccess = useCallback(async (): Promise<PushStatus> => {
-    if (!supportsPush()) return 'unsupported'
+    if (!supportsPush()) {
+      setStatus('unsupported')
+      return 'unsupported'
+    }
     try {
       const info = (await omClient.getPushSubscription()) as {
         configured?: boolean
@@ -52,39 +71,51 @@ export function useWebPush() {
       }
       if (!info.configured || !info.vapidPublicKey) {
         setConfigured(false)
+        setStatus('unavailable')
         return 'unavailable'
       }
       setConfigured(true)
       const permission = await Notification.requestPermission()
+      // Hide consent banner immediately from the browser permission result.
       if (permission === 'denied') {
         setStatus('denied')
         return 'denied'
       }
       if (permission !== 'granted') {
-        setStatus('prompt')
+        setStatus(readPermissionStatus())
         return 'prompt'
       }
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(info.vapidPublicKey) as BufferSource,
-      })
-      const json = subscription.toJSON()
-      await omClient.savePushSubscription({
-        endpoint: json.endpoint,
-        expirationTime: json.expirationTime ?? null,
-        keys: {
-          p256dh: json.keys?.p256dh,
-          auth: json.keys?.auth,
-        },
-      })
       setStatus('ready')
+      try {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(info.vapidPublicKey) as BufferSource,
+        })
+        const json = subscription.toJSON()
+        await omClient.savePushSubscription({
+          endpoint: json.endpoint,
+          expirationTime: json.expirationTime ?? null,
+          keys: {
+            p256dh: json.keys?.p256dh,
+            auth: json.keys?.auth,
+          },
+        })
+      } catch {
+        // Permission is granted — keep banner dismissed even if subscribe fails.
+      }
       return 'ready'
     } catch {
-      setStatus('unavailable')
+      setStatus(readPermissionStatus())
       return 'unavailable'
     }
   }, [])
 
-  return { status, configured, requestAccess, showConsentBanner: status === 'prompt' && configured }
+  return {
+    status,
+    configured,
+    requestAccess,
+    refreshStatus,
+    showConsentBanner: status === 'prompt' && configured,
+  }
 }

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -75,10 +76,34 @@ function useBannerState(): BannerCtx {
   const { me, refreshMe } = useAuth()
   const push = useWebPush()
   const [online, setOnline] = useState(true)
-  const [geoDenied, setGeoDenied] = useState(false)
+  /** true when geolocation is not granted (denied or prompt / unknown). */
+  const [geoBlocked, setGeoBlocked] = useState(false)
   const [syncCount, setSyncCount] = useState(0)
   const [cachedAt, setCachedAt] = useState<string | null>(null)
   const [liveTick, setLiveTick] = useState(0)
+
+  const refreshGeo = useCallback(async () => {
+    if (!('geolocation' in navigator)) {
+      setGeoBlocked(true)
+      return
+    }
+    if ('permissions' in navigator) {
+      try {
+        const status = await navigator.permissions.query({ name: 'geolocation' as PermissionName })
+        setGeoBlocked(status.state !== 'granted')
+        status.onchange = () => setGeoBlocked(status.state !== 'granted')
+        return
+      } catch {
+        // Safari / some WebViews throw — probe with a cached read.
+      }
+    }
+    // Soft probe: succeed quietly if already allowed; otherwise keep blocked for the CTA.
+    navigator.geolocation.getCurrentPosition(
+      () => setGeoBlocked(false),
+      () => setGeoBlocked(true),
+      { enableHighAccuracy: false, maximumAge: 60_000, timeout: 2500 },
+    )
+  }, [])
 
   useEffect(() => {
     const syncOnline = () => {
@@ -101,16 +126,23 @@ function useBannerState(): BannerCtx {
     }
   }, [])
 
+  const refreshPush = push.refreshStatus
   useEffect(() => {
-    if (!('permissions' in navigator)) return
-    void navigator.permissions
-      .query({ name: 'geolocation' as PermissionName })
-      .then((status) => {
-        setGeoDenied(status.state === 'denied')
-        status.onchange = () => setGeoDenied(status.state === 'denied')
-      })
-      .catch(() => undefined)
-  }, [])
+    void refreshGeo()
+    const onFocus = () => {
+      void refreshGeo()
+      refreshPush()
+    }
+    const onVis = () => {
+      if (document.visibilityState === 'visible') onFocus()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVis)
+    }
+  }, [refreshGeo, refreshPush])
 
   useEffect(() => {
     void pendingOutboxCount().then(setSyncCount).catch(() => setSyncCount(0))
@@ -125,6 +157,10 @@ function useBannerState(): BannerCtx {
     const id = window.setInterval(() => setLiveTick((n) => n + 1), 1000)
     return () => window.clearInterval(id)
   }, [me?.liveTrip])
+
+  useEffect(() => {
+    if (me?.dashboardState === 'C') void refreshGeo()
+  }, [me?.dashboardState, refreshGeo])
 
   return useMemo(() => {
     const items: BannerItem[] = []
@@ -166,7 +202,7 @@ function useBannerState(): BannerCtx {
       })
     }
 
-    if (geoDenied && me?.dashboardState === 'C') {
+    if (geoBlocked && me?.dashboardState === 'C') {
       items.push({
         key: 'gps',
         tone: 'danger',
@@ -176,11 +212,20 @@ function useBannerState(): BannerCtx {
         action: 'Włącz',
         chip: 'GPS wył.',
         onAction: () => {
-          if (!navigator.geolocation) return
+          if (!navigator.geolocation) {
+            setGeoBlocked(true)
+            return
+          }
           navigator.geolocation.getCurrentPosition(
-            () => setGeoDenied(false),
-            () => setGeoDenied(true),
-            { enableHighAccuracy: true, timeout: 8000 },
+            () => {
+              setGeoBlocked(false)
+              void refreshGeo()
+            },
+            () => {
+              setGeoBlocked(true)
+              void refreshGeo()
+            },
+            { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
           )
         },
       })
@@ -196,7 +241,7 @@ function useBannerState(): BannerCtx {
         action: 'Włącz',
         chip: 'Powiadomienia',
         onAction: () => {
-          void push.requestAccess()
+          void push.requestAccess().then(() => push.refreshStatus())
         },
       })
     } else if (push.status === 'denied') {
@@ -239,7 +284,20 @@ function useBannerState(): BannerCtx {
     }
 
     return { primary: items[0] ?? null, chips: items.slice(1) }
-  }, [me, refreshMe, geoDenied, push, online, cachedAt, syncCount, liveTick])
+  }, [
+    me,
+    refreshMe,
+    geoBlocked,
+    push.showConsentBanner,
+    push.status,
+    push.requestAccess,
+    push.refreshStatus,
+    online,
+    cachedAt,
+    syncCount,
+    liveTick,
+    refreshGeo,
+  ])
 }
 
 export function SystemBannerProvider({ children }: { children: ReactNode }) {
