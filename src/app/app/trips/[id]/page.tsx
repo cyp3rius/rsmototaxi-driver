@@ -2,8 +2,8 @@
 
 import { ChevronDown, ChevronUp, Lock, Plane, Receipt } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
+import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
-import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -35,6 +35,7 @@ import {
 export default function TripDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
+  const stackBack = useStackBack()
   const { me, refreshMe } = useAuth()
   const toast = useToast()
   const { openStartShift } = useStartShift()
@@ -203,8 +204,8 @@ export default function TripDetailPage() {
           : 'neutral'
 
   return (
-    <AppShell hideNav={isLiveStyle}>
-      <PageHeader title={detailTitle} onBack={() => router.back()} />
+    <>
+      <PageHeader title={detailTitle} onBack={stackBack} />
 
       {!trip ? (
         <LoadingBlock className="px-5" />
@@ -522,6 +523,6 @@ export default function TripDetailPage() {
             : null
         }
       />
-    </AppShell>
+    </>
   )
 }

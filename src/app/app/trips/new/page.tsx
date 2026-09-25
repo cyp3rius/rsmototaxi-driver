@@ -20,7 +20,6 @@ import {
   Zap,
 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
-import { AppShell } from '@/components/shell/AppShell'
 import { AddressField } from '@/components/ui/AddressField'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
@@ -322,7 +321,7 @@ export default function NewTripPage() {
 
   if (mode === 'choose') {
     return (
-      <AppShell hideNav>
+      <>
         <PageHeader title="Nowy kurs" onClose={() => router.back()} />
         <div className="space-y-3 px-5 pb-10">
           {onShift ? (
@@ -379,12 +378,12 @@ export default function NewTripPage() {
             onClick={() => pickMode('past')}
           />
         </div>
-      </AppShell>
+      </>
     )
   }
 
   return (
-    <AppShell hideNav>
+    <>
       <div className="flex min-h-dvh flex-col">
         <div className="shrink-0">
           <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
@@ -616,7 +615,7 @@ export default function NewTripPage() {
           </Button>
         )}
       </ActionBar>
-    </AppShell>
+    </>
   )
 }
 

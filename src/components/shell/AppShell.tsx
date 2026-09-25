@@ -9,7 +9,7 @@ import {
 import { useAuth } from '@/lib/om/AuthProvider'
 import { Button } from '@/components/ui/Button'
 import { Spinner } from '@/components/ui/Spinner'
-import { forceFixedBottomReflow } from '@/lib/visualViewport'
+import { requestViewportSettle } from '@/lib/visualViewport'
 
 export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?: boolean }) {
   const { ready, session, me } = useAuth()
@@ -21,9 +21,11 @@ export function AppShell({ children, hideNav }: { children: ReactNode; hideNav?:
 
   useEffect(() => {
     if (hideNav || !ready || !session) return
-    forceFixedBottomReflow()
-    const t = window.setTimeout(forceFixedBottomReflow, 120)
-    return () => window.clearTimeout(t)
+    requestViewportSettle()
+    const timers = [80, 200, 500, 1000].map((ms) => window.setTimeout(requestViewportSettle, ms))
+    return () => {
+      for (const t of timers) window.clearTimeout(t)
+    }
   }, [hideNav, ready, session])
 
   if (!ready) {

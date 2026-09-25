@@ -14,6 +14,7 @@ import {
   tripPickupLabel,
 } from '@/lib/tripMeta'
 import { isReturnVisit, markWowSeen } from '@/lib/viewTransition'
+import { requestViewportSettle } from '@/lib/visualViewport'
 
 const clamp = (x: number) => Math.max(0, Math.min(1, x))
 const seg = (x: number, a: number, b: number) => clamp((x - a) / (b - a))
@@ -178,6 +179,10 @@ export function WowLoadingScreen() {
     }
     // Morph already painted dashboard chrome — plain replace avoids VT geometry jump.
     router.replace('/app')
+    // After route paint, settle VV so bottom nav is not left floating on a phantom inset.
+    window.setTimeout(() => requestViewportSettle(), 0)
+    window.setTimeout(() => requestViewportSettle(), 120)
+    window.setTimeout(() => requestViewportSettle(), 400)
   }, [returning, router])
 
   // Shared rAF clock for A and B

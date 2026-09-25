@@ -1,8 +1,8 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
+import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
-import { AppShell } from '@/components/shell/AppShell'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { StatusChip } from '@/components/ui/StatusChip'
@@ -21,6 +21,7 @@ import {
 export default function MonthlyPayoutDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
+  const stackBack = useStackBack()
   const [data, setData] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState(false)
 
@@ -39,8 +40,8 @@ export default function MonthlyPayoutDetailPage() {
   const note = data ? monthlyDetailNote(data) : ''
 
   return (
-    <AppShell hideNav>
-      <PageHeader title="Wypłata miesięczna" onBack={() => router.back()} />
+    <>
+      <PageHeader title="Wypłata miesięczna" onBack={stackBack} />
       <div className="px-5 pb-10">
         {error ? (
           <p className="mt-6 text-[15px] text-[var(--text-secondary)]">Nie udało się wczytać wypłaty.</p>
@@ -86,6 +87,6 @@ export default function MonthlyPayoutDetailPage() {
           </>
         )}
       </div>
-    </AppShell>
+    </>
   )
 }

@@ -2,7 +2,6 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
@@ -114,7 +113,7 @@ export default function LiveTripPage() {
   }
 
   return (
-    <AppShell hideNav>
+    <>
       <PageHeader title="Kurs live" onBack={() => router.push('/app')} />
       <div className="space-y-3 px-5 pb-36">
         <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
@@ -166,7 +165,7 @@ export default function LiveTripPage() {
       <ActionBar>
         <SlideToConfirm label="Przesuń, aby zakończyć" onConfirm={() => void endTrip()} disabled={busy} />
       </ActionBar>
-    </AppShell>
+    </>
   )
 }
 

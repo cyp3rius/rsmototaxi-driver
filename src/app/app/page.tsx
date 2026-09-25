@@ -1,10 +1,4 @@
-import { AppShell } from '@/components/shell/AppShell'
-import { DashboardScreen } from '@/components/screens/DashboardScreen'
-
+/** Tab content lives in DriverChrome (1a). This route only syncs the URL. */
 export default function AppHomePage() {
-  return (
-    <AppShell>
-      <DashboardScreen />
-    </AppShell>
-  )
+  return null
 }

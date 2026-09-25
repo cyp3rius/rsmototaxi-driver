@@ -3,7 +3,6 @@
 import { Camera, File, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useMemo, useRef, useState } from 'react'
-import { AppShell } from '@/components/shell/AppShell'
 import { ActionBar } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
@@ -75,7 +74,7 @@ export default function NewExpensePage() {
   }
 
   return (
-    <AppShell hideNav>
+    <>
       <PageHeader title="Zarejestruj koszt" onClose={() => router.back()} />
       <p className="px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
         Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie
@@ -215,6 +214,6 @@ export default function NewExpensePage() {
           Zapisz koszt
         </Button>
       </ActionBar>
-    </AppShell>
+    </>
   )
 }

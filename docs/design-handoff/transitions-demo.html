@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RS Moto Taxi - Kierowca · przejścia 1a + 1c</title>
+<style>
+  :root { --bg:#020407; --surface:#0B1016; --raised:#141B23; --fg:#F2F4F6; --fg2:#98A2AD; --line:#1D2630; --accent:#D8B878; }
+  @media (prefers-color-scheme: light) { :root { --bg:#F5F7F9; --surface:#FFFFFF; --raised:#EDF0F3; --fg:#0A0F14; --fg2:#5B6570; --line:#DDE2E7; --accent:#8A6A30; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #6b7280; font: 17px/24px -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; }
+  body { display: grid; place-items: center; }
+  .phone { position: relative; width: 390px; height: 844px; max-height: 100vh; border-radius: 44px; overflow: hidden; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; }
+  .sb { flex: none; height: 54px; display: flex; align-items: flex-end; padding: 0 30px 14px 38px; font-weight: 600; font-size: 16px; }
+  .content { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+  .pane { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior-y: contain; padding: 6px 20px 24px; }
+  .pane h1 { margin: 0 0 12px; font-size: 30px; line-height: 36px; font-weight: 600; }
+  .card { padding: 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 12px; cursor: pointer; }
+  .card b { display: block; font-size: 20px; }
+  .card span { color: var(--fg2); font-size: 15px; }
+  nav { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); height: 98px; padding-bottom: 34px; border-top: 1px solid var(--line); background: var(--surface); }
+  nav button { all: unset; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; color: var(--fg2); cursor: pointer; }
+  nav button[aria-current="page"] { color: var(--accent); font-weight: 600; }
+  .stack { position: absolute; inset: 0; }
+  .dim { position: absolute; inset: 0; background: #020407; opacity: 0; pointer-events: none; }
+  .detail { position: absolute; inset: 0; background: var(--bg); transform: translateX(100%); touch-action: pan-y; overflow-y: auto; padding: 6px 20px 24px; }
+  .back { all: unset; height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; cursor: pointer; }
+  .hint { position: absolute; bottom: 110px; left: 20px; right: 20px; color: var(--fg2); font-size: 15px; line-height: 20px; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="sb">19:14</div>
+  <div class="stack" id="stack" style="top:54px">
+    <div id="list" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+      <div class="content" id="panes"></div>
+      <nav id="nav"></nav>
+    </div>
+    <div class="dim" id="dim"></div>
+    <div class="detail" id="detail" hidden>
+      <button class="back" id="back">‹ Kursy</button>
+      <h1 style="margin:8px 0 12px;font-size:30px;line-height:36px;font-weight:600;">19:40</h1>
+      <div class="card" style="cursor:default"><b>Kraków Airport (KRK)</b><span>→ Zakopane, ul. Kościeliska 18</span></div>
+      <p class="hint" style="position:static">Przesuń od lewej krawędzi, żeby wrócić.</p>
+    </div>
+  </div>
+</div>
+<script>
+/* Same logic as src/*.ts, without types, for a standalone preview. */
+const EASE_OUT='cubic-bezier(.2,.8,.2,1)', EASE_IN='cubic-bezier(.4,0,1,1)', EASE_STACK='cubic-bezier(.32,.72,0,1)';
+const TAB={outDuration:90,inDuration:210,inDelay:90,outShift:12,inShift:20};
+const STACK={duration:380,parallax:-25,dim:.12,shadow:'-12px 0 32px rgba(2,4,7,.14)',edgeWidth:24,completeRatio:.35,flickVelocity:.5,minSettle:180};
+const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+let running=[];
+function tabTransition(from,to,dir){
+  running.forEach(a=>a.finish()); running=[];
+  to.hidden=false; to.style.zIndex='2'; from.style.zIndex='1'; from.style.pointerEvents='none';
+  const r=reduced();
+  const out=from.animate(r?[{opacity:1},{opacity:0}]:[{opacity:1,transform:'translateX(0)'},{opacity:0,transform:`translateX(${-dir*TAB.outShift}px)`}],{duration:r?150:TAB.outDuration,easing:EASE_IN,fill:'forwards'});
+  const inn=to.animate(r?[{opacity:0},{opacity:1}]:[{opacity:0,transform:`translateX(${dir*TAB.inShift}px)`},{opacity:1,transform:'translateX(0)'}],{duration:r?150:TAB.inDuration,delay:r?0:TAB.inDelay,easing:EASE_OUT,fill:'backwards'});
+  running=[out,inn];
+  return Promise.all([out.finished,inn.finished]).catch(()=>{}).then(()=>{out.cancel();from.hidden=true;from.style.pointerEvents='';from.style.zIndex='';to.style.zIndex='';running=[];});
+}
+const frame=p=>({detail:{transform:`translateX(${(1-p)*100}%)`},list:{transform:`translateX(${STACK.parallax*p}%)`},dim:{opacity:String(STACK.dim*p)}});
+function apply(e,p){const f=frame(p);e.detail.style.transform=f.detail.transform;e.list.style.transform=f.list.transform;e.dim.style.opacity=f.dim.opacity;}
+function animateTo(e,from,to,d){
+  if(reduced()){apply(e,to);e.list.style.transform='';e.detail.style.transform='';return e.detail.animate([{opacity:from},{opacity:to}],{duration:150}).finished.catch(()=>{});}
+  const a=frame(from),b=frame(to),o={duration:d,easing:EASE_STACK};
+  const an=[e.detail.animate([a.detail,b.detail],o),e.list.animate([a.list,b.list],o),e.dim.animate([a.dim,b.dim],o)];
+  apply(e,to); return Promise.all(an.map(x=>x.finished)).catch(()=>{});
+}
+function pushDetail(e){e.detail.hidden=false;e.detail.style.boxShadow=STACK.shadow;e.list.style.pointerEvents='none';return animateTo(e,0,1,STACK.duration);}
+function popDetail(e,from=1){return animateTo(e,from,0,Math.max(STACK.minSettle,STACK.duration*from)).then(()=>{e.detail.hidden=true;e.detail.style.boxShadow='';e.list.style.pointerEvents='';e.list.style.transform='';});}
+function attachEdgeSwipe(e,onPopped){
+  const el=e.detail;let sx=0,sy=0,lx=0,lt=0,v=0,w=1,tr=false,dec=false;
+  el.addEventListener('pointerdown',ev=>{const x=ev.clientX-el.getBoundingClientRect().left;if(x>STACK.edgeWidth)return;tr=true;dec=false;sx=lx=ev.clientX;sy=ev.clientY;lt=ev.timeStamp;v=0;w=el.offsetWidth;});
+  el.addEventListener('pointermove',ev=>{if(!tr)return;const dx=ev.clientX-sx,dy=ev.clientY-sy;if(!dec){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;if(Math.abs(dy)>Math.abs(dx)||dx<0){tr=false;return;}dec=true;el.setPointerCapture(ev.pointerId);}
+    v=(ev.clientX-lx)/Math.max(1,ev.timeStamp-lt);lx=ev.clientX;lt=ev.timeStamp;apply(e,1-Math.min(1,Math.max(0,dx/w)));});
+  const up=ev=>{if(!tr)return;tr=false;if(!dec)return;const m=Math.max(0,(ev.clientX-sx)/w),p=1-Math.min(1,m);
+    if(m>STACK.completeRatio||v>STACK.flickVelocity)popDetail(e,p).then(onPopped);else animateTo(e,p,1,Math.max(STACK.minSettle,STACK.duration*(1-p)));};
+  el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+}
+
+const tabs=['Start','Kursy','Koszty','Wypłaty','Zmiany'];
+const panes=document.getElementById('panes'), nav=document.getElementById('nav');
+const paneEls=tabs.map((t,i)=>{const d=document.createElement('div');d.className='pane';d.hidden=i!==1;
+  d.innerHTML=`<h1>${t}</h1>`+Array.from({length:8},(_,k)=>`<div class="card" data-open="${t==='Kursy'?1:''}"><b>${['19:40','18:05','16:30','14:10','12:00','10:45','09:20','08:00'][k]}</b><span>Kraków Airport (KRK) → Zakopane</span></div>`).join('');
+  panes.appendChild(d);return d;});
+let active=1;
+tabs.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;if(i===active)b.setAttribute('aria-current','page');
+  b.onclick=()=>{if(i===active){paneEls[i].scrollTo({top:0,behavior:'smooth'});return;}
+    nav.querySelectorAll('button').forEach(x=>x.removeAttribute('aria-current'));b.setAttribute('aria-current','page');
+    const from=active;active=i;tabTransition(paneEls[from],paneEls[i],i>from?1:-1);};nav.appendChild(b);});
+
+const E={list:document.getElementById('list'),dim:document.getElementById('dim'),detail:document.getElementById('detail')};
+panes.addEventListener('click',ev=>{const c=ev.target.closest('.card[data-open="1"]');if(!c)return;history.pushState({detail:1},'');pushDetail(E);});
+document.getElementById('back').onclick=()=>history.back();
+addEventListener('popstate',()=>{if(!E.detail.hidden)popDetail(E);});
+attachEdgeSwipe(E,()=>{if(history.state&&history.state.detail)history.replaceState(null,'');});
+</script>
+</body>
+</html>
