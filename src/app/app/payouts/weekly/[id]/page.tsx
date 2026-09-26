@@ -40,9 +40,9 @@ export default function WeeklyPayoutDetailPage() {
   const note = data ? weeklyDetailNote(data.weekStart) : ''
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader title="Rozliczenie tygodniowe" onBack={stackBack} />
-      <div className="px-5 pb-10">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-10 pt-3" data-scroll>
         {error ? (
           <p className="mt-6 text-[15px] text-[var(--text-secondary)]">
             Nie udało się wczytać rozliczenia.
@@ -87,6 +87,6 @@ export default function WeeklyPayoutDetailPage() {
           </>
         )}
       </div>
-    </>
+    </div>
   )
 }

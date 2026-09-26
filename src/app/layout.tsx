@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Archivo } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/lib/om/AuthProvider'
+import { ThemeProvider } from '@/lib/theme'
 import { SplashGate } from '@/components/shell/SplashGate'
 import { ClientBoot } from '@/components/shell/ClientBoot'
 import { StartShiftProvider } from '@/components/ui/StartShiftProvider'
@@ -183,16 +184,18 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="pl" className={`${archivo.variable} h-full bg-[#020407]`}>
+    <html lang="pl" className={`${archivo.variable} h-full bg-[var(--bg-base)]`}>
       <body className="mx-auto min-h-dvh max-w-[430px] bg-[var(--bg-base)] antialiased shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <AuthProvider>
-          <ToastProvider>
-            <StartShiftProvider>
-              <ClientBoot>
-                <SplashGate>{children}</SplashGate>
-              </ClientBoot>
-            </StartShiftProvider>
-          </ToastProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <StartShiftProvider>
+                <ClientBoot>
+                  <SplashGate>{children}</SplashGate>
+                </ClientBoot>
+              </StartShiftProvider>
+            </ToastProvider>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>

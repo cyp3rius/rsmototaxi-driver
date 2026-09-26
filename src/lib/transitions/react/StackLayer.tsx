@@ -17,6 +17,7 @@ import {
   pushDetail,
   type StackEls,
 } from '@/lib/transitions/stackTransition'
+import { BottomEdgeFade } from '@/components/ui/BottomEdgeFade'
 import {
   lockAppViewport,
   pinFixedChromeToVisualViewport,
@@ -186,8 +187,9 @@ export function StackLayer({
             overscrollBehavior: 'none',
           }}
         >
-          <div className="flex h-full min-h-0 flex-col" data-scroll-root>
+          <div className="relative flex h-full min-h-0 flex-col" data-scroll-root>
             {shown}
+            <BottomEdgeFade />
           </div>
         </div>
       </div>

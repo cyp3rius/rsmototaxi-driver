@@ -7,9 +7,12 @@ import {
   Info,
   LogOut,
   MapPin,
+  Monitor,
+  Moon,
   Phone,
   RefreshCw,
   Smartphone,
+  Sun,
   X,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -25,6 +28,7 @@ import {
   pendingOutboxCount,
   type OutboxItem,
 } from '@/lib/offline/outbox'
+import { useTheme, THEME_LABELS, nextTheme } from '@/lib/theme'
 import { useWebPush } from '@/lib/useWebPush'
 import { cn } from '@/lib/cn'
 
@@ -100,6 +104,8 @@ export function DriverProfileSheet({
   const { me, session, logout } = useAuth()
   const toast = useToast()
   const push = useWebPush()
+  const refreshPushStatus = push.refreshStatus
+  const { preference: themePref, setPreference: setThemePref } = useTheme()
   const [geo, setGeo] = useState<GeoState>('unknown')
   const [installed, setInstalled] = useState(true)
   const [pending, setPending] = useState(0)
@@ -111,6 +117,7 @@ export function DriverProfileSheet({
 
   const refreshPermissions = useCallback(async () => {
     setInstalled(isStandalone())
+    refreshPushStatus()
     try {
       const items = await listOutbox()
       const openItems = items.filter((i) => i.status === 'pending' || i.status === 'error')
@@ -133,7 +140,7 @@ export function DriverProfileSheet({
     } catch {
       setGeo('unknown')
     }
-  }, [])
+  }, [refreshPushStatus])
 
   useEffect(() => {
     if (!open) {
@@ -144,6 +151,20 @@ export function DriverProfileSheet({
       return
     }
     queueMicrotask(() => void refreshPermissions())
+    const onResume = () => {
+      void refreshPermissions()
+    }
+    const onVis = () => {
+      if (document.visibilityState === 'visible') onResume()
+    }
+    window.addEventListener('focus', onResume)
+    document.addEventListener('visibilitychange', onVis)
+    const poll = window.setInterval(onResume, 1500)
+    return () => {
+      window.removeEventListener('focus', onResume)
+      document.removeEventListener('visibilitychange', onVis)
+      window.clearInterval(poll)
+    }
   }, [open, refreshPermissions])
 
   const displayName = (me?.member.displayName || session?.displayName || 'Kierowca').trim()
@@ -167,10 +188,12 @@ export function DriverProfileSheet({
       () => {
         setGeo('granted')
         toast.success('Lokalizacja włączona')
+        void refreshPermissions()
       },
       () => {
         setGeo('denied')
         setHelpOpen(true)
+        void refreshPermissions()
       },
       { enableHighAccuracy: true, timeout: 8000 },
     )
@@ -178,6 +201,8 @@ export function DriverProfileSheet({
 
   async function requestNotif() {
     const next = await push.requestAccess()
+    refreshPushStatus()
+    await refreshPermissions()
     if (next === 'ready') toast.success('Powiadomienia włączone')
     else toast.warning('Powiadomienia są wyłączone w ustawieniach systemu')
   }
@@ -296,10 +321,26 @@ export function DriverProfileSheet({
             </p>
             <div className="overflow-hidden rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)]">
               <AppRow
+                icon={
+                  themePref === 'light' ? (
+                    <Sun size={20} strokeWidth={1.9} />
+                  ) : themePref === 'dark' ? (
+                    <Moon size={20} strokeWidth={1.9} />
+                  ) : (
+                    <Monitor size={20} strokeWidth={1.9} />
+                  )
+                }
+                label="Motyw"
+                value={THEME_LABELS[themePref]}
+                chevron
+                onClick={() => setThemePref(nextTheme(themePref))}
+              />
+              <AppRow
                 icon={<Globe size={20} strokeWidth={1.9} />}
                 label="Język"
                 value="Polski"
                 chevron
+                divider
               />
               <AppRow
                 icon={<RefreshCw size={20} strokeWidth={1.9} />}

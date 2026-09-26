@@ -210,7 +210,7 @@ export default function TripDetailPage() {
       {!trip ? (
         <LoadingBlock className="min-h-0 flex-1 px-5" />
       ) : (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6" data-scroll>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6 pt-3" data-scroll>
           {isInProgress && onShift ? (
             <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
               <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />

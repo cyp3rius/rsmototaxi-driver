@@ -53,6 +53,43 @@
   }
 }
 
+/* Explicit theme preference (overrides system). */
+html[data-theme='light'],
+html.light {
+  color-scheme: light;
+  --bg-base: #f5f7f9;
+  --bg-surface: #ffffff;
+  --bg-surface-raised: #edf0f3;
+  --text-primary: #0a0f14;
+  --text-secondary: #5b6570;
+  --text-tertiary: #8a939c;
+  --separator: #dde2e7;
+  --accent: #8a6a30;
+  --accent-on: #ffffff;
+  --success: #1e7a4c;
+  --warning: #9a5b00;
+  --danger: #b3261e;
+  --sheet-shadow: 0 8px 24px rgba(2, 4, 7, 0.08);
+}
+
+html[data-theme='dark'],
+html.dark {
+  color-scheme: dark;
+  --bg-base: #020407;
+  --bg-surface: #0b1016;
+  --bg-surface-raised: #141b23;
+  --text-primary: #f2f4f6;
+  --text-secondary: #98a2ad;
+  --text-tertiary: #5f6873;
+  --separator: #1d2630;
+  --accent: #d8b878;
+  --accent-on: #020407;
+  --success: #4cc38a;
+  --warning: #f0a93b;
+  --danger: #ff6b61;
+  --sheet-shadow: none;
+}
+
 html {
   font: -apple-system-body;
   -webkit-text-size-adjust: 100%;

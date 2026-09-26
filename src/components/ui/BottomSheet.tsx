@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { BottomEdgeFade } from '@/components/ui/BottomEdgeFade'
 import { cn } from '@/lib/cn'
 
 const ENTER_MS = 360
@@ -40,6 +41,7 @@ export function BottomSheet({
   const [entered, setEntered] = useState(false)
   const [portalReady, setPortalReady] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
   const dragActive = useRef(false)
   const pointerId = useRef<number | null>(null)
@@ -114,8 +116,8 @@ export function BottomSheet({
 
   function beginDrag(clientY: number) {
     if (!entered || closingByDrag || !open) return false
-    const el = panelRef.current
-    if (!el || el.scrollTop > 0) return false
+    const scrollEl = scrollRef.current
+    if (!scrollEl || scrollEl.scrollTop > 0) return false
     startY.current = clientY
     dragActive.current = true
     setDragging(true)
@@ -197,47 +199,56 @@ export function BottomSheet({
       <div
         ref={panelRef}
         className={cn(
-          'absolute inset-x-0 bottom-0 overflow-auto rounded-t-[32px] border-t border-transparent bg-[var(--bg-surface)] px-6 pt-2.5 shadow-[var(--sheet-shadow)] will-change-transform dark:border-[var(--separator)]',
+          'absolute inset-x-0 bottom-0 flex flex-col overflow-hidden rounded-t-[32px] border-t border-transparent bg-[var(--bg-surface)] shadow-[var(--sheet-shadow)] will-change-transform dark:border-[var(--separator)]',
           expanded
             ? 'max-h-[calc(100dvh-var(--safe-top))] min-h-[72dvh] max-[390px]:min-h-[calc(100dvh-var(--safe-top))]'
             : 'max-h-[92dvh]',
           className,
         )}
         data-sheet-panel
-        data-scroll
         style={{
-          paddingBottom: `calc(var(--safe-bottom) + 16px + ${keyboardPad}px)`,
           transform: panelTransform,
           transition: dragging ? 'none' : `transform ${entered ? ENTER_MS : EXIT_MS}ms ${EASE}`,
           overscrollBehavior: 'none',
         }}
       >
         <div
-          className="mx-auto mb-1.5 flex touch-none select-none justify-center py-2.5"
-          data-sheet-handle
-          style={{ touchAction: 'none', cursor: 'grab' }}
-          onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onPointerCancel={onHandlePointerUp}
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-auto px-6 pt-2.5"
+          data-scroll
+          style={{
+            paddingBottom: `calc(var(--safe-bottom) + 16px + ${keyboardPad}px)`,
+            overscrollBehavior: 'none',
+          }}
         >
-          <span className="h-1.5 w-10 rounded-[3px] bg-[var(--separator)]" />
-        </div>
-        {title ? (
-          <h2
-            className={cn(
-              'mt-2 font-[family-name:var(--font-display)] text-[30px] font-semibold leading-9',
-              titleClassName,
-            )}
-            style={{ fontStretch: '115%' }}
+          <div
+            className="mx-auto mb-1.5 flex touch-none select-none justify-center py-2.5"
+            data-sheet-handle
+            style={{ touchAction: 'none', cursor: 'grab' }}
+            onPointerDown={onHandlePointerDown}
+            onPointerMove={onHandlePointerMove}
+            onPointerUp={onHandlePointerUp}
+            onPointerCancel={onHandlePointerUp}
           >
-            {title}
-          </h2>
-        ) : null}
-        {subtitle ? (
-          <p className="mt-1.5 text-[17px] leading-6 text-[var(--text-secondary)]">{subtitle}</p>
-        ) : null}
-        <div className={title || subtitle ? 'mt-4' : undefined}>{children}</div>
+            <span className="h-1.5 w-10 rounded-[3px] bg-[var(--separator)]" />
+          </div>
+          {title ? (
+            <h2
+              className={cn(
+                'mt-2 font-[family-name:var(--font-display)] text-[30px] font-semibold leading-9',
+                titleClassName,
+              )}
+              style={{ fontStretch: '115%' }}
+            >
+              {title}
+            </h2>
+          ) : null}
+          {subtitle ? (
+            <p className="mt-1.5 text-[17px] leading-6 text-[var(--text-secondary)]">{subtitle}</p>
+          ) : null}
+          <div className={title || subtitle ? 'mt-4' : undefined}>{children}</div>
+        </div>
+        <BottomEdgeFade fromVar="--bg-surface" />
       </div>
     </div>,
     document.body,

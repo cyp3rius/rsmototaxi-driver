@@ -24,6 +24,12 @@ export const BOTTOM_NAV_TABS = [
 
 /** Icon row + labels; keep in sync with DriverChrome content bottom padding. */
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
+/** Sink nav by half the icon row so it sits lower against the home indicator. */
+export const BOTTOM_NAV_SINK_PX = BOTTOM_NAV_BAR_HEIGHT_PX / 2
+/** Visible nav height contributing to content clearance (bar − sink + safe-area). */
+export function bottomNavContentClearanceCss() {
+  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX}px + env(safe-area-inset-bottom, 0px))`
+}
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
@@ -118,8 +124,9 @@ export function BottomNav({
       ref={navRef}
       className={cn(
         'rs-bottom-nav z-20',
-        docked ? 'absolute inset-x-0 bottom-0 flex-none' : 'fixed inset-x-0 bottom-0',
+        docked ? 'absolute inset-x-0 flex-none' : 'fixed inset-x-0',
       )}
+      style={{ bottom: `-${BOTTOM_NAV_SINK_PX}px` }}
     >
       <div
         aria-hidden

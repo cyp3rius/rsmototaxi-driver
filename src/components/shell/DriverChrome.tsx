@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
-import { BottomNav, BOTTOM_NAV_BAR_HEIGHT_PX } from '@/components/shell/BottomNav'
+import { BottomNav, bottomNavContentClearanceCss } from '@/components/shell/BottomNav'
 import { DashboardScreen } from '@/components/screens/DashboardScreen'
 import { TripsScreen } from '@/components/screens/TripsScreen'
 import { ExpensesScreen } from '@/components/screens/ExpensesScreen'
@@ -64,7 +64,7 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
       <div
         className="flex min-h-0 flex-1 flex-col"
         style={{
-          paddingBottom: `calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
+          paddingBottom: bottomNavContentClearanceCss(),
         }}
       >
         <PullToRefresh
