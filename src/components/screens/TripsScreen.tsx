@@ -229,7 +229,7 @@ function TripsScreenInner() {
         action={
           <Link
             href="/app/trips/new"
-            className="inline-flex h-12 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[16px] font-semibold text-[var(--accent-on)]"
+            className="rs-accent-fill inline-flex h-12 items-center gap-1.5 rounded-full px-4 text-[16px] font-semibold"
           >
             <Plus size={18} strokeWidth={2.4} />
             Nowy kurs

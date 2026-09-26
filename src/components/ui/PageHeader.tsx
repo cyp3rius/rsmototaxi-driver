@@ -40,7 +40,10 @@ export function PageHeader({
   const hasNav = Boolean(onBack || onClose)
 
   return (
-    <div className={cn('px-5', className)} style={{ paddingTop: 'calc(var(--safe-top) + 6px)' }}>
+    <div
+      className={cn('px-5', className)}
+      style={{ paddingTop: 'calc(var(--safe-top, env(safe-area-inset-top, 0px)) + 6px)' }}
+    >
       {hasNav && onBack && !onClose ? (
         <div className="flex h-[52px] items-center gap-1.5">
           <CircleIconButton onClick={onBack} label="Wróć">

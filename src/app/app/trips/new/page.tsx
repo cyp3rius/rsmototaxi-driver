@@ -336,7 +336,7 @@ export default function NewTripPage() {
                 <button
                   type="button"
                   onClick={() => pickMode('live')}
-                  className="flex min-h-24 w-full items-center gap-3.5 rounded-[22px] bg-[var(--accent)] px-[18px] py-[18px] text-left text-[var(--accent-on)]"
+                  className="rs-accent-fill flex min-h-24 w-full items-center gap-3.5 rounded-[22px] px-[18px] py-[18px] text-left"
                 >
                   <Zap size={28} strokeWidth={2} />
                   <span className="flex-1">

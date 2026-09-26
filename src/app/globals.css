@@ -20,8 +20,11 @@
   --success: #4cc38a;
   --warning: #f0a93b;
   --danger: #ff6b61;
+  /* Overwritten at runtime by syncVisualViewportCssVars() — env() alone can stick at 0 on iOS. */
   --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
   --vv-bottom: 0px;
   --radius-sheet: 32px;
   --radius-card: 22px;
@@ -124,21 +127,22 @@ body {
 
 /*
  * Driver chrome — full-bleed fixed shell.
- * Standalone: top+bottom 0 so the frame includes the home-indicator band;
- * tab bar paints into that band via padding-bottom: env(safe-area-inset-bottom).
+ * Height is set explicitly by pinFixedChromeToVisualViewport (--app-height /
+ * screen frame) so the shell covers the home-indicator band on iOS PWA.
  */
 .rs-driver-chrome {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: auto;
   width: 100%;
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
-  height: auto;
+  height: var(--app-height, 100dvh);
   min-height: 100dvh;
+  min-height: -webkit-fill-available;
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg-base);
@@ -147,19 +151,15 @@ body {
 
 @media (display-mode: standalone), (display-mode: fullscreen) {
   .rs-driver-chrome {
-    top: 0;
-    bottom: 0;
-    height: auto;
-    min-height: 100dvh;
+    height: var(--app-height, 100dvh);
+    min-height: -webkit-fill-available;
   }
 }
 
 html[data-display-mode='standalone'] .rs-driver-chrome,
 html[data-display-mode='fullscreen'] .rs-driver-chrome {
-  top: 0;
-  bottom: 0;
-  height: auto;
-  min-height: 100dvh;
+  height: var(--app-height, 100dvh);
+  min-height: -webkit-fill-available;
 }
 
 /* Freeze document rubber-band while the fixed driver chrome is mounted */
@@ -187,9 +187,25 @@ html.rs-app-lock body {
   box-sizing: border-box;
 }
 
-a {
-  text-decoration: none;
+/*
+ * Keep link reset in @layer base so Tailwind color utilities (and .rs-accent-fill)
+ * win the cascade. Unlayered `a { color: inherit }` was wiping accent-on on header CTAs.
+ */
+@layer base {
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+/* Filled accent control: light → white label, dark → black label */
+.rs-accent-fill {
+  background: var(--accent);
+  color: var(--accent-on);
+}
+.rs-accent-fill svg {
   color: inherit;
+  stroke: currentColor;
 }
 
 /* Bottom nav active must beat Tailwind preflight `a { color: inherit }` / button defaults */

@@ -136,7 +136,7 @@ function ExpensesScreenInner() {
         action={
           <Link
             href="/app/expenses/new"
-            className="inline-flex h-12 items-center gap-1.5 rounded-full bg-[var(--accent)] px-4 text-[16px] font-[600] text-[var(--accent-on)]"
+            className="rs-accent-fill inline-flex h-12 items-center gap-1.5 rounded-full px-4 text-[16px] font-[600]"
           >
             <Plus size={18} strokeWidth={2.4} />
             Koszt

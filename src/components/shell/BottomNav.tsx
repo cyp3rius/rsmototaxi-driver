@@ -22,26 +22,25 @@ export const BOTTOM_NAV_TABS = [
   { href: '/app/shifts', label: 'Zmiany', icon: CalendarDays },
 ] as const
 
-/** Icon + label row (above the home-indicator band). */
-export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
+/** Icon + label row (matches ~iOS UITabBar content height). */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 50
 /** Soft gradient above the nav that overlays list content — include in clearance. */
 export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
 
 /**
- * Space the tab scroller must leave for nav + home indicator + fade.
- * Native pattern: bar height + safe-area (bar bg paints into the inset) + fade.
+ * Extra space above the in-flow tab bar so list rows clear the fade.
+ * Bar height + safe-area are already taken by the flex footer itself.
  */
 export function bottomNavContentClearanceCss() {
-  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`
+  return `${BOTTOM_NAV_FADE_HEIGHT_PX}px`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
- * Bottom nav — flush to the physical screen bottom.
- * Background fills `safe-area-inset-bottom` (home indicator sits ON the bar, like iOS Tab Bar).
- * Do not use negative `bottom` / sink hacks — they clip under overflow:hidden chrome
- * and leave an empty body strip under the bar.
+ * Bottom nav — native iOS Tab Bar pattern.
+ * In-flow flex footer (not absolute): background fills to chrome bottom;
+ * `padding-bottom: var(--safe-bottom)` keeps icons above the home indicator.
  */
 export function BottomNav({
   activeIndex,
@@ -130,7 +129,7 @@ export function BottomNav({
       ref={navRef}
       className={cn(
         'rs-bottom-nav z-20',
-        docked ? 'absolute inset-x-0 bottom-0 flex-none' : 'fixed inset-x-0 bottom-0',
+        docked ? 'relative flex-none' : 'fixed inset-x-0 bottom-0',
       )}
     >
       <div
@@ -143,9 +142,9 @@ export function BottomNav({
         }}
       />
       <div
-        className="relative bg-[var(--bg-base)]"
+        className="relative border-t border-[var(--separator)] bg-[var(--bg-base)]"
         style={{
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: 'var(--safe-bottom, env(safe-area-inset-bottom, 0px))',
         }}
       >
         <ul
@@ -167,13 +166,13 @@ export function BottomNav({
                     if (onNavigate) onNavigate(index, tab.href)
                   }}
                   className={cn(
-                    'relative flex h-full w-full flex-col items-center justify-center gap-[2px] text-[13px] leading-[16px]',
+                    'relative flex h-full w-full flex-col items-center justify-center gap-[1px] text-[11px] leading-[13px]',
                     active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
                   )}
                   style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
                 >
                   <span className="relative">
-                    <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
+                    <Icon size={22} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
                     {showBadge ? (
                       <span
                         className="absolute -right-1.5 top-0 size-[9px] rounded-full border-2 border-[var(--bg-base)] bg-[var(--warning)]"

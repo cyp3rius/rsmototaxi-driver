@@ -25,8 +25,8 @@ export function ActionBar({
       )}
       style={{
         paddingBottom: withNav
-          ? 'calc(env(safe-area-inset-bottom, 0px) + 72px)'
-          : 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+          ? 'calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 72px)'
+          : 'calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 12px)',
       }}
     >
       <div className="mx-auto flex w-full max-w-lg flex-col gap-2">{children}</div>

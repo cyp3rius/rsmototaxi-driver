@@ -22,18 +22,58 @@ export function isStandaloneDisplay(): boolean {
 }
 
 /**
+ * Live-measure safe-area insets. Prefer this over CSS custom props alone —
+ * iOS can report env() as 0 at first paint (esp. display:fullscreen), then
+ * never refresh vars defined as `env(...)` on :root.
+ */
+export function readSafeAreaInsets(): {
+  top: number
+  right: number
+  bottom: number
+  left: number
+} {
+  if (typeof document === 'undefined') {
+    return { top: 0, right: 0, bottom: 0, left: 0 }
+  }
+  const el = document.createElement('div')
+  el.setAttribute('aria-hidden', 'true')
+  el.style.cssText =
+    'position:fixed;inset:0;visibility:hidden;pointer-events:none;' +
+    'padding-top:env(safe-area-inset-top,0px);' +
+    'padding-right:env(safe-area-inset-right,0px);' +
+    'padding-bottom:env(safe-area-inset-bottom,0px);' +
+    'padding-left:env(safe-area-inset-left,0px);'
+  document.documentElement.appendChild(el)
+  const cs = getComputedStyle(el)
+  const insets = {
+    top: parseFloat(cs.paddingTop) || 0,
+    right: parseFloat(cs.paddingRight) || 0,
+    bottom: parseFloat(cs.paddingBottom) || 0,
+    left: parseFloat(cs.paddingLeft) || 0,
+  }
+  el.remove()
+  return insets
+}
+
+/**
  * Frame height for the driver chrome.
- * - PWA: full-bleed screen height (never `-webkit-fill-available` — it often excludes
- *   the home-indicator band and doubles with nav `safe-area` padding).
- * - Safari tab: max(layout, visual, lvh) closes post-morph phantoms above the toolbar.
+ * PWA: prefer the largest credible screen frame so the shell never ends above
+ * the home-indicator band (that leaves an empty body strip under the tab bar).
  */
 export function readFrameHeight(): number {
   if (typeof window === 'undefined') return 0
   const vv = window.visualViewport
 
   if (isStandaloneDisplay()) {
+    // screen.height is CSS px on iOS and includes the home-indicator band.
     return Math.round(
-      Math.max(window.innerHeight, vv?.height ?? 0, readCssViewportHeight('dvh')),
+      Math.max(
+        window.innerHeight,
+        window.screen?.height ?? 0,
+        vv?.height ?? 0,
+        readCssViewportHeight('dvh'),
+        readCssViewportHeight('lvh'),
+      ),
     )
   }
 
@@ -80,8 +120,33 @@ export function isVisualViewportMeaningfullyShortened(): boolean {
 export function syncVisualViewportCssVars() {
   if (typeof document === 'undefined') return
   const inset = isVisualViewportMeaningfullyShortened() ? readVisualViewportBottomInset() : 0
+  let safe = readSafeAreaInsets()
+
+  // iOS display:fullscreen (and some standalone installs) report env() = 0 while
+  // black-translucent still draws under the status bar / home indicator.
+  // Without a fallback, titles collide with the clock and the tab bar floats.
+  if (
+    isStandaloneDisplay() &&
+    safe.top === 0 &&
+    safe.bottom === 0 &&
+    typeof window !== 'undefined' &&
+    Math.min(window.screen?.width ?? 0, window.screen?.height ?? 0) >= 375 &&
+    Math.max(window.screen?.width ?? 0, window.screen?.height ?? 0) >= 812
+  ) {
+    const tall = Math.max(window.screen.width, window.screen.height)
+    safe = {
+      ...safe,
+      top: tall >= 852 ? 59 : 47,
+      bottom: 34,
+    }
+  }
+
   document.documentElement.style.setProperty('--vv-bottom', `${inset}px`)
   document.documentElement.style.setProperty('--app-height', `${readFrameHeight()}px`)
+  document.documentElement.style.setProperty('--safe-top', `${safe.top}px`)
+  document.documentElement.style.setProperty('--safe-bottom', `${safe.bottom}px`)
+  document.documentElement.style.setProperty('--safe-left', `${safe.left}px`)
+  document.documentElement.style.setProperty('--safe-right', `${safe.right}px`)
   const mode = isStandaloneDisplay()
     ? window.matchMedia('(display-mode: fullscreen)').matches
       ? 'fullscreen'
@@ -159,9 +224,8 @@ export function unlockAppViewport() {
 
 /**
  * Pin a fullscreen fixed chrome shell to the real screen frame.
- * Standalone PWA: stretch top+bottom to the layout viewport edges (home indicator
- * lives inside the chrome; nav paints into safe-area). Never undersize with a short
- * visualViewport height — that leaves an empty body strip under the tab bar.
+ * Always set an explicit height (never rely on bottom:0 alone) — iOS PWA layout
+ * viewports often end above the home-indicator band.
  */
 export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512) {
   const vv = window.visualViewport
@@ -183,13 +247,6 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
     el.style.top = `${vv.offsetTop}px`
     el.style.bottom = 'auto'
     el.style.height = `${vv.height}px`
-    return
-  }
-
-  if (isStandaloneDisplay()) {
-    el.style.top = '0px'
-    el.style.bottom = '0px'
-    el.style.height = 'auto'
     return
   }
 

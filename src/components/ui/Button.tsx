@@ -24,7 +24,7 @@ export function Button({
   const height = size === 'lg' ? 'h-16 text-[18px]' : 'h-14 text-[17px]'
   const styles =
     variant === 'primary'
-      ? 'bg-[var(--accent)] text-[var(--accent-on)]'
+      ? 'rs-accent-fill'
       : variant === 'secondary'
         ? 'bg-transparent border border-[var(--separator)] text-[var(--text-primary)]'
         : variant === 'danger'
