@@ -370,6 +370,8 @@ export function receiptStatusLabel(trip: Record<string, unknown>) {
   }
   const type = String(trip.tripType || '')
   if (type === 'internal') return null
+  const status = String(trip.status || '')
+  if (status !== 'completed' && status !== 'pending_authorization') return null
   return 'Brak paragonu'
 }
 

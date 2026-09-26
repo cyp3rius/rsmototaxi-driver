@@ -67,6 +67,9 @@ export function receiptUiStatusFromRecord(
   }
   const type = String(record.tripType || '')
   if (record.platform || type === 'internal' || type === 'platform') return null
+  // Future / live trips are not "missing receipt" until completed.
+  const status = String(record.status || '')
+  if (status !== 'completed' && status !== 'pending_authorization') return null
   return 'missing'
 }
 
