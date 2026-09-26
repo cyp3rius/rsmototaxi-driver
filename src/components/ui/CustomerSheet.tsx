@@ -147,7 +147,7 @@ export function CustomerPicker({
   }
 
   if (value) {
-    const kindLabel = value.kind === 'company' ? 'firma' : 'osoba'
+    const kindLabel = value.kind === 'company' ? 'Firma' : 'Osoba'
     const phonePart = value.phone ? ` · ${value.phone}` : ''
     return (
       <div>
@@ -258,7 +258,7 @@ export function CustomerPicker({
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-[16px] font-semibold leading-5">{item.label}</span>
                 <span className="block truncate text-[15px] leading-5 text-[var(--text-secondary)]">
-                  {item.description || item.phone || (item.kind === 'company' ? 'firma' : 'osoba')}
+                  {item.description || item.phone || (item.kind === 'company' ? 'Firma' : 'Osoba')}
                 </span>
               </span>
             </button>
