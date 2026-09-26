@@ -57,23 +57,17 @@ export function readSafeAreaInsets(): {
 
 /**
  * Frame height for the driver chrome.
- * PWA: prefer the largest credible screen frame so the shell never ends above
- * the home-indicator band (that leaves an empty body strip under the tab bar).
+ * Must match the *visible* layout viewport — never `screen.height`.
+ * Oversizing clips the tab-bar labels and ActionBar safe-area padding under
+ * `overflow:hidden`, which looks like “icons only” / “footer button covered”.
  */
 export function readFrameHeight(): number {
   if (typeof window === 'undefined') return 0
   const vv = window.visualViewport
 
   if (isStandaloneDisplay()) {
-    // screen.height is CSS px on iOS and includes the home-indicator band.
     return Math.round(
-      Math.max(
-        window.innerHeight,
-        window.screen?.height ?? 0,
-        vv?.height ?? 0,
-        readCssViewportHeight('dvh'),
-        readCssViewportHeight('lvh'),
-      ),
+      Math.max(window.innerHeight, vv?.height ?? 0, readCssViewportHeight('dvh')),
     )
   }
 
@@ -224,8 +218,8 @@ export function unlockAppViewport() {
 
 /**
  * Pin a fullscreen fixed chrome shell to the real screen frame.
- * Always set an explicit height (never rely on bottom:0 alone) — iOS PWA layout
- * viewports often end above the home-indicator band.
+ * Prefer top+bottom stretch (matches CSS). Only set an explicit height when the
+ * visual viewport is meaningfully shortened (keyboard) or in Safari tab mode.
  */
 export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512) {
   const vv = window.visualViewport
@@ -247,6 +241,13 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
     el.style.top = `${vv.offsetTop}px`
     el.style.bottom = 'auto'
     el.style.height = `${vv.height}px`
+    return
+  }
+
+  if (isStandaloneDisplay()) {
+    el.style.top = '0px'
+    el.style.bottom = '0px'
+    el.style.height = 'auto'
     return
   }
 

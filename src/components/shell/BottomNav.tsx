@@ -22,25 +22,25 @@ export const BOTTOM_NAV_TABS = [
   { href: '/app/shifts', label: 'Zmiany', icon: CalendarDays },
 ] as const
 
-/** Icon + label row (matches ~iOS UITabBar content height). */
-export const BOTTOM_NAV_BAR_HEIGHT_PX = 50
-/** Soft gradient above the nav that overlays list content — include in clearance. */
+/** Icon + label row (content-box height — safe-area padding is additive below). */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
+/** Soft gradient above the nav that overlays list content. */
 export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
 
 /**
- * Extra space above the in-flow tab bar so list rows clear the fade.
- * Bar height + safe-area are already taken by the flex footer itself.
+ * Space content must leave so it clears the fixed/docked tab bar.
+ * = bar height + safe-area (additive) + fade overlay.
  */
 export function bottomNavContentClearanceCss() {
-  return `${BOTTOM_NAV_FADE_HEIGHT_PX}px`
+  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
- * Bottom nav — native iOS Tab Bar pattern.
- * In-flow flex footer (not absolute): background fills to chrome bottom;
- * `padding-bottom: var(--safe-bottom)` keeps icons above the home indicator.
+ * Bottom nav — textbook PWA standalone pattern:
+ * `bottom: 0` + content-box height + `padding-bottom: env(safe-area-inset-bottom)`
+ * so the home-indicator band grows the bar downward instead of crushing icons/labels.
  */
 export function BottomNav({
   activeIndex,
@@ -129,7 +129,7 @@ export function BottomNav({
       ref={navRef}
       className={cn(
         'rs-bottom-nav z-20',
-        docked ? 'relative flex-none' : 'fixed inset-x-0 bottom-0',
+        docked ? 'absolute inset-x-0 bottom-0' : 'fixed inset-x-0 bottom-0',
       )}
     >
       <div
@@ -141,16 +141,8 @@ export function BottomNav({
             'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
         }}
       />
-      <div
-        className="relative border-t border-[var(--separator)] bg-[var(--bg-base)]"
-        style={{
-          paddingBottom: 'var(--safe-bottom, env(safe-area-inset-bottom, 0px))',
-        }}
-      >
-        <ul
-          className="mx-auto grid max-w-lg grid-cols-5"
-          style={{ height: BOTTOM_NAV_BAR_HEIGHT_PX }}
-        >
+      <div className="rs-bottom-nav-inner">
+        <ul className="mx-auto grid h-full max-w-lg grid-cols-5">
           {BOTTOM_NAV_TABS.map((tab, index) => {
             const active = index === resolvedActive
             const Icon = tab.icon
@@ -166,13 +158,13 @@ export function BottomNav({
                     if (onNavigate) onNavigate(index, tab.href)
                   }}
                   className={cn(
-                    'relative flex h-full w-full flex-col items-center justify-center gap-[1px] text-[11px] leading-[13px]',
+                    'relative flex h-full w-full flex-col items-center justify-center gap-0.5 text-[13px] leading-4',
                     active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
                   )}
                   style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
                 >
                   <span className="relative">
-                    <Icon size={22} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
+                    <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
                     {showBadge ? (
                       <span
                         className="absolute -right-1.5 top-0 size-[9px] rounded-full border-2 border-[var(--bg-base)] bg-[var(--warning)]"

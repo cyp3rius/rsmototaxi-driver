@@ -2,10 +2,9 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
 /**
- * Form footer for stack screens.
- * Default `docked` sits in the page flex column (never `position:fixed`) so it
- * cannot slide under the home indicator / below the visual viewport on iOS PWA.
- * Full safe-area padding — bar background fills to the physical bottom (native pattern).
+ * Form footer — same PWA pattern as the tab bar:
+ * content stays full size; `padding-bottom: env(safe-area-inset-bottom)` is additive
+ * (content-box) so the CTA is never crushed into / under the home indicator.
  */
 export function ActionBar({
   children,
@@ -20,14 +19,10 @@ export function ActionBar({
   return (
     <div
       className={cn(
-        'z-30 border-t border-[var(--separator)] bg-[var(--bg-base)] px-5 pt-3',
+        'rs-action-bar z-30 border-t border-[var(--separator)] bg-[var(--bg-base)] px-5 pt-3',
         docked ? 'relative flex-none' : 'fixed inset-x-0 bottom-0',
+        withNav && 'rs-action-bar--with-nav',
       )}
-      style={{
-        paddingBottom: withNav
-          ? 'calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 72px)'
-          : 'calc(var(--safe-bottom, env(safe-area-inset-bottom, 0px)) + 12px)',
-      }}
     >
       <div className="mx-auto flex w-full max-w-lg flex-col gap-2">{children}</div>
     </div>

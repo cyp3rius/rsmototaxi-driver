@@ -126,23 +126,21 @@ body {
 }
 
 /*
- * Driver chrome — full-bleed fixed shell.
- * Height is set explicitly by pinFixedChromeToVisualViewport (--app-height /
- * screen frame) so the shell covers the home-indicator band on iOS PWA.
+ * Driver chrome — fixed shell filling the layout viewport (top + bottom: 0).
+ * Tab bar / ActionBar use content-box + safe-area padding inside this frame.
  */
 .rs-driver-chrome {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  bottom: auto;
+  bottom: 0;
   width: 100%;
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
+  height: auto;
   height: var(--app-height, 100dvh);
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg-base);
@@ -151,15 +149,19 @@ body {
 
 @media (display-mode: standalone), (display-mode: fullscreen) {
   .rs-driver-chrome {
-    height: var(--app-height, 100dvh);
-    min-height: -webkit-fill-available;
+    top: 0;
+    bottom: 0;
+    height: auto;
+    min-height: 100dvh;
   }
 }
 
 html[data-display-mode='standalone'] .rs-driver-chrome,
 html[data-display-mode='fullscreen'] .rs-driver-chrome {
-  height: var(--app-height, 100dvh);
-  min-height: -webkit-fill-available;
+  top: 0;
+  bottom: 0;
+  height: auto;
+  min-height: 100dvh;
 }
 
 /* Freeze document rubber-band while the fixed driver chrome is mounted */
@@ -185,6 +187,31 @@ html.rs-app-lock body {
 
 * {
   box-sizing: border-box;
+}
+
+/*
+ * PWA tab bar — textbook standalone pattern:
+ * content-box height stays 64px; safe-area padding ADDS below (does not crush icons).
+ * See: padding-bottom: env(safe-area-inset-bottom) + box-sizing: content-box.
+ */
+.rs-bottom-nav-inner {
+  box-sizing: content-box;
+  height: 64px;
+  padding-bottom: var(--safe-bottom, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--separator);
+  background: var(--bg-base);
+}
+
+/*
+ * Form ActionBar — same additive safe-area (12px breath + inset).
+ * --with-nav only when a tab bar is also visible under the form.
+ */
+.rs-action-bar {
+  box-sizing: content-box;
+  padding-bottom: calc(12px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
+}
+.rs-action-bar.rs-action-bar--with-nav {
+  padding-bottom: calc(72px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
 }
 
 /*
