@@ -509,11 +509,6 @@ export function DashboardScreen() {
               Podgląd kursów
             </Button>
           ) : null}
-          {state === 'D' ? (
-            <Button variant="secondary" size="md" onClick={() => router.push('/app/trips')}>
-              Kursy z tej zmiany
-            </Button>
-          ) : null}
           {state !== 'A2' ? (
             <Button variant="secondary" size="md" onClick={() => router.push('/app/expenses/new')}>
               <Fuel size={20} strokeWidth={1.8} />
