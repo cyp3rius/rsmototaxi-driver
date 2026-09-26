@@ -81,10 +81,6 @@ function attachmentImageUrl(attachmentId: string) {
   return `/api/om/attachments/image/${encodeURIComponent(attachmentId)}?width=720`
 }
 
-function attachmentFileUrl(attachmentId: string) {
-  return `/api/om/attachments/file/${encodeURIComponent(attachmentId)}`
-}
-
 /**
  * Design 5.9 receipt sheet — shared by trip detail and expense flows.
  * Pick state: two full-width entries (camera + file). Preview: image, OCR status, document number.
@@ -233,12 +229,7 @@ export function ReceiptSheet({
         ) : null}
 
         {remotePreviewUrl ? (
-          <a
-            href={attachmentFileUrl(attachmentId!)}
-            target="_blank"
-            rel="noreferrer"
-            className="relative block overflow-hidden rounded-[18px] border border-[var(--separator)]"
-          >
+          <div className="relative overflow-hidden rounded-[18px] border border-[var(--separator)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={remotePreviewUrl}
@@ -246,17 +237,12 @@ export function ReceiptSheet({
               className="max-h-[200px] w-full object-cover"
               onError={() => setRemotePreviewBroken(true)}
             />
-          </a>
+          </div>
         ) : !hasFile && attachmentId && remotePreviewBroken ? (
-          <a
-            href={attachmentFileUrl(attachmentId)}
-            target="_blank"
-            rel="noreferrer"
-            className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4"
-          >
+          <div className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4">
             <FileText size={28} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
-            <p className="min-w-0 truncate text-[15px] font-medium">Otwórz plik paragonu</p>
-          </a>
+            <p className="min-w-0 truncate text-[15px] font-medium">Paragon (PDF / plik)</p>
+          </div>
         ) : null}
 
         {showPickButtons ? (

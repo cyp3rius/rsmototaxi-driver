@@ -197,7 +197,26 @@ export default function TripDetailPage() {
   const from = tripPickupLabel(trip)
   const to = tripDropoffLabel(trip)
   const fromSub = request.fromNote || null
-  const toSub = tripRouteSubtitle(trip, 'to')
+  const toNote = request.toNote || null
+  const routeStats = (() => {
+    if (toNote) return null
+    const km =
+      request.distanceKm != null && request.distanceKm !== ''
+        ? Number(request.distanceKm)
+        : trip?.distanceKm != null
+          ? Number(trip.distanceKm)
+          : null
+    const duration =
+      request.durationText ||
+      (request.durationMin != null ? `${request.durationMin} min` : null)
+    if ((km == null || !Number.isFinite(km)) && !duration) return null
+    const parts: string[] = []
+    if (km != null && Number.isFinite(km)) {
+      parts.push(`ok. ${km.toLocaleString('pl-PL', { maximumFractionDigits: 1 })} km`)
+    }
+    if (duration) parts.push(duration)
+    return parts.join(' · ')
+  })()
   const payment = tripPaymentLabel(trip)
   const detailRows = trip ? buildTripDetailRows(trip) : []
   const showActionBar =
@@ -299,24 +318,33 @@ export default function TripDetailPage() {
               </p>
 
               <div className="mt-3.5 grid grid-cols-[14px_1fr] gap-x-3">
-                <span className="flex flex-col items-center pt-1.5">
-                  <span className="size-2.5 rounded-full border-2 border-[var(--accent)]" />
+                <span className="flex flex-col items-center">
+                  <span className="mt-1.5 size-2.5 shrink-0 rounded-full border-2 border-[var(--accent)]" />
                   <span className="my-1 w-0.5 flex-1 bg-[var(--separator)]" />
-                  <span className="size-2.5 rounded-[2px] bg-[var(--accent)]" />
                 </span>
-                <span className="flex flex-col gap-3.5">
-                  <span>
-                    <span className="block text-[17px] font-semibold">{from || '—'}</span>
-                    {fromSub ? (
-                      <span className="block text-[15px] text-[var(--text-secondary)]">{fromSub}</span>
-                    ) : null}
-                  </span>
-                  <span>
-                    <span className="block text-[17px] font-semibold">{to || '—'}</span>
-                    {toSub ? (
-                      <span className="block text-[15px] text-[var(--text-secondary)]">{toSub}</span>
-                    ) : null}
-                  </span>
+                <span className="min-w-0 pb-3.5">
+                  <span className="block text-[17px] font-semibold leading-[22px]">{from || '—'}</span>
+                  {fromSub ? (
+                    <span className="mt-0.5 block text-[15px] leading-5 text-[var(--text-secondary)]">
+                      {fromSub}
+                    </span>
+                  ) : null}
+                  {routeStats ? (
+                    <span className="mt-1.5 block text-[15px] leading-5 text-[var(--text-secondary)]">
+                      {routeStats}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="flex justify-center pt-1.5">
+                  <span className="size-2.5 shrink-0 rounded-[2px] bg-[var(--accent)]" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-[17px] font-semibold leading-[22px]">{to || '—'}</span>
+                  {toNote ? (
+                    <span className="mt-0.5 block text-[15px] leading-5 text-[var(--text-secondary)]">
+                      {toNote}
+                    </span>
+                  ) : null}
                 </span>
               </div>
 
