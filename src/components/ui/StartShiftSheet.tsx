@@ -155,7 +155,7 @@ export function StartShiftSheet({
               className="mt-2 font-[family-name:var(--font-display)] text-[26px] font-semibold leading-8"
               style={{ fontStretch: '115%' }}
             >
-              Start zmiany Ad-hoc
+              Start zmiany
             </h2>
             <p className="mt-1.5 text-[16px] leading-[23px] text-[var(--text-secondary)]">
               Nie masz dostępnych żadnych pojazdów. Skontaktuj się z koordynatorem floty:
@@ -221,7 +221,7 @@ export function StartShiftSheet({
               className="mt-2 font-[family-name:var(--font-display)] text-[26px] font-semibold leading-8"
               style={{ fontStretch: '115%' }}
             >
-              {planned ? 'Potwierdź pojazd na tę zmianę' : 'Start zmiany Ad-hoc'}
+              {planned ? 'Potwierdź pojazd na tę zmianę' : 'Rozpocznij zmianę'}
             </h2>
             <p className="mt-1.5 text-[16px] leading-[23px] text-[var(--text-secondary)]">
               {planned

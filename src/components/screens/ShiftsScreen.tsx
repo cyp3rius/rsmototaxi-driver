@@ -73,10 +73,7 @@ function shiftChip(item: Assignment): {
   tone: 'success' | 'neutral' | 'accent'
 } {
   if (item.shiftStart && !item.shiftEnd) return { label: 'Na zmianie', tone: 'success' }
-  if (item.shiftEnd) {
-    if (!item.plannedShiftStart) return { label: 'Ad hoc', tone: 'accent' }
-    return { label: 'Zakończona', tone: 'neutral' }
-  }
+  if (item.shiftEnd) return { label: 'Zakończona', tone: 'neutral' }
   return { label: 'Zaplanowana', tone: 'neutral' }
 }
 

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/Button'
 import { DriverProfileSheet } from '@/components/ui/DriverProfileSheet'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
@@ -358,7 +358,7 @@ export function DashboardScreen() {
             </span>
             <h2 className="display-l mt-2">Brak zmiany na dziś</h2>
             <p className="mt-2 text-[16px] leading-[23px] text-[var(--text-secondary)]">
-              Możesz zacząć zmianę ad hoc na jednym ze swoich pojazdów.{' '}
+              Możesz zacząć zmianę na jednym ze swoich pojazdów.{' '}
               <span className="inline">
                 Domyślny:{' '}
                 <CrossfadeReveal
@@ -428,8 +428,9 @@ export function DashboardScreen() {
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-[var(--separator)] pt-3.5">
               <Stat
                 label="Kursy"
-                value={String(enrichment.todayStats.trips)}
+                value={formatTripsStat(enrichment.todayStats.trips, enrichment.missingCount)}
                 ready={enrichment.statsReady}
+                href={enrichment.missingCount > 0 ? '/app/trips?missing=1' : undefined}
               />
               <Stat label="GPS" value={gpsLabel} ready={enrichment.statsReady} />
               <Stat label="Przychód" value={revenueLabel} ready={enrichment.statsReady} />
@@ -449,7 +450,7 @@ export function DashboardScreen() {
             <Button onClick={() => openStartShift()}>Rozpocznij zmianę</Button>
           ) : null}
           {state === 'A' ? (
-            <Button onClick={() => openStartShift()}>Rozpocznij zmianę ad hoc</Button>
+            <Button onClick={() => openStartShift()}>Rozpocznij zmianę</Button>
           ) : null}
           {state === 'D' ? (
             <Button onClick={() => openStartShift()}>Rozpocznij kolejną zmianę</Button>
@@ -482,8 +483,9 @@ export function DashboardScreen() {
           <section className="grid grid-cols-3 gap-2 rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] px-5 py-4">
             <Stat
               label="Kursy"
-              value={String(enrichment.todayStats.trips)}
+              value={formatTripsStat(enrichment.todayStats.trips, enrichment.missingCount)}
               ready={enrichment.statsReady}
+              href={enrichment.missingCount > 0 ? '/app/trips?missing=1' : undefined}
             />
             <Stat label="GPS" value={gpsLabel} ready={enrichment.statsReady} />
             <Stat label="Przychód" value={revenueLabel} ready={enrichment.statsReady} />
@@ -528,7 +530,7 @@ export function DashboardScreen() {
               Zakończ zmianę
             </button>
           ) : null}
-          {state === 'A' || state === 'A2' || state === 'B' ? (
+          {state === 'A' || state === 'A2' || state === 'B' || state === 'D' ? (
             <button
               type="button"
               onClick={() => router.push('/app/shifts')}
@@ -556,23 +558,44 @@ export function DashboardScreen() {
   )
 }
 
+function formatTripsStat(trips: number, missing: number): ReactNode {
+  if (missing <= 0) return String(trips)
+  return (
+    <>
+      {trips}
+      <span className="font-medium text-[var(--text-secondary)]"> · </span>
+      <span className="font-semibold text-[var(--warning)]">⚠ {missing}</span>
+    </>
+  )
+}
+
 function Stat({
   label,
   value,
   ready,
+  href,
 }: {
   label: string
-  value: string
+  value: ReactNode
   ready: boolean
+  href?: string
 }) {
-  return (
-    <div>
+  const inner = (
+    <>
       <div className="text-[15px] text-[var(--text-secondary)]">{label}</div>
       <CrossfadeReveal ready={ready} skeleton={<SkelStatValue />}>
         <div className="text-[20px] font-semibold leading-6 tabular-nums">{value}</div>
       </CrossfadeReveal>
-    </div>
+    </>
   )
+  if (href) {
+    return (
+      <Link href={href} className="block min-w-0">
+        {inner}
+      </Link>
+    )
+  }
+  return <div>{inner}</div>
 }
 
 function PlannedTripPreview({ trip }: { trip: Record<string, unknown> }) {
