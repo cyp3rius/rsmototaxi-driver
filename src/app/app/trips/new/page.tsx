@@ -188,8 +188,8 @@ export default function NewTripPage() {
       setDurationSeconds(resolvedSeconds)
       const endedAtLocal = revealAutoEnd(resolvedSeconds)
 
-      if (km && km > 0 && startedAt) {
-        const start = new Date(startedAt)
+      if (km && km > 0 && (startedAt || mode === 'live')) {
+        const start = new Date(startedAt || nowLocalInput())
         const date = start.toISOString().slice(0, 10)
         const time = `${String(start.getHours()).padStart(2, '0')}:${String(start.getMinutes()).padStart(2, '0')}`
         const quote = (await omClient.quote({
@@ -202,8 +202,9 @@ export default function NewTripPage() {
         if (typeof quote.totalPrice === 'number') {
           setAmount(String(quote.totalPrice.toFixed(2)).replace('.', ','))
           if (!options?.silent) {
+            const label = mode === 'live' ? 'Orientacyjna kwota' : 'Sugerowana kwota'
             toast.success(
-              `Sugerowana kwota: ${quote.totalPrice.toFixed(2).replace('.', ',')} ${quote.currency || 'PLN'}`,
+              `${label}: ${quote.totalPrice.toFixed(2).replace('.', ',')} ${quote.currency || 'PLN'}`,
             )
           }
         } else if (!options?.silent) {
@@ -272,13 +273,15 @@ export default function NewTripPage() {
       toast.warning(timeErr)
       return
     }
-    if ((tripType === 'client' || tripType === 'other') && !customer) {
-      toast.warning('Wybierz lub dodaj klienta')
-      return
-    }
-    if (needsReceipt && !receipt.file) {
-      toast.warning('Paragon jest wymagany dla kursu przeszłego')
-      return
+    if (mode !== 'live') {
+      if ((tripType === 'client' || tripType === 'other') && !customer) {
+        toast.warning('Wybierz lub dodaj klienta')
+        return
+      }
+      if (needsReceipt && !receipt.file) {
+        toast.warning('Paragon jest wymagany dla kursu przeszłego')
+        return
+      }
     }
     setBusy(true)
     try {
@@ -296,31 +299,39 @@ export default function NewTripPage() {
       const endIso = resolvedEnd ? new Date(resolvedEnd).toISOString() : null
       const status =
         mode === 'live' ? 'in_progress' : mode === 'schedule' ? 'scheduled' : 'completed'
+      const parsedAmount = amount ? Number(amount.replace(',', '.')) : null
       const body: Record<string, unknown> = {
-        tripType,
+        tripType: mode === 'live' ? 'client' : tripType,
         status,
         startedAt: startIso,
         endedAt: mode === 'live' ? null : endIso || startIso,
-        paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
-        revenueAmount: amount ? Number(amount.replace(',', '.')) : null,
+        paymentMethod:
+          mode === 'live' || tripType === 'internal' || tripType === 'private' ? null : payment,
+        // Live: formal amount is entered when finishing the trip; keep estimate in metadata only.
+        revenueAmount: mode === 'live' ? null : parsedAmount,
         distanceKm: distanceKm,
-        customerEntityId: customer?.id || null,
+        customerEntityId: mode === 'live' ? null : customer?.id || null,
         ...(receiptAttachmentId ? { receiptAttachmentId } : {}),
         ...(receipt.documentNumber
           ? { receiptDocumentNumber: receipt.documentNumber }
           : {}),
         metadata: {
-          paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
+          paymentMethod:
+            mode === 'live' || tripType === 'internal' || tripType === 'private' ? null : payment,
           tripRequest: {
             from: from.trim(),
             to: to.trim(),
             fromAddress: from.trim(),
             toAddress: to.trim(),
             stops: stops.filter((s) => s.trim()),
-            paymentType: tripType === 'internal' || tripType === 'private' ? undefined : payment,
+            paymentType:
+              mode === 'live' || tripType === 'internal' || tripType === 'private'
+                ? undefined
+                : payment,
             durationText: durationText || undefined,
             distanceKm: distanceKm ?? undefined,
             basePrice: amount || undefined,
+            estimatedAmount: mode === 'live' && amount ? amount : undefined,
           },
         },
       }
@@ -423,13 +434,18 @@ export default function NewTripPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0">
-        <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
-        <div className="px-5 pt-3">
-          <div className="grid grid-cols-2 gap-1.5">
-            <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
-            <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+        <PageHeader
+          title={title}
+          onBack={() => (mode === 'live' || step === 1 ? setMode('choose') : setStep(1))}
+        />
+        {mode !== 'live' ? (
+          <div className="px-5 pt-3">
+            <div className="grid grid-cols-2 gap-1.5">
+              <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+              <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div
@@ -437,10 +453,14 @@ export default function NewTripPage() {
         data-scroll
         style={{ paddingBottom: actionBarContentPadCss() }}
       >
-        <p className="mb-5 text-[15px] text-[var(--text-secondary)]">
-          Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
-        </p>
-        <div className={step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 1}>
+        {mode !== 'live' ? (
+          <p className="mb-5 text-[15px] text-[var(--text-secondary)]">
+            Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
+          </p>
+        ) : (
+          <p className="mb-5 text-[15px] text-[var(--text-secondary)]">Trasa</p>
+        )}
+        <div className={mode === 'live' || step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={mode !== 'live' && step !== 1}>
             <AddressField label="Skąd" value={from} onChange={setFrom} placeholder="Adres startu" allowMyLocation />
             {stops.map((stop, index) => (
               <div key={`stop-${index}`} className="relative min-w-0">
@@ -472,19 +492,31 @@ export default function NewTripPage() {
             </button>
             <AddressField label="Dokąd" value={to} onChange={setTo} placeholder="Adres końca" allowMyLocation />
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="md"
-                variant="secondary"
-                loading={quoteBusy}
-                onClick={() => void recalculate()}
-              >
-                Przelicz
-              </Button>
-              {distanceKm != null ? (
-                <span className="text-[15px] text-[var(--text-secondary)]">
-                  ≈ {distanceKm.toFixed(1)} km{durationText ? ` · ${durationText}` : ''}
-                </span>
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="md"
+                  variant="secondary"
+                  loading={quoteBusy}
+                  onClick={() => void recalculate()}
+                >
+                  Przelicz
+                </Button>
+                {distanceKm != null ? (
+                  <span className="text-[15px] text-[var(--text-secondary)]">
+                    ≈ {distanceKm.toFixed(1)} km{durationText ? ` · ${durationText}` : ''}
+                  </span>
+                ) : null}
+              </div>
+              {amount ? (
+                <p className="text-[16px] font-semibold tabular-nums text-[var(--text-primary)]">
+                  Orientacyjna kwota · {amount} zł
+                  {mode === 'live' ? (
+                    <span className="mt-0.5 block text-[15px] font-normal text-[var(--text-secondary)]">
+                      Dokładną kwotę wpiszesz po zakończeniu kursu.
+                    </span>
+                  ) : null}
+                </p>
               ) : null}
             </div>
 
@@ -568,11 +600,12 @@ export default function NewTripPage() {
               </>
             ) : (
               <p className="rounded-[18px] bg-[var(--bg-surface-raised)] px-4 py-3 text-[15px] text-[var(--text-secondary)]">
-                Start od razu. Po zakończeniu uzupełnisz trasę i szczegóły.
+                Start od razu. Po zakończeniu uzupełnisz szczegóły i wpiszesz kwotę końcową.
               </p>
             )}
           </div>
 
+          {mode !== 'live' ? (
           <div className={step === 2 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 2}>
             <div>
               <p className="mb-2 text-[15px] font-medium">Typ kursu</p>
@@ -650,12 +683,21 @@ export default function NewTripPage() {
               />
             ) : null}
           </div>
+          ) : null}
       </div>
 
       <ActionBar>
-        {step === 1 ? (
+        {mode === 'live' ? (
           <Button
-            disabled={!from.trim() || !to.trim() || (mode !== 'live' && !startedAt) || quoteBusy}
+            disabled={!from.trim() || !to.trim() || quoteBusy}
+            loading={busy}
+            onClick={() => void save()}
+          >
+            Ruszaj
+          </Button>
+        ) : step === 1 ? (
+          <Button
+            disabled={!from.trim() || !to.trim() || !startedAt || quoteBusy}
             loading={quoteBusy && step === 1}
             onClick={() => void goStep2()}
           >
