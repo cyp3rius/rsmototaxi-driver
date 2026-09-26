@@ -6,9 +6,9 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   env: {
-    // Prefer explicit env (Vercel / .env.local); fall back to package.json version.
-    NEXT_PUBLIC_APP_VERSION:
-      process.env.NEXT_PUBLIC_APP_VERSION || packageJson.version || 'dev',
+    // Always from package.json so a version bump busts SW / forces clients to refresh.
+    // Do not override via Vercel env — bump `package.json` instead.
+    NEXT_PUBLIC_APP_VERSION: packageJson.version,
   },
 }
 

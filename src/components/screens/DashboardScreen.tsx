@@ -235,7 +235,7 @@ export function DashboardScreen() {
 
       <SystemBannerChips />
 
-      <div className="flex flex-1 flex-col gap-4 pt-1">
+      <div className="flex flex-1 flex-col gap-[11px] pt-1">
         <SystemBannerPrimary />
 
         {state === 'C' && nextTrip ? (

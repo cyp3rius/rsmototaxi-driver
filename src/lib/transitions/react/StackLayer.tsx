@@ -179,16 +179,16 @@ export function StackLayer({
         <div
           ref={detailRef}
           hidden
-          data-scroll
-          className="absolute inset-0 z-50 overflow-y-auto bg-[var(--bg-base)]"
+          className="absolute inset-0 z-50 flex flex-col overflow-hidden bg-[var(--bg-base)]"
           style={{
             transform: 'translateX(100%)',
             touchAction: 'pan-y',
             overscrollBehavior: 'none',
-            WebkitOverflowScrolling: 'touch',
           }}
         >
-          {shown}
+          <div className="flex h-full min-h-0 flex-col" data-scroll-root>
+            {shown}
+          </div>
         </div>
       </div>
     </StackBackContext.Provider>

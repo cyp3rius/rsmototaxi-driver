@@ -34,7 +34,7 @@ CORS po stronie OM **nie jest wymagany** dla przeglądarki (serwer Next → OM).
 
 ## Deploy (Vercel)
 
-1. Env: `OM_API_BASE`, `NEXT_PUBLIC_APP_VERSION`, opcjonalnie `REMEMBER_ME_DAYS`
+1. Env: `OM_API_BASE`, opcjonalnie `REMEMBER_ME_DAYS`. Wersja aplikacji (`NEXT_PUBLIC_APP_VERSION`) jest zawsze brana z `package.json` przez `next.config.ts` — podbijaj `version` przy commitach (nie ustawiaj osobno w Vercel).
 2. Cookies: `Secure` w production (`NODE_ENV=production`)
 
 ## QA

@@ -204,13 +204,13 @@ export default function TripDetailPage() {
           : 'neutral'
 
   return (
-    <>
+    <div className="flex h-full min-h-0 flex-col">
       <PageHeader title={detailTitle} onBack={stackBack} />
 
       {!trip ? (
-        <LoadingBlock className="px-5" />
+        <LoadingBlock className="min-h-0 flex-1 px-5" />
       ) : (
-        <div className={`space-y-3 px-5 ${showActionBar ? 'pb-36' : 'pb-28'}`}>
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6" data-scroll>
           {isInProgress && onShift ? (
             <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
               <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />
@@ -523,6 +523,6 @@ export default function TripDetailPage() {
             : null
         }
       />
-    </>
+    </div>
   )
 }

@@ -3,7 +3,7 @@
 import { useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
-import { BottomNav } from '@/components/shell/BottomNav'
+import { BottomNav, BOTTOM_NAV_BAR_HEIGHT_PX } from '@/components/shell/BottomNav'
 import { DashboardScreen } from '@/components/screens/DashboardScreen'
 import { TripsScreen } from '@/components/screens/TripsScreen'
 import { ExpensesScreen } from '@/components/screens/ExpensesScreen'
@@ -61,17 +61,24 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
 
   const list = (
     <div className="relative flex h-full min-h-0 flex-col bg-[var(--bg-base)]">
-      <PullToRefresh
-        disabled={stacked}
-        onRefresh={async () => {
-          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-            throw new Error('offline')
-          }
-          await runTabRefresh(active)
+      <div
+        className="flex min-h-0 flex-1 flex-col"
+        style={{
+          paddingBottom: `calc(${BOTTOM_NAV_BAR_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`,
         }}
       >
-        <TabPanes active={active} panes={panes} className="min-h-0 flex-1" />
-      </PullToRefresh>
+        <PullToRefresh
+          disabled={stacked}
+          onRefresh={async () => {
+            if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+              throw new Error('offline')
+            }
+            await runTabRefresh(active)
+          }}
+        >
+          <TabPanes active={active} panes={panes} className="min-h-0 flex-1" />
+        </PullToRefresh>
+      </div>
       <BottomNav
         activeIndex={active}
         onNavigate={(index, href) => {

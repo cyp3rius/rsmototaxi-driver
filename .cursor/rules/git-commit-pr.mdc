@@ -1,5 +1,5 @@
 ---
-description: Przed commitami testy+build; przy PR podbij wersję; push tylko na polecenie
+description: Przed commitami: podbij wersję, testy+build; push tylko na polecenie
 alwaysApply: true
 ---
 
@@ -7,21 +7,23 @@ alwaysApply: true
 
 ## Przed każdym commitem
 
-Zawsze przed utworzeniem commita uruchom i poczekaj na sukces:
+Zawsze przed utworzeniem commita:
 
-1. Testy: `yarn test` jeśli skrypt istnieje; w przeciwnym razie `yarn lint`
-2. Build: `yarn build`
+1. **Podbij wersję** w `package.json`
+   - Format: `2.0.0-beta.<short-git-hash>` gdzie hash to `git rev-parse --short HEAD` (aktualny HEAD przed commitem ze zmianami), albo kolejny sensowny identyfikator zgodny z dotychczasowym schematem
+   - `NEXT_PUBLIC_APP_VERSION` jest wstrzykiwane z `package.json` przez `next.config.ts` — **nie** ustawiaj osobno w `.env` / Vercel
+   - Dzięki bumpowi SW / klienci PWA odświeżają aplikację
+2. Testy: `yarn test` jeśli skrypt istnieje; w przeciwnym razie `yarn lint`
+3. Build: `yarn build`
 
-Jeśli testy lub build padną — **nie commituj**. Napraw problem, uruchom ponownie, dopiero potem commit.
+Jeśli lint lub build padną — **nie commituj**. Napraw problem, uruchom ponownie, dopiero potem commit (wersja już podbita zostaje w tym samym commicie albo w osobnym „Bump app version…”).
 
 ## Przy tworzeniu PR
 
-Oprócz powyższego (testy + build muszą przejść):
-
-1. **Podbij wersję** w `package.json` (domyślnie patch, np. `0.1.0` → `0.1.1`), chyba że użytkownik wskaże minor/major
-2. Wersja ma być w commitach wchodzących w PR (osobny commit lub w ramach zmian — preferuj osobny commit „bump version”)
+Oprócz powyższego (wersja + lint + build muszą przejść): upewnij się, że bump wersji jest w commitach wchodzących w PR.
 
 ## Push
 
 - **Nigdy** nie wypychaj (`git push`) z własnej inicjatywy
 - Push tylko gdy użytkownik **wyraźnie** o to poprosi
+- Remote: `origin` (ten repozytorium — nie fork/upstream z Open Mercato)

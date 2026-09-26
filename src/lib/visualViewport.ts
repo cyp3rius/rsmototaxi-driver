@@ -33,12 +33,7 @@ export function readFrameHeight(): number {
 
   if (isStandaloneDisplay()) {
     return Math.round(
-      Math.max(
-        window.innerHeight,
-        vv?.height ?? 0,
-        readCssViewportHeight('dvh'),
-        typeof screen !== 'undefined' ? screen.height : 0,
-      ),
+      Math.max(window.innerHeight, vv?.height ?? 0, readCssViewportHeight('dvh')),
     )
   }
 
@@ -185,10 +180,12 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
   }
 
   if (isStandaloneDisplay()) {
-    // Full-bleed pixel height so nav safe-area padding is applied only once.
-    const h = readFrameHeight()
-    el.style.top = '0px'
-    el.style.bottom = '0px'
+    // Exact visual frame — never screen.height (oversizes chrome and clips fixed footers).
+    const h = Math.round(
+      Math.max(window.innerHeight, vv?.height ?? 0, readCssViewportHeight('dvh')),
+    )
+    el.style.top = vv ? `${Math.max(0, vv.offsetTop)}px` : '0px'
+    el.style.bottom = 'auto'
     el.style.height = `${h}px`
     return
   }

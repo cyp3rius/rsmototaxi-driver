@@ -1,9 +1,10 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { SettlementContactNote } from '@/components/ui/SettlementContactNote'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -20,7 +21,6 @@ import {
 
 export default function MonthlyPayoutDetailPage() {
   const params = useParams<{ id: string }>()
-  const router = useRouter()
   const stackBack = useStackBack()
   const [data, setData] = useState<Record<string, unknown> | null>(null)
   const [error, setError] = useState(false)
@@ -81,9 +81,7 @@ export default function MonthlyPayoutDetailPage() {
               ))}
             </SurfaceCard>
 
-            <p className="mt-3 px-1 text-[15px] leading-5 text-[var(--text-secondary)]">
-              Rozliczenie akceptuje flota. Pytania o kwoty: koordynator, 508 222 321.
-            </p>
+            <SettlementContactNote />
           </>
         )}
       </div>

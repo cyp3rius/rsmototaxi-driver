@@ -22,13 +22,14 @@ export const BOTTOM_NAV_TABS = [
   { href: '/app/shifts', label: 'Zmiany', icon: CalendarDays },
 ] as const
 
+/** Icon row + labels; keep in sync with DriverChrome content bottom padding. */
+export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
+
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
- * Bottom nav.
- * - `docked` (default in DriverChrome): sits under the tab scroller (not over content).
- * - `fixed`: legacy viewport pin (AppShell without DriverChrome).
- * Fade to `--bg-base` removes the hard cut-off; z stays below sheets/dialogs (portal ≥50).
+ * Bottom nav — docked to the bottom of the driver chrome (labels + safe-area).
+ * Fade softens the cut against scrolling content; z stays below portaled sheets.
  */
 export function BottomNav({
   activeIndex,
@@ -116,16 +117,16 @@ export function BottomNav({
     <nav
       ref={navRef}
       className={cn(
-        'rs-bottom-nav relative z-20',
-        docked ? 'mt-auto flex-none' : 'fixed inset-x-0 bottom-0',
+        'rs-bottom-nav z-20',
+        docked ? 'absolute inset-x-0 bottom-0 flex-none' : 'fixed inset-x-0 bottom-0',
       )}
     >
-      {/* Soft fade into page background — no hard “odcięcie” */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 bottom-full h-12"
         style={{
-          background: 'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
+          background:
+            'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
         }}
       />
       <div
@@ -135,7 +136,10 @@ export function BottomNav({
           background: 'var(--bg-base)',
         }}
       >
-        <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
+        <ul
+          className="mx-auto grid max-w-lg grid-cols-5"
+          style={{ height: BOTTOM_NAV_BAR_HEIGHT_PX }}
+        >
           {BOTTOM_NAV_TABS.map((tab, index) => {
             const active = index === resolvedActive
             const Icon = tab.icon
@@ -151,7 +155,7 @@ export function BottomNav({
                     if (onNavigate) onNavigate(index, tab.href)
                   }}
                   className={cn(
-                    'relative flex h-full w-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5',
+                    'relative flex h-full w-full flex-col items-center justify-center gap-[2px] text-[13px] leading-[16px]',
                     active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
                   )}
                   style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
@@ -165,7 +169,7 @@ export function BottomNav({
                       />
                     ) : null}
                   </span>
-                  {tab.label}
+                  <span className="max-w-full truncate px-0.5">{tab.label}</span>
                 </button>
               </li>
             )

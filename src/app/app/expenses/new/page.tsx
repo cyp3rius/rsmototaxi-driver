@@ -76,14 +76,16 @@ export default function NewExpensePage() {
   }
 
   return (
-    <>
-      <PageHeader title="Zarejestruj koszt" onClose={stackBack} />
-      <p className="mt-1 px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
-        Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie
-        paragonu.
-      </p>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0">
+        <PageHeader title="Zarejestruj koszt" onClose={stackBack} />
+        <p className="mt-1 px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
+          Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie
+          paragonu.
+        </p>
+      </div>
 
-      <div className="space-y-5 px-5 pb-36 pt-5">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 pb-6 pt-5" data-scroll>
         <div className="grid grid-cols-3 gap-2">
           {COST_TYPE_OPTIONS.map((opt) => (
             <SelectTile
@@ -216,6 +218,6 @@ export default function NewExpensePage() {
           Zapisz koszt
         </Button>
       </ActionBar>
-    </>
+    </div>
   )
 }

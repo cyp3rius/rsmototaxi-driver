@@ -323,30 +323,44 @@ export default function NewTripPage() {
 
   if (mode === 'choose') {
     return (
-      <>
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto" data-scroll>
         <PageHeader title="Nowy kurs" onClose={stackBack} />
-        <div className="space-y-3.5 px-5 pb-10 pt-2">
+        <div className="px-5 pb-10 pt-1">
           {onShift ? (
             <>
-              <div className="mb-1 flex items-center justify-between px-1">
+              <div className="flex items-center justify-between px-1">
                 <span className="text-[15px] text-[var(--text-secondary)]">Pojazd na zmianie</span>
                 {plate ? <PlateBadge plate={plate} /> : null}
               </div>
-              <button
-                type="button"
-                onClick={() => pickMode('live')}
-                className="flex min-h-24 w-full items-center gap-3.5 rounded-[22px] bg-[var(--accent)] px-[18px] py-[18px] text-left text-[var(--accent-on)]"
-              >
-                <Zap size={28} strokeWidth={2} />
-                <span className="flex-1">
-                  <span className="block text-[19px] font-semibold">Kurs live</span>
-                  <span className="block text-[15px] opacity-85">Start teraz, trasa z GPS</span>
-                </span>
-                <ChevronRight size={20} strokeWidth={2.2} />
-              </button>
+              <div className="mt-[11px] space-y-3.5">
+                <button
+                  type="button"
+                  onClick={() => pickMode('live')}
+                  className="flex min-h-24 w-full items-center gap-3.5 rounded-[22px] bg-[var(--accent)] px-[18px] py-[18px] text-left text-[var(--accent-on)]"
+                >
+                  <Zap size={28} strokeWidth={2} />
+                  <span className="flex-1">
+                    <span className="block text-[19px] font-semibold">Kurs live</span>
+                    <span className="block text-[15px] opacity-85">Start teraz, trasa z GPS</span>
+                  </span>
+                  <ChevronRight size={20} strokeWidth={2.2} />
+                </button>
+                <ModeRow
+                  icon={<Calendar size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
+                  title="Zaplanuj kurs"
+                  subtitle="Rezerwacja z godziną w przyszłości"
+                  onClick={() => pickMode('schedule')}
+                />
+                <ModeRow
+                  icon={<History size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
+                  title="Kurs przeszły"
+                  subtitle="Zakończony kurs z tej lub poprzedniej zmiany"
+                  onClick={() => pickMode('past')}
+                />
+              </div>
             </>
           ) : (
-            <>
+            <div className="space-y-3.5">
               <div className="rounded-[18px] bg-[var(--bg-surface-raised)] p-4 text-[16px] leading-[23px]">
                 Jesteś poza zmianą. Możesz zaplanować kurs albo dodać zakończony kurs z poprzedniej zmiany.
               </div>
@@ -364,44 +378,42 @@ export default function NewTripPage() {
                   Rozpocznij zmianę
                 </Button>
               </div>
-            </>
+              <ModeRow
+                icon={<Calendar size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
+                title="Zaplanuj kurs"
+                subtitle="Rezerwacja z godziną w przyszłości"
+                onClick={() => pickMode('schedule')}
+              />
+              <ModeRow
+                icon={<History size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
+                title="Kurs przeszły"
+                subtitle="Zakończony kurs z tej lub poprzedniej zmiany"
+                onClick={() => pickMode('past')}
+              />
+            </div>
           )}
-
-          <ModeRow
-            icon={<Calendar size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
-            title="Zaplanuj kurs"
-            subtitle="Rezerwacja z godziną w przyszłości"
-            onClick={() => pickMode('schedule')}
-          />
-          <ModeRow
-            icon={<History size={26} className="text-[var(--accent)]" strokeWidth={1.9} />}
-            title="Kurs przeszły"
-            subtitle="Zakończony kurs z tej lub poprzedniej zmiany"
-            onClick={() => pickMode('past')}
-          />
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
-      <div className="flex min-h-dvh flex-col">
-        <div className="shrink-0">
-          <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
-          <div className="px-5">
-            <div className="grid grid-cols-2 gap-1.5">
-              <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
-              <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
-            </div>
-            <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-              Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
-            </p>
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="shrink-0">
+        <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
+        <div className="px-5">
+          <div className="grid grid-cols-2 gap-1.5">
+            <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
+            <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
           </div>
+          <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
+            Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
+          </p>
         </div>
+      </div>
 
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-36 pt-5">
-          <div className={step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 1}>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-5" data-scroll>
+        <div className={step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 1}>
             <AddressField label="Skąd" value={from} onChange={setFrom} placeholder="Adres startu" allowMyLocation />
             {stops.map((stop, index) => (
               <div key={`stop-${index}`} className="relative min-w-0">
@@ -599,7 +611,6 @@ export default function NewTripPage() {
               </div>
             ) : null}
           </div>
-        </div>
       </div>
 
       <ActionBar>
@@ -617,7 +628,7 @@ export default function NewTripPage() {
           </Button>
         )}
       </ActionBar>
-    </>
+    </div>
   )
 }
 
