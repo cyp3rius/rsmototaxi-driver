@@ -212,11 +212,11 @@ export function ReceiptSheet({
               <StatusChip tone="neutral" pulse={false}>
                 Czeka na synchronizację
               </StatusChip>
-            ) : (
+            ) : status === 'processing' ? (
               <StatusChip tone="accent" pulse>
                 Przetwarzanie
               </StatusChip>
-            )}
+            ) : null}
           </div>
         ) : null}
 
