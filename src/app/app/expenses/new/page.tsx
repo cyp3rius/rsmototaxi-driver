@@ -1,12 +1,12 @@
 'use client'
 
-import { Camera, File, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { ReceiptFields, useReceiptFile } from '@/components/ui/ReceiptFields'
 import { SelectTile } from '@/components/ui/SelectTile'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
@@ -24,25 +24,15 @@ export default function NewExpensePage() {
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const toast = useToast()
-  const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
-  const cameraRef = useRef<HTMLInputElement>(null)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const receipt = useReceiptFile()
 
   const whenLabel = useMemo(() => {
     const now = new Date()
     return `Dziś, ${formatTime(now.toISOString())}`
   }, [])
 
-  function pick(next: File | null) {
-    if (!next) return
-    setFile(next)
-    if (next.type.startsWith('image/')) setPreview(URL.createObjectURL(next))
-    else setPreview(null)
-  }
-
   async function save() {
-    if (!file) {
+    if (!receipt.file) {
       toast.warning('Paragon jest wymagany')
       return
     }
@@ -58,7 +48,7 @@ export default function NewExpensePage() {
     setBusy(true)
     try {
       const form = new FormData()
-      form.set('file', file)
+      form.set('file', receipt.file)
       const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
       await omClient.createExpense({
         costType,
@@ -146,62 +136,13 @@ export default function NewExpensePage() {
           </div>
         </div>
 
-        <div>
-          <p className="mb-2 text-[15px] font-[500]">
-            Paragon <span className="font-[400] text-[var(--text-secondary)]">(wymagany)</span>
-          </p>
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => cameraRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
-            >
-              <Camera size={20} strokeWidth={1.9} />
-              Zrób zdjęcie
-            </button>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
-            >
-              <File size={20} strokeWidth={1.9} />
-              Wybierz plik
-            </button>
-          </div>
-          <input
-            ref={cameraRef}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="hidden"
-            onChange={(e) => pick(e.target.files?.[0] ?? null)}
-          />
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*,application/pdf"
-            className="hidden"
-            onChange={(e) => pick(e.target.files?.[0] ?? null)}
-          />
-          {preview ? (
-            <div className="relative mt-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={preview} alt="" className="max-h-40 w-full rounded-[14px] object-cover" />
-              <button
-                type="button"
-                className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
-                onClick={() => {
-                  setFile(null)
-                  setPreview(null)
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          ) : file ? (
-            <p className="mt-3 rounded-[14px] bg-[var(--bg-surface-raised)] px-4 py-3 text-[15px]">{file.name}</p>
-          ) : null}
-        </div>
+        <ReceiptFields
+          file={receipt.file}
+          previewUrl={receipt.previewUrl}
+          onPick={receipt.pick}
+          onClear={receipt.clear}
+          required
+        />
 
         <div>
           <p className="mb-2 text-[15px] font-[500]">Notatki</p>

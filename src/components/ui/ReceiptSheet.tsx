@@ -73,6 +73,10 @@ export function receiptUiStatusFromRecord(
   return 'missing'
 }
 
+/**
+ * Design 5.9 receipt sheet — shared by trip detail and expense flows.
+ * Pick state: two full-width entries (camera + file). Preview: image, OCR status, document number.
+ */
 export function ReceiptSheet({
   open,
   onClose,
@@ -189,22 +193,25 @@ export function ReceiptSheet({
         ) : null}
 
         {!hasFile ? (
-          <div className="grid grid-cols-2 gap-2">
+          <div className="flex flex-col gap-2">
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold active:scale-[0.98]"
+              className="rs-accent-fill flex h-16 w-full items-center justify-center gap-2.5 rounded-full text-[18px] font-semibold active:scale-[0.98]"
             >
-              <Camera size={20} strokeWidth={1.9} />
+              <Camera size={22} strokeWidth={2} />
               Zrób zdjęcie
             </button>
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-semibold active:scale-[0.98]"
+              className="flex h-16 w-full items-center justify-center gap-2.5 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] text-[18px] font-semibold active:scale-[0.98]"
             >
-              <FileText size={20} strokeWidth={1.9} />
+              <FileText size={22} strokeWidth={2} />
               Wybierz plik
+              <span className="text-[15px] font-normal text-[var(--text-secondary)]">
+                zdjęcie lub PDF
+              </span>
             </button>
           </div>
         ) : null}
@@ -241,37 +248,39 @@ export function ReceiptSheet({
           </div>
         ) : null}
 
-        <label className="block">
-          <span className="mb-2 block text-[15px] font-medium leading-5">
-            Numer paragonu / faktury
-          </span>
-          <input
-            type="text"
-            value={docNumber}
-            onChange={(e) => setDocNumber(e.target.value)}
-            placeholder={
-              isProcessing || (!docNumber && hasFile)
-                ? 'Uzupełni się po rozpoznaniu'
-                : 'OCR uzupełni — możesz poprawić'
-            }
-            className={cn(
-              'h-14 w-full rounded-[14px] border bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none transition',
-              isReview
-                ? 'border-[var(--danger)] text-[var(--text-primary)]'
-                : 'border-transparent focus:border-[var(--accent)]',
-              !docNumber ? 'placeholder:text-[var(--text-tertiary)]' : '',
-            )}
-          />
-          {isReview && reviewHint ? (
-            <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
-              {reviewHint}
+        {hasFile || showPreviewChrome ? (
+          <label className="block">
+            <span className="mb-2 block text-[15px] font-medium leading-5">
+              Numer paragonu / faktury
             </span>
-          ) : hasFile && (isProcessing || !docNumber) ? (
-            <span className="mt-2 block text-[15px] leading-5 text-[var(--text-secondary)]">
-              Numer uzupełni się po rozpoznaniu. Możesz zamknąć, kurs zapisze się już teraz.
-            </span>
-          ) : null}
-        </label>
+            <input
+              type="text"
+              value={docNumber}
+              onChange={(e) => setDocNumber(e.target.value)}
+              placeholder={
+                isProcessing || (!docNumber && hasFile)
+                  ? 'Uzupełni się po rozpoznaniu'
+                  : 'OCR uzupełni — możesz poprawić'
+              }
+              className={cn(
+                'h-14 w-full rounded-[14px] border bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none transition',
+                isReview
+                  ? 'border-[var(--danger)] text-[var(--text-primary)]'
+                  : 'border-transparent focus:border-[var(--accent)]',
+                !docNumber ? 'placeholder:text-[var(--text-tertiary)]' : '',
+              )}
+            />
+            {isReview && reviewHint ? (
+              <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
+                {reviewHint}
+              </span>
+            ) : hasFile && (isProcessing || !docNumber) ? (
+              <span className="mt-2 block text-[15px] leading-5 text-[var(--text-secondary)]">
+                Numer uzupełni się po rozpoznaniu. Możesz zamknąć, kurs zapisze się już teraz.
+              </span>
+            ) : null}
+          </label>
+        ) : null}
 
         {!hasFile && typeof navigator !== 'undefined' && !navigator.onLine ? (
           <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
@@ -279,16 +288,11 @@ export function ReceiptSheet({
           </p>
         ) : null}
 
-        <div className="mt-2 flex flex-col gap-1">
-          <Button
-            size="lg"
-            loading={busy}
-            disabled={!file}
-            onClick={() => void submit()}
-          >
-            {ctaLabel}
-          </Button>
-          {hasFile ? (
+        {hasFile ? (
+          <div className="mt-2 flex flex-col gap-1">
+            <Button size="lg" loading={busy} disabled={!file} onClick={() => void submit()}>
+              {ctaLabel}
+            </Button>
             <button
               type="button"
               onClick={clearFile}
@@ -297,8 +301,8 @@ export function ReceiptSheet({
               <Trash2 size={18} strokeWidth={2} />
               Usuń zdjęcie
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </BottomSheet>
   )
