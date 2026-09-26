@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Button } from '@/components/ui/Button'
+import { LoadingErrorScreen } from '@/components/screens/LoadingErrorScreen'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
@@ -98,6 +98,7 @@ export function WowLoadingScreen() {
   const [t, setT] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState<'timeout' | 'offline' | null>(null)
+  const [cacheSavedAtLabel, setCacheSavedAtLabel] = useState<string | null>(null)
   const [slowHint, setSlowHint] = useState<'day' | 'still' | null>(null)
   const [missingCount, setMissingCount] = useState(0)
   const [nextTripLabel, setNextTripLabel] = useState<string | null>(null)
@@ -227,6 +228,7 @@ export function WowLoadingScreen() {
             setProgress(100)
             return
           }
+          setCacheSavedAtLabel(null)
           setError('offline')
           return
         }
@@ -272,12 +274,40 @@ export function WowLoadingScreen() {
           setDataReady(true)
         }, Math.max(0, minBar - elapsed))
       } catch {
-        if (!cancelled) setError(navigator.onLine ? 'timeout' : 'offline')
+        if (!cancelled) {
+          if (!navigator.onLine && !me) {
+            setCacheSavedAtLabel(null)
+            setError('offline')
+          } else {
+            if (me) {
+              setCacheSavedAtLabel(
+                new Date().toLocaleTimeString('pl-PL', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+              )
+            } else {
+              setCacheSavedAtLabel(null)
+            }
+            setError(navigator.onLine ? 'timeout' : 'offline')
+          }
+        }
       }
     })()
 
     const timeout = window.setTimeout(() => {
-      if (!cancelled) setError('timeout')
+      if (cancelled) return
+      if (me) {
+        setCacheSavedAtLabel(
+          new Date().toLocaleTimeString('pl-PL', {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+        )
+      } else {
+        setCacheSavedAtLabel(null)
+      }
+      setError('timeout')
     }, 15000)
 
     return () => {
@@ -374,39 +404,26 @@ export function WowLoadingScreen() {
   const showSlow = isRoute && tt > 2000 && tt < 2700
 
   if (error) {
+    const isOfflineNoCache = error === 'offline'
     return (
-      <main
-        className="flex min-h-dvh flex-col justify-center bg-[var(--bg-base)] px-5 pb-16"
-        style={{ paddingTop: 'var(--safe-top)' }}
-      >
-        <span className="flex size-16 items-center justify-center rounded-[20px] tint-warning text-[var(--warning)]">
-          ⚠
-        </span>
-        <h1
-          className="mt-6 font-[family-name:var(--font-display)] text-[30px] font-semibold leading-9"
-          style={{ fontStretch: '115%' }}
-        >
-          {error === 'offline' ? 'Brak połączenia' : 'Nie udało się pobrać zleceń'}
-        </h1>
-        <p className="mt-2.5 text-[17px] leading-6 text-[var(--text-secondary)]">
-          {error === 'offline'
-            ? 'Brak zapisanego profilu na tym urządzeniu. Połącz się raz, żeby pobrać pojazdy i dane zmian.'
-            : 'Ładowanie trwa ponad 15 sekund. Sprawdź połączenie albo spróbuj ponownie.'}
-        </p>
-        <div className="mt-6 space-y-2">
-          <Button onClick={() => window.location.reload()}>Spróbuj ponownie</Button>
-          <Button variant="secondary" onClick={() => router.replace('/app')}>
-            Otwórz dane z pamięci
-          </Button>
-          <button
-            type="button"
-            className="flex h-14 w-full items-center justify-center text-[16px] font-medium text-[var(--text-secondary)]"
-            onClick={() => void logout().then(() => router.replace('/'))}
-          >
-            Wyloguj się
-          </button>
-        </div>
-      </main>
+      <LoadingErrorScreen
+        kind={isOfflineNoCache ? 'offline' : 'timeout'}
+        cacheSavedAtLabel={isOfflineNoCache ? null : cacheSavedAtLabel}
+        onRetry={() => window.location.reload()}
+        onOpenCache={
+          isOfflineNoCache
+            ? undefined
+            : () => {
+                markWowSeen(!returning)
+                router.replace('/app')
+              }
+        }
+        onLogout={
+          isOfflineNoCache
+            ? () => void logout().then(() => router.replace('/'))
+            : undefined
+        }
+      />
     )
   }
 

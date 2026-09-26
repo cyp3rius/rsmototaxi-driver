@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Mail, Phone } from 'lucide-react'
+import { Mail, Phone, RefreshCw, WifiOff } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { TextField } from '@/components/ui/TextField'
@@ -95,8 +95,21 @@ export function LoginScreen() {
       >
         <form onSubmit={onSubmit} className="space-y-4" autoComplete="on">
           {offline ? (
-            <div className="flex items-center gap-3 rounded-[14px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] tint-warning px-4 py-3 text-[15px] text-[var(--warning)]">
-              Brak połączenia z internetem. Logowanie wymaga sieci.
+            <div className="space-y-2">
+              <div className="flex items-center gap-3 rounded-[14px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] px-3 py-3 pl-4 text-[15px] leading-5 text-[var(--text-primary)] tint-warning">
+                <WifiOff size={22} className="shrink-0 text-[var(--warning)]" strokeWidth={1.9} />
+                <span className="flex-1">Brak połączenia z internetem. Logowanie wymaga sieci.</span>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                size="md"
+                className="!h-14 border border-[var(--separator)] bg-transparent text-[16px] font-semibold"
+                onClick={() => setOffline(!navigator.onLine)}
+              >
+                <RefreshCw size={18} strokeWidth={2} />
+                Spróbuj ponownie
+              </Button>
             </div>
           ) : null}
           <TextField
