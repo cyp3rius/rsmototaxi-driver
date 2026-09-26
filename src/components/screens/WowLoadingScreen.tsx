@@ -6,6 +6,7 @@ import { LoadingErrorScreen } from '@/components/screens/LoadingErrorScreen'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import { getActiveLiveTripDraft } from '@/lib/offline/liveTripDraft'
 import {
   driverFirstName,
   isAppScopedTrip,
@@ -178,12 +179,19 @@ export function WowLoadingScreen() {
     } catch {
       // ignore
     }
-    // Morph already painted dashboard chrome — plain replace avoids VT geometry jump.
-    router.replace('/app')
-    // After route paint, settle VV so bottom nav is not left floating on a phantom inset.
-    window.setTimeout(() => requestViewportSettle(), 0)
-    window.setTimeout(() => requestViewportSettle(), 120)
-    window.setTimeout(() => requestViewportSettle(), 400)
+    void (async () => {
+      const draft = await getActiveLiveTripDraft().catch(() => null)
+      if (draft?.phase === 'active') {
+        router.replace('/app/trips/live')
+      } else if (draft?.phase === 'ended' || draft?.phase === 'finishing') {
+        router.replace('/app/trips/live/finish')
+      } else {
+        router.replace('/app')
+      }
+      window.setTimeout(() => requestViewportSettle(), 0)
+      window.setTimeout(() => requestViewportSettle(), 120)
+      window.setTimeout(() => requestViewportSettle(), 400)
+    })()
   }, [returning, router])
 
   // Shared rAF clock for A and B

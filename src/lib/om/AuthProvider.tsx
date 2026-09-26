@@ -9,6 +9,11 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import {
+  clearAllLiveTripDrafts,
+  getActiveLiveTripDraft,
+  liveDraftToTripShape,
+} from '@/lib/offline/liveTripDraft'
 import { omClient, type DriverMe } from './client'
 import type { AuthSession } from './authStore'
 
@@ -31,14 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshMe = useCallback(async () => {
     try {
       const payload = await omClient.me()
-      setMe(payload)
+      // Live trips stay on-device until finished — overlay local draft onto /me.
+      const draft = await getActiveLiveTripDraft().catch(() => null)
+      const next: DriverMe =
+        draft && (draft.phase === 'active' || draft.phase === 'ended' || draft.phase === 'finishing')
+          ? { ...payload, liveTrip: liveDraftToTripShape(draft) }
+          : payload
+      setMe(next)
       if (!omClient.getSession()) {
         setSession({
           authenticated: true,
-          displayName: payload.member.displayName,
+          displayName: next.member.displayName,
         })
       }
-      return payload
+      return next
     } catch {
       setMe(null)
       return null
@@ -67,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     await omClient.logout()
+    await clearAllLiveTripDrafts().catch(() => undefined)
     setMe(null)
   }, [])
 

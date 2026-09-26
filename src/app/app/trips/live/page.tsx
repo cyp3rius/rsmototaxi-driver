@@ -10,22 +10,28 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import {
+  getActiveLiveTripDraft,
+  upsertLiveTripDraft,
+  type LiveTripDraft,
+} from '@/lib/offline/liveTripDraft'
 import { formatElapsedHms, formatTime } from '@/lib/format'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
-import { tripPickupLabel } from '@/lib/tripMeta'
 
 export default function LiveTripPage() {
   const router = useRouter()
   const stackBack = useStackBack(() => router.push('/app'))
   const { me, refreshMe } = useAuth()
   const toast = useToast()
-  const [trip, setTrip] = useState<Record<string, unknown> | null>(null)
+  const [draft, setDraft] = useState<LiveTripDraft | null>(null)
   const [address, setAddress] = useState<string | null>(null)
   const [gpsKm, setGpsKm] = useState(0)
   const [gpsPoints, setGpsPoints] = useState(0)
   const [busy, setBusy] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const lastPos = useRef<{ lat: number; lon: number } | null>(null)
+  const draftRef = useRef<LiveTripDraft | null>(null)
+  const gpsKmRef = useRef(0)
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000)
@@ -35,18 +41,23 @@ export default function LiveTripPage() {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      await refreshMe()
-      const live = me?.liveTrip
-      if (live?.id) {
-        if (!cancelled) setTrip(live)
+      const local = await getActiveLiveTripDraft()
+      if (cancelled) return
+      if (local?.phase === 'ended' || local?.phase === 'finishing') {
+        router.replace('/app/trips/live/finish')
         return
       }
-      const res = await omClient.getTrips({ pageSize: 10 })
-      const found = res.items.find((item) => item.status === 'in_progress') || null
-      if (!cancelled) {
-        setTrip(found)
-        if (!found) router.replace('/app/trips')
+      if (local?.phase === 'active') {
+        draftRef.current = local
+        gpsKmRef.current = local.gpsDistanceKm || 0
+        setDraft(local)
+        setGpsKm(local.gpsDistanceKm || 0)
+        setGpsPoints(local.track.length)
+        await refreshMe()
+        return
       }
+      // No local live draft — nothing to track.
+      router.replace('/app/trips')
     })()
     return () => {
       cancelled = true
@@ -55,27 +66,49 @@ export default function LiveTripPage() {
   }, [])
 
   useEffect(() => {
-    if (!trip?.id || !me?.todayAssignment?.id) return
+    if (!draft || draft.phase !== 'active') return
     if (!navigator.geolocation) return
+    const assignmentId = draft.assignmentId || me?.todayAssignment?.id || null
 
     const watch = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude: lat, longitude: lon } = pos.coords
+        const recordedAt = new Date(pos.timestamp).toISOString()
         setGpsPoints((n) => n + 1)
+        let nextKm = gpsKmRef.current
         if (lastPos.current) {
           const d = haversineKm(lastPos.current.lat, lastPos.current.lon, lat, lon)
-          setGpsKm((km) => km + d)
+          nextKm = gpsKmRef.current + d
+          gpsKmRef.current = nextKm
+          setGpsKm(nextKm)
         }
         lastPos.current = { lat, lon }
-        void omClient
-          .postLocation({
-            assignmentId: me.todayAssignment?.id,
-            tripId: trip.id,
-            latitude: lat,
-            longitude: lon,
-            recordedAt: new Date().toISOString(),
-          })
-          .catch(() => undefined)
+
+        const current = draftRef.current
+        if (current) {
+          const next: LiveTripDraft = {
+            ...current,
+            gpsDistanceKm: Number(nextKm.toFixed(3)),
+            track: [...current.track, { lat, lon, recordedAt }].slice(-2000),
+            assignmentId: current.assignmentId || assignmentId,
+          }
+          draftRef.current = next
+          // Persist periodically (every ~10 points) to avoid thrashing IndexedDB.
+          if (next.track.length % 10 === 0) {
+            void upsertLiveTripDraft(next)
+          }
+        }
+
+        if (assignmentId) {
+          void omClient
+            .postLocation({
+              assignmentId,
+              latitude: lat,
+              longitude: lon,
+              recordedAt,
+            })
+            .catch(() => undefined)
+        }
         void omClient
           .reverseGeocode(lat, lon)
           .then((res) => setAddress(res.label || res.address || null))
@@ -86,32 +119,48 @@ export default function LiveTripPage() {
     )
 
     return () => navigator.geolocation.clearWatch(watch)
-  }, [trip?.id, me?.todayAssignment?.id])
+    // gpsKm intentionally omitted — we read via closure + lastPos; avoid re-subscribing each tick
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft?.id, draft?.phase, me?.todayAssignment?.id])
 
-  const liveTimer = !trip?.startedAt
+  const liveTimer = !draft?.startedAt
     ? '0:00:00'
-    : formatElapsedHms(now - new Date(String(trip.startedAt)).getTime())
+    : formatElapsedHms(now - new Date(String(draft.startedAt)).getTime())
 
   const shiftTimer = !me?.todayAssignment?.shiftStart
     ? null
     : formatElapsedHms(now - new Date(me.todayAssignment.shiftStart).getTime())
 
   async function endTrip() {
-    if (!trip?.id || busy) return
+    if (!draft || busy) return
     setBusy(true)
     try {
-      await omClient.updateTrip({
-        id: trip.id,
-        status: 'completed',
-        distanceKm: gpsKm > 0 ? Number(gpsKm.toFixed(2)) : null,
+      const endedAt = new Date().toISOString()
+      const current = draftRef.current || draft
+      const next = await upsertLiveTripDraft({
+        ...current,
+        phase: 'ended',
+        endedAt,
+        gpsDistanceKm: Number(gpsKmRef.current.toFixed(3)),
       })
+      draftRef.current = next
       await refreshMe()
-      toast.success('Kurs zakończony')
-      window.setTimeout(() => router.replace(`/app/trips/${String(trip.id)}`), 500)
+      router.replace('/app/trips/live/finish')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Nie udało się zakończyć')
       setBusy(false)
     }
+  }
+
+  if (!draft) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <PageHeader title="Kurs live" onBack={stackBack} />
+        <div className="flex flex-1 items-center justify-center px-5 text-[15px] text-[var(--text-secondary)]">
+          Ładowanie…
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -143,11 +192,14 @@ export default function LiveTripPage() {
             {liveTimer}
           </p>
           <p className="mt-6 text-[15px] text-[var(--text-secondary)]">
-            Skąd · od {formatTime(String(trip?.startedAt || ''))}
+            Skąd · od {formatTime(String(draft.startedAt || ''))}
           </p>
           <p className="text-[19px] font-semibold leading-[26px]">
-            {address || tripPickupLabel(trip) || 'Lokalizacja GPS…'}
+            {address || draft.from || 'Lokalizacja GPS…'}
           </p>
+          {draft.to ? (
+            <p className="mt-1 text-[15px] text-[var(--text-secondary)]">Dokąd · {draft.to}</p>
+          ) : null}
           <div className="mt-[18px] grid grid-cols-2 gap-2.5 border-t border-[var(--separator)] pt-4">
             <div>
               <div className="text-[15px] text-[var(--text-secondary)]">Dystans z GPS</div>
@@ -163,8 +215,8 @@ export default function LiveTripPage() {
         </SurfaceCard>
 
         <p className="px-1 text-[15px] leading-5 text-[var(--text-secondary)]">
-          Po zakończeniu uzupełnisz trasę i szczegóły kursu. Nie zamykaj aplikacji: GPS działa tylko
-          przy otwartym ekranie.
+          Kurs jest zapisany tylko w telefonie. Po zakończeniu uzupełnisz szczegóły i kwotę — wtedy
+          trafi do floty. Nie zamykaj aplikacji: GPS działa tylko przy otwartym ekranie.
         </p>
       </div>
 

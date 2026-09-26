@@ -24,6 +24,7 @@ import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import { getActiveLiveTripDraft } from '@/lib/offline/liveTripDraft'
 import { formatElapsedHms, formatMoneyShort, formatTime } from '@/lib/format'
 import {
   buildTripDetailRows,
@@ -55,7 +56,13 @@ export default function TripDetailPage() {
   const [distanceDraft, setDistanceDraft] = useState('')
 
   useEffect(() => {
-    void omClient.getTrips({ id: params.id }).then((res) => {
+    void (async () => {
+      const draft = await getActiveLiveTripDraft()
+      if (draft && draft.id === params.id) {
+        router.replace(draft.phase === 'active' ? '/app/trips/live' : '/app/trips/live/finish')
+        return
+      }
+      const res = await omClient.getTrips({ id: params.id })
       const found = res.items[0] ?? null
       setTrip(found)
       if (found) {
@@ -82,7 +89,7 @@ export default function TripDetailPage() {
           if (!hasRoute) router.replace('/app/trips/live')
         }
       }
-    })
+    })()
   }, [params.id, router])
 
   const status = String(trip?.status || '')

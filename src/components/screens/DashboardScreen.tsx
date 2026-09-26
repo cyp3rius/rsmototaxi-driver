@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown } from 'lucide-react'
+import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { DriverProfileSheet } from '@/components/ui/DriverProfileSheet'
@@ -419,10 +419,17 @@ export function DashboardScreen() {
         {/* Primary CTA — immediate from /me */}
         <div className="pt-0.5">
           {state === 'C' ? (
-            <Button onClick={() => router.push('/app/trips/new')}>
-              <Plus size={22} strokeWidth={2.3} />
-              Dodaj kurs
-            </Button>
+            liveTrip ? (
+              <Button onClick={() => router.push('/app/trips/live')}>
+                <Zap size={22} strokeWidth={2.3} />
+                Wznów kurs live
+              </Button>
+            ) : (
+              <Button onClick={() => router.push('/app/trips/new')}>
+                <Plus size={22} strokeWidth={2.3} />
+                Dodaj kurs
+              </Button>
+            )
           ) : null}
           {state === 'B' ? (
             <Button onClick={() => openStartShift()}>Rozpocznij zmianę</Button>

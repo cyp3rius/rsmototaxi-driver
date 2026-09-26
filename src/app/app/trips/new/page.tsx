@@ -35,6 +35,7 @@ import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { translateApiError } from '@/lib/om/errors'
+import { getActiveLiveTripDraft, startLiveTripDraft } from '@/lib/offline/liveTripDraft'
 import { formatEndedAtCaption, resolveAutoEndedAtLocal } from '@/lib/route/endedAt'
 import { translateRouteError } from '@/lib/route/errors'
 import { PAYMENT_OPTIONS, TRIP_TYPE_OPTIONS, tripTypeRequiresReceipt } from '@/lib/tripMeta'
@@ -112,6 +113,26 @@ export default function NewTripPage() {
       openStartShift()
       return
     }
+    if (next === 'live') {
+      void (async () => {
+        const draft = await getActiveLiveTripDraft()
+        if (draft) {
+          router.replace('/app/trips/live')
+          return
+        }
+        setMode('live')
+        setStep(1)
+        setFieldError(null)
+        setEndVisible(false)
+        setDistanceKm(null)
+        setDurationText(null)
+        setDurationSeconds(null)
+        setAmount('')
+        setStartedAt(nowLocalInput())
+        setEndedAt('')
+      })()
+      return
+    }
     setMode(next)
     setStep(1)
     setFieldError(null)
@@ -120,10 +141,7 @@ export default function NewTripPage() {
     setDurationText(null)
     setDurationSeconds(null)
     setAmount('')
-    if (next === 'live') {
-      setStartedAt(nowLocalInput())
-      setEndedAt('')
-    } else if (next === 'schedule') {
+    if (next === 'schedule') {
       const d = new Date()
       d.setHours(d.getHours() + 1, 0, 0, 0)
       d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
@@ -260,8 +278,46 @@ export default function NewTripPage() {
 
   async function save() {
     if (mode === 'choose') return
-    const resolvedEnd =
-      endedAt || (mode !== 'live' ? resolveAutoEndedAtLocal(startedAt, durationSeconds) || '' : '')
+
+    // Live: keep the trip on-device until the driver finishes and submits full details.
+    if (mode === 'live') {
+      if (!from.trim() || !to.trim()) {
+        toast.warning('Podaj adresy skąd i dokąd')
+        return
+      }
+      if (!onShift) {
+        toast.warning('Kurs live można rozpocząć tylko na otwartej zmianie.')
+        return
+      }
+      setBusy(true)
+      try {
+        const existing = await getActiveLiveTripDraft()
+        if (existing) {
+          router.replace('/app/trips/live')
+          return
+        }
+        const startIso = startedAt ? new Date(startedAt).toISOString() : new Date().toISOString()
+        await startLiveTripDraft({
+          from: from.trim(),
+          to: to.trim(),
+          stops: stops.filter((s) => s.trim()),
+          startedAt: startIso,
+          routeDistanceKm: distanceKm,
+          durationText,
+          durationSeconds,
+          estimatedAmount: amount || null,
+          assignmentId: me?.todayAssignment?.id ?? null,
+        })
+        await refreshMe()
+        router.replace('/app/trips/live')
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Nie udało się rozpocząć kursu live')
+        setBusy(false)
+      }
+      return
+    }
+
+    const resolvedEnd = endedAt || resolveAutoEndedAtLocal(startedAt, durationSeconds) || ''
     const timeErr = validateTripTimes({
       mode,
       onShift,
@@ -273,15 +329,13 @@ export default function NewTripPage() {
       toast.warning(timeErr)
       return
     }
-    if (mode !== 'live') {
-      if ((tripType === 'client' || tripType === 'other') && !customer) {
-        toast.warning('Wybierz lub dodaj klienta')
-        return
-      }
-      if (needsReceipt && !receipt.file) {
-        toast.warning('Paragon jest wymagany dla kursu przeszłego')
-        return
-      }
+    if ((tripType === 'client' || tripType === 'other') && !customer) {
+      toast.warning('Wybierz lub dodaj klienta')
+      return
+    }
+    if (needsReceipt && !receipt.file) {
+      toast.warning('Paragon jest wymagany dla kursu przeszłego')
+      return
     }
     setBusy(true)
     try {
@@ -297,50 +351,38 @@ export default function NewTripPage() {
       }
       const startIso = startedAt ? new Date(startedAt).toISOString() : new Date().toISOString()
       const endIso = resolvedEnd ? new Date(resolvedEnd).toISOString() : null
-      const status =
-        mode === 'live' ? 'in_progress' : mode === 'schedule' ? 'scheduled' : 'completed'
+      const status = mode === 'schedule' ? 'scheduled' : 'completed'
       const parsedAmount = amount ? Number(amount.replace(',', '.')) : null
       const body: Record<string, unknown> = {
-        tripType: mode === 'live' ? 'client' : tripType,
+        tripType,
         status,
         startedAt: startIso,
-        endedAt: mode === 'live' ? null : endIso || startIso,
-        paymentMethod:
-          mode === 'live' || tripType === 'internal' || tripType === 'private' ? null : payment,
-        // Live: formal amount is entered when finishing the trip; keep estimate in metadata only.
-        revenueAmount: mode === 'live' ? null : parsedAmount,
+        endedAt: endIso || startIso,
+        paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
+        revenueAmount: parsedAmount,
         distanceKm: distanceKm,
-        customerEntityId: mode === 'live' ? null : customer?.id || null,
+        customerEntityId: customer?.id || null,
         ...(receiptAttachmentId ? { receiptAttachmentId } : {}),
         ...(receipt.documentNumber
           ? { receiptDocumentNumber: receipt.documentNumber }
           : {}),
         metadata: {
-          paymentMethod:
-            mode === 'live' || tripType === 'internal' || tripType === 'private' ? null : payment,
+          paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
           tripRequest: {
             from: from.trim(),
             to: to.trim(),
             fromAddress: from.trim(),
             toAddress: to.trim(),
             stops: stops.filter((s) => s.trim()),
-            paymentType:
-              mode === 'live' || tripType === 'internal' || tripType === 'private'
-                ? undefined
-                : payment,
+            paymentType: tripType === 'internal' || tripType === 'private' ? undefined : payment,
             durationText: durationText || undefined,
             distanceKm: distanceKm ?? undefined,
             basePrice: amount || undefined,
-            estimatedAmount: mode === 'live' && amount ? amount : undefined,
           },
         },
       }
       const result = (await omClient.createTrip(body)) as { id?: string; status?: string }
       await refreshMe()
-      if (mode === 'live') {
-        router.replace('/app/trips/live')
-        return
-      }
       if (result.status === 'pending_authorization' || tripType === 'internal') {
         toast.success('Kurs zapisany. Czeka na autoryzację.')
       } else {
