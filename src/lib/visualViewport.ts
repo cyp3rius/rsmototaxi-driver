@@ -82,7 +82,12 @@ export function syncVisualViewportCssVars() {
   const inset = isVisualViewportMeaningfullyShortened() ? readVisualViewportBottomInset() : 0
   document.documentElement.style.setProperty('--vv-bottom', `${inset}px`)
   document.documentElement.style.setProperty('--app-height', `${readFrameHeight()}px`)
-  document.documentElement.dataset.displayMode = isStandaloneDisplay() ? 'standalone' : 'browser'
+  const mode = isStandaloneDisplay()
+    ? window.matchMedia('(display-mode: fullscreen)').matches
+      ? 'fullscreen'
+      : 'standalone'
+    : 'browser'
+  document.documentElement.dataset.displayMode = mode
 }
 
 /**

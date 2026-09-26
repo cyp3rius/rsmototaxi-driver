@@ -108,7 +108,8 @@ body {
   }
 }
 
-html[data-display-mode='standalone'] .rs-driver-chrome {
+html[data-display-mode='standalone'] .rs-driver-chrome,
+html[data-display-mode='fullscreen'] .rs-driver-chrome {
   height: 100dvh;
   height: var(--app-height, 100dvh);
   bottom: 0;

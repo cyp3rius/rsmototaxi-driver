@@ -11,6 +11,7 @@ function isStandalone() {
   if (typeof window === 'undefined') return true
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
+    window.matchMedia('(display-mode: fullscreen)').matches ||
     ('standalone' in navigator && Boolean((navigator as Navigator & { standalone?: boolean }).standalone))
   )
 }
