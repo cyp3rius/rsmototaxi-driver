@@ -44,11 +44,12 @@ function resolve(preference: ThemePreference): 'light' | 'dark' {
   return systemDark() ? 'dark' : 'light'
 }
 
-function applyDom(preference: ThemePreference) {
+/** Apply theme to <html>. Prefer data-theme over class — OS media must not override. */
+export function applyDom(preference: ThemePreference) {
   if (typeof document === 'undefined') return
   const resolved = resolve(preference)
   const root = document.documentElement
-  root.dataset.theme = preference === 'system' ? 'system' : preference
+  root.dataset.theme = preference
   root.dataset.colorScheme = resolved
   root.style.colorScheme = resolved
   root.classList.toggle('dark', resolved === 'dark')
@@ -120,3 +121,6 @@ export function nextTheme(current: ThemePreference): ThemePreference {
   if (current === 'light') return 'dark'
   return 'system'
 }
+
+/** Inline boot script — set data-theme before first paint to avoid wrong accent-on flash. */
+export const THEME_BOOT_SCRIPT = `(function(){try{var k='${STORAGE_KEY}';var p=localStorage.getItem(k);if(p!=='light'&&p!=='dark'&&p!=='system')p='system';var dark=window.matchMedia('(prefers-color-scheme: dark)').matches;var r=p==='light'?'light':p==='dark'?'dark':(dark?'dark':'light');var h=document.documentElement;h.setAttribute('data-theme',p);h.setAttribute('data-color-scheme',r);h.style.colorScheme=r;h.classList.toggle('dark',r==='dark');h.classList.toggle('light',r==='light');}catch(e){}})();`
