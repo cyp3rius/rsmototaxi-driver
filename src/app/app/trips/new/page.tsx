@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState, type ReactNode } from 'react'
 import { AddressField } from '@/components/ui/AddressField'
-import { ActionBar } from '@/components/ui/ActionBar'
+import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
@@ -409,7 +409,11 @@ export default function NewTripPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-3" data-scroll>
+      <div
+        className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pt-3"
+        data-scroll
+        style={{ paddingBottom: actionBarContentPadCss() }}
+      >
         <p className="mb-5 text-[15px] text-[var(--text-secondary)]">
           Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
         </p>

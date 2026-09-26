@@ -26,6 +26,9 @@ export const BOTTOM_NAV_TABS = [
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
 /** Soft gradient above the nav — overlays list content (not empty padding). */
 export const BOTTOM_NAV_FADE_HEIGHT_PX = 56
+/** Shared with ActionBar / other chrome fades. */
+export const CHROME_EDGE_FADE_GRADIENT =
+  'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 28%, color-mix(in srgb, var(--bg-base) 18%, transparent) 62%, transparent 100%)'
 /** Breath under the icon row (part of .rs-bottom-nav-inner padding). */
 export const BOTTOM_NAV_EDGE_BREATH_PX = 8
 
@@ -139,8 +142,7 @@ export function BottomNav({
         className="pointer-events-none absolute inset-x-0 bottom-full"
         style={{
           height: BOTTOM_NAV_FADE_HEIGHT_PX,
-          background:
-            'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 28%, color-mix(in srgb, var(--bg-base) 18%, transparent) 62%, transparent 100%)',
+          background: CHROME_EDGE_FADE_GRADIENT,
         }}
       />
       <div className="rs-bottom-nav-inner">

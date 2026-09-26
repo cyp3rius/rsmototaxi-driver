@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { ActionBar } from '@/components/ui/ActionBar'
+import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
@@ -117,7 +117,11 @@ export default function LiveTripPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader title="Kurs live" onBack={stackBack} />
-      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6 pt-3" data-scroll>
+      <div
+        className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pt-3"
+        data-scroll
+        style={{ paddingBottom: actionBarContentPadCss() }}
+      >
         <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
           <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />
           <span className="text-[15px] font-semibold text-[var(--success)]">Na zmianie</span>

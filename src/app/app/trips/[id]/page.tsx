@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Lock, Plane, Receipt } from 'lucide-react'
 import { useParams, useRouter } from 'next/navigation'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
-import { ActionBar } from '@/components/ui/ActionBar'
+import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { BOTTOM_EDGE_FADE_PAD_PX } from '@/components/ui/BottomEdgeFade'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
@@ -214,7 +214,9 @@ export default function TripDetailPage() {
         <div
           className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pt-3"
           data-scroll
-          style={{ paddingBottom: showActionBar ? 24 : BOTTOM_EDGE_FADE_PAD_PX }}
+          style={{
+            paddingBottom: showActionBar ? actionBarContentPadCss() : BOTTOM_EDGE_FADE_PAD_PX,
+          }}
         >
           {isInProgress && onShift ? (
             <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
