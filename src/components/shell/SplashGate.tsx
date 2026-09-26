@@ -7,8 +7,8 @@ import { useAuth } from '@/lib/om/AuthProvider'
 
 /**
  * Native-feeling boot splash: always #020407 + centered logo.
- * Shown until auth hydrate completes. For an existing session on `/`, stays up until we leave
- * the auth gate — so 5.1 never flashes before 5.3–5.4.
+ * Held until auth hydrate + destination (5.1 / 5.3–5.4) can paint the same black,
+ * so we never fade onto a light --bg-base and flash black html underneath.
  */
 export function SplashGate({ children }: { children: React.ReactNode }) {
   const { ready, session } = useAuth()
@@ -18,9 +18,10 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
   const [gone, setGone] = useState(false)
 
   const onAuthGate = pathname === '/' || pathname === '/login'
+  const onWow = pathname === '/loading'
   const holdForSession = ready && Boolean(session) && onAuthGate
-  const canReveal = ready && minDone && !holdForSession
-  const fade = canReveal && !gone
+  /** Destination must be painted (wow or welcome) before we lift the splash. */
+  const destinationReady = ready && minDone && !holdForSession && (!session || onWow)
   const splashUp = !gone
 
   useEffect(() => {
@@ -34,10 +35,19 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
   }, [holdForSession, router])
 
   useEffect(() => {
-    if (!canReveal || gone) return
-    const t = window.setTimeout(() => setGone(true), 280)
-    return () => window.clearTimeout(t)
-  }, [canReveal, gone])
+    if (!destinationReady || gone) return
+    // One frame for /loading (or welcome) to paint black under the splash, then drop.
+    let cancelled = false
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!cancelled) setGone(true)
+      })
+    })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(raf)
+    }
+  }, [destinationReady, gone])
 
   useEffect(() => {
     const root = document.documentElement
@@ -52,9 +62,7 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
       {splashUp ? (
         <div
           aria-hidden
-          className={`fixed inset-0 z-[100] flex items-center justify-center bg-[#020407] transition-opacity duration-300 ${
-            fade ? 'opacity-0' : 'opacity-100'
-          }`}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020407]"
           style={{
             inset: 0,
             width: '100%',

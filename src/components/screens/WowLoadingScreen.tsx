@@ -413,7 +413,7 @@ export function WowLoadingScreen() {
   return (
     <main
       ref={rootRef}
-      className="relative min-h-dvh overflow-hidden bg-[var(--bg-base)]"
+      className="relative min-h-dvh overflow-hidden bg-[#020407]"
       onClick={() => {
         if (t >= helloAt) setSkip(true)
       }}
