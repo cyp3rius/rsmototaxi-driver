@@ -255,7 +255,22 @@ class OmClient {
     return this.requestJson(`taxi_fleet/driver-app/v2/monthly-settlements/${id}`)
   }
 
-  async uploadAttachment(formData: FormData) {
+  async uploadAttachment(
+    formData: FormData,
+    options?: { recordId?: string; purpose?: 'trip' | 'expense' },
+  ) {
+    if (!formData.get('recordId')) {
+      formData.set(
+        'recordId',
+        options?.recordId ||
+          (typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : `draft_${Date.now()}`),
+      )
+    }
+    if (options?.purpose && !formData.get('purpose')) {
+      formData.set('purpose', options.purpose)
+    }
     return this.requestJson('taxi_fleet/driver-app/v2/attachments', { method: 'POST', formData })
   }
 

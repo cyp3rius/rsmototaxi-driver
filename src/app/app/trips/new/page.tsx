@@ -343,7 +343,9 @@ export default function NewTripPage() {
       if (needsReceipt && receipt.file) {
         const form = new FormData()
         form.set('file', receipt.file)
-        const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
+        const uploaded = (await omClient.uploadAttachment(form, { purpose: 'trip' })) as {
+          id?: string
+        }
         receiptAttachmentId = uploaded.id || null
         if (!receiptAttachmentId) {
           throw new Error('Could not upload receipt photo.')

@@ -167,8 +167,10 @@ export default function TripDetailPage() {
     try {
       const form = new FormData()
       form.set('file', file)
-      form.set('tripId', params.id)
-      const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
+      const uploaded = (await omClient.uploadAttachment(form, {
+        recordId: params.id,
+        purpose: 'trip',
+      })) as { id?: string }
       await omClient.updateTrip({
         id: params.id,
         receiptAttachmentId: uploaded.id,

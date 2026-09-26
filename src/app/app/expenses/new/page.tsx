@@ -49,7 +49,9 @@ export default function NewExpensePage() {
     try {
       const form = new FormData()
       form.set('file', receipt.file)
-      const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
+      const uploaded = (await omClient.uploadAttachment(form, { purpose: 'expense' })) as {
+        id?: string
+      }
       await omClient.createExpense({
         costType,
         amount: parsedAmount,
