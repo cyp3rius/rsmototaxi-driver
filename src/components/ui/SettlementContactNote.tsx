@@ -12,17 +12,17 @@ export function SettlementContactNote() {
         Pytania o kwoty: koordynator{' '}
         <a
           href={`tel:${COORDINATOR_TEL}`}
-          className="inline font-semibold no-underline"
+          className="inline-flex items-center gap-1 align-baseline font-semibold no-underline"
           style={{ color: 'var(--accent)', WebkitTextFillColor: 'var(--accent)' }}
         >
           <Phone
             size={14}
             strokeWidth={2.4}
             aria-hidden
-            className="relative top-[0.125em] mr-1 inline-block"
+            className="-translate-y-px"
             style={{ color: 'var(--accent)' }}
           />
-          {COORDINATOR_DISPLAY}
+          <span>{COORDINATOR_DISPLAY}</span>
         </a>
       </p>
     </div>

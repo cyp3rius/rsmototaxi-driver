@@ -406,13 +406,13 @@ export default function NewTripPage() {
             <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
             <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
           </div>
-          <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-            Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
-          </p>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-5" data-scroll>
+      <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-6 pt-3" data-scroll>
+        <p className="mb-5 text-[15px] text-[var(--text-secondary)]">
+          Krok {step} z 2 · {step === 1 ? 'Trasa i czasy' : 'Szczegóły kursu'}
+        </p>
         <div className={step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 1}>
             <AddressField label="Skąd" value={from} onChange={setFrom} placeholder="Adres startu" allowMyLocation />
             {stops.map((stop, index) => (

@@ -4,6 +4,7 @@ import { useParams } from 'next/navigation'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
 import { PageHeader } from '@/components/ui/PageHeader'
+import { BOTTOM_EDGE_FADE_PAD_PX } from '@/components/ui/BottomEdgeFade'
 import { SettlementContactNote } from '@/components/ui/SettlementContactNote'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { StatusChip } from '@/components/ui/StatusChip'
@@ -42,7 +43,11 @@ export default function MonthlyPayoutDetailPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PageHeader title="Wypłata miesięczna" onBack={stackBack} />
-      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-10 pt-3" data-scroll>
+      <div
+        className="min-h-0 flex-1 overflow-y-auto px-5 pt-3"
+        data-scroll
+        style={{ paddingBottom: BOTTOM_EDGE_FADE_PAD_PX }}
+      >
         {error ? (
           <p className="mt-6 text-[15px] text-[var(--text-secondary)]">Nie udało się wczytać wypłaty.</p>
         ) : !data ? (

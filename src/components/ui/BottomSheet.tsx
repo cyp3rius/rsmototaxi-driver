@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { BottomEdgeFade } from '@/components/ui/BottomEdgeFade'
+import { BottomEdgeFade, BOTTOM_EDGE_FADE_PAD_PX } from '@/components/ui/BottomEdgeFade'
 import { cn } from '@/lib/cn'
 
 const ENTER_MS = 360
@@ -217,7 +217,7 @@ export function BottomSheet({
           className="min-h-0 flex-1 overflow-auto px-6 pt-2.5"
           data-scroll
           style={{
-            paddingBottom: `calc(var(--safe-bottom) + 16px + ${keyboardPad}px)`,
+            paddingBottom: `calc(var(--safe-bottom) + ${BOTTOM_EDGE_FADE_PAD_PX}px + ${keyboardPad}px)`,
             overscrollBehavior: 'none',
           }}
         >

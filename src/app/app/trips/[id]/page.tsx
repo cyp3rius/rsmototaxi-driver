@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { useEffect, useMemo, useState } from 'react'
 import { ActionBar } from '@/components/ui/ActionBar'
+import { BOTTOM_EDGE_FADE_PAD_PX } from '@/components/ui/BottomEdgeFade'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { LoadingBlock } from '@/components/ui/Spinner'
@@ -210,7 +211,11 @@ export default function TripDetailPage() {
       {!trip ? (
         <LoadingBlock className="min-h-0 flex-1 px-5" />
       ) : (
-        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-6 pt-3" data-scroll>
+        <div
+          className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pt-3"
+          data-scroll
+          style={{ paddingBottom: showActionBar ? 24 : BOTTOM_EDGE_FADE_PAD_PX }}
+        >
           {isInProgress && onShift ? (
             <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
               <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />

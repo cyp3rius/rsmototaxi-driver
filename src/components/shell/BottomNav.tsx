@@ -26,9 +26,9 @@ export const BOTTOM_NAV_TABS = [
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
 /**
  * Sink nav below the chrome bottom so icons sit lower against the home indicator.
- * Half + quarter of the icon row (previous half + another ¼).
+ * Last push was +¼ bar; nudge back up by half of that (⅛ bar) → ⅝ total sink.
  */
-export const BOTTOM_NAV_SINK_PX = Math.round(BOTTOM_NAV_BAR_HEIGHT_PX * 0.75)
+export const BOTTOM_NAV_SINK_PX = Math.round(BOTTOM_NAV_BAR_HEIGHT_PX * 0.625)
 /** Visible nav height contributing to content clearance (bar − sink + safe-area). */
 export function bottomNavContentClearanceCss() {
   return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX}px + env(safe-area-inset-bottom, 0px))`
