@@ -26,7 +26,7 @@ import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { PlateBadge } from '@/components/ui/PlateBadge'
-import { ReceiptFields, useReceiptFile } from '@/components/ui/ReceiptFields'
+import { AddReceiptControl, useAddReceiptState } from '@/components/ui/AddReceiptControl'
 import { SelectTile } from '@/components/ui/SelectTile'
 import { CustomerPicker, type SelectedCustomer } from '@/components/ui/CustomerSheet'
 import { TextField } from '@/components/ui/TextField'
@@ -96,7 +96,7 @@ export default function NewTripPage() {
   const [customer, setCustomer] = useState<SelectedCustomer | null>(null)
   const [busy, setBusy] = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
-  const receipt = useReceiptFile()
+  const receipt = useAddReceiptState()
 
   const needsReceipt = mode === 'past' && tripTypeRequiresReceipt(tripType)
 
@@ -306,6 +306,9 @@ export default function NewTripPage() {
         distanceKm: distanceKm,
         customerEntityId: customer?.id || null,
         ...(receiptAttachmentId ? { receiptAttachmentId } : {}),
+        ...(receipt.documentNumber
+          ? { receiptDocumentNumber: receipt.documentNumber }
+          : {}),
         metadata: {
           paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
           tripRequest: {
@@ -638,12 +641,12 @@ export default function NewTripPage() {
               </div>
             ) : null}
             {needsReceipt ? (
-              <ReceiptFields
+              <AddReceiptControl
                 file={receipt.file}
                 previewUrl={receipt.previewUrl}
-                onPick={receipt.pick}
+                documentNumber={receipt.documentNumber}
+                onPicked={receipt.pick}
                 onClear={receipt.clear}
-                required
               />
             ) : null}
           </div>

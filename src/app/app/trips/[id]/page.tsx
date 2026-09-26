@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { PlateBadge } from '@/components/ui/PlateBadge'
+import { MissingReceiptBanner } from '@/components/ui/AddReceiptControl'
 import { ReceiptSheet, receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
 import { StatusChip } from '@/components/ui/StatusChip'
@@ -402,17 +403,7 @@ export default function TripDetailPage() {
           ) : null}
 
           {receiptStatus === 'missing' && isCompleted && !platform ? (
-            <div className="flex min-h-16 items-center gap-3 rounded-[18px] border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] tint-warning px-2 py-2 pl-4">
-              <Receipt size={22} className="text-[var(--warning)]" strokeWidth={1.8} />
-              <span className="flex-1 text-[16px] font-semibold">Brak paragonu</span>
-              <Button
-                size="md"
-                className="!h-12 !w-auto px-4"
-                onClick={() => setReceiptOpen(true)}
-              >
-                Dodaj paragon
-              </Button>
-            </div>
+            <MissingReceiptBanner onAdd={() => setReceiptOpen(true)} />
           ) : null}
 
           {receiptStatus && receiptStatus !== 'missing' && isCompleted && !platform ? (

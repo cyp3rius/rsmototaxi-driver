@@ -6,7 +6,7 @@ import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
 import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { ReceiptFields, useReceiptFile } from '@/components/ui/ReceiptFields'
+import { AddReceiptControl, useAddReceiptState } from '@/components/ui/AddReceiptControl'
 import { SelectTile } from '@/components/ui/SelectTile'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
@@ -24,7 +24,7 @@ export default function NewExpensePage() {
   const [notes, setNotes] = useState('')
   const [busy, setBusy] = useState(false)
   const toast = useToast()
-  const receipt = useReceiptFile()
+  const receipt = useAddReceiptState()
 
   const whenLabel = useMemo(() => {
     const now = new Date()
@@ -55,6 +55,7 @@ export default function NewExpensePage() {
         amount: parsedAmount,
         vatRatePercent: vat,
         receiptAttachmentId: uploaded.id,
+        receiptDocumentNumber: receipt.documentNumber || null,
         occurredAt: new Date().toISOString(),
         notes: notes.trim() || null,
       })
@@ -136,12 +137,12 @@ export default function NewExpensePage() {
           </div>
         </div>
 
-        <ReceiptFields
+        <AddReceiptControl
           file={receipt.file}
           previewUrl={receipt.previewUrl}
-          onPick={receipt.pick}
+          documentNumber={receipt.documentNumber}
+          onPicked={receipt.pick}
           onClear={receipt.clear}
-          required
         />
 
         <div>
