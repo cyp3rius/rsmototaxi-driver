@@ -15,7 +15,6 @@ import {
   ReceiptSheet,
   receiptUiStatusFromRecord,
   ReceiptStatusBadge,
-  isReceiptChangeLocked,
 } from '@/components/ui/ReceiptSheet'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
 import { StatusChip } from '@/components/ui/StatusChip'
@@ -362,6 +361,19 @@ export default function TripDetailPage() {
                       {platform ? String(trip.platform) : tripTypeLabel(trip.tripType)}
                     </StatusChip>
                     {payment ? <StatusChip tone="neutral">{payment}</StatusChip> : null}
+                    {!platform && receiptStatus ? (
+                      receiptStatus === 'processing' || receiptStatus === 'offline' ? (
+                        <button
+                          type="button"
+                          onClick={() => setReceiptOpen(true)}
+                          className="inline-flex"
+                        >
+                          <ReceiptStatusBadge status={receiptStatus} />
+                        </button>
+                      ) : (
+                        <ReceiptStatusBadge status={receiptStatus} />
+                      )
+                    ) : null}
                     <StatusChip tone="neutral" className="!text-[var(--text-primary)]">
                       {formatMoneyShort(trip.revenueAmount)}
                     </StatusChip>
@@ -449,25 +461,6 @@ export default function TripDetailPage() {
 
           {receiptStatus === 'needs_review' && isCompleted && !platform ? (
             <NeedsReviewReceiptBanner onCheck={() => setReceiptOpen(true)} />
-          ) : null}
-
-          {receiptStatus &&
-          receiptStatus !== 'missing' &&
-          receiptStatus !== 'needs_review' &&
-          isCompleted &&
-          !platform ? (
-            isReceiptChangeLocked(trip) ? (
-              <div className="space-y-2">
-                <ReceiptStatusBadge status={receiptStatus} />
-                <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
-                  Paragon został zweryfikowany i nie można go już zmienić.
-                </p>
-              </div>
-            ) : (
-              <button type="button" onClick={() => setReceiptOpen(true)} className="text-left">
-                <ReceiptStatusBadge status={receiptStatus} />
-              </button>
-            )
           ) : null}
 
           {!platform && (isScheduled || isInProgress) ? (

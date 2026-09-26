@@ -81,6 +81,48 @@ function attachmentImageUrl(attachmentId: string) {
   return `/api/om/attachments/image/${encodeURIComponent(attachmentId)}?width=720`
 }
 
+/** Fixed 200px frame (design 5.9) — skeleton until image paints, no layout jump. */
+function ReceiptPreviewFrame({
+  src,
+  alt,
+  onBroken,
+}: {
+  src: string
+  alt: string
+  onBroken?: () => void
+}) {
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    queueMicrotask(() => setLoaded(false))
+  }, [src])
+
+  return (
+    <div className="relative h-[200px] w-full overflow-hidden rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)]">
+      {!loaded ? (
+        <div
+          aria-hidden
+          className="absolute inset-0 animate-pulse bg-[var(--bg-surface-raised)]"
+        />
+      ) : null}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={alt}
+        className={cn(
+          'h-full w-full object-cover transition-opacity duration-200',
+          loaded ? 'opacity-100' : 'opacity-0',
+        )}
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setLoaded(true)
+          onBroken?.()
+        }}
+      />
+    </div>
+  )
+}
+
 /**
  * Design 5.9 receipt sheet — shared by trip detail and expense flows.
  * Pick state: two full-width entries (camera + file). Preview: image, OCR status, document number.
@@ -216,29 +258,20 @@ export function ReceiptSheet({
           </div>
         ) : null}
 
-        {isLocked ? (
-          <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
-            Paragon został zweryfikowany i nie można go już zmienić.
-          </p>
-        ) : null}
-
         {isReview && reviewAlert ? (
           <div className="rounded-[14px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] tint-danger px-4 py-3 text-[15px] leading-5 text-[var(--danger)]">
             {reviewAlert}
           </div>
         ) : null}
 
-        {remotePreviewUrl ? (
-          <div className="relative overflow-hidden rounded-[18px] border border-[var(--separator)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={remotePreviewUrl}
-              alt="Podgląd paragonu"
-              className="max-h-[200px] w-full object-cover"
-              onError={() => setRemotePreviewBroken(true)}
-            />
-          </div>
-        ) : !hasFile && attachmentId && remotePreviewBroken ? (
+        {/* Verified OCR: no image preview — status lives on the trip chip row. */}
+        {!isLocked && remotePreviewUrl ? (
+          <ReceiptPreviewFrame
+            src={remotePreviewUrl}
+            alt="Podgląd paragonu"
+            onBroken={() => setRemotePreviewBroken(true)}
+          />
+        ) : !isLocked && !hasFile && attachmentId && remotePreviewBroken ? (
           <div className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4">
             <FileText size={28} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
             <p className="min-w-0 truncate text-[15px] font-medium">Paragon (PDF / plik)</p>
@@ -290,14 +323,7 @@ export function ReceiptSheet({
         ) : null}
 
         {preview ? (
-          <div className="relative overflow-hidden rounded-[18px] border border-[var(--separator)]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={preview}
-              alt="Podgląd paragonu"
-              className="max-h-[200px] w-full object-cover"
-            />
-          </div>
+          <ReceiptPreviewFrame src={preview} alt="Podgląd paragonu" />
         ) : file ? (
           <div className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4">
             <FileText size={28} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
