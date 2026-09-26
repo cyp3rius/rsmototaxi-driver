@@ -34,7 +34,6 @@ import {
   tripDropoffLabel,
   tripPaymentLabel,
   tripPickupLabel,
-  tripRouteSubtitle,
   tripStatusChipLabel,
   tripTypeLabel,
   tripWhenLabel,
