@@ -401,7 +401,7 @@ export default function NewTripPage() {
     <div className="flex h-full min-h-0 flex-col">
       <div className="shrink-0">
         <PageHeader title={title} onBack={() => (step === 1 ? setMode('choose') : setStep(1))} />
-        <div className="px-5">
+        <div className="px-5 pt-3">
           <div className="grid grid-cols-2 gap-1.5">
             <span className={`h-1 rounded-sm ${step >= 1 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />
             <span className={`h-1 rounded-sm ${step >= 2 ? 'bg-[var(--accent)]' : 'bg-[var(--separator)]'}`} />

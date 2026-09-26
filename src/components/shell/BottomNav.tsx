@@ -24,8 +24,11 @@ export const BOTTOM_NAV_TABS = [
 
 /** Icon row + labels; keep in sync with DriverChrome content bottom padding. */
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
-/** Sink nav by half the icon row so it sits lower against the home indicator. */
-export const BOTTOM_NAV_SINK_PX = BOTTOM_NAV_BAR_HEIGHT_PX / 2
+/**
+ * Sink nav below the chrome bottom so icons sit lower against the home indicator.
+ * Half + quarter of the icon row (previous half + another ¼).
+ */
+export const BOTTOM_NAV_SINK_PX = Math.round(BOTTOM_NAV_BAR_HEIGHT_PX * 0.75)
 /** Visible nav height contributing to content clearance (bar − sink + safe-area). */
 export function bottomNavContentClearanceCss() {
   return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX}px + env(safe-area-inset-bottom, 0px))`

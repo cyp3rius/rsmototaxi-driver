@@ -45,8 +45,11 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
   const runTabRefresh = useRunTabRefresh()
 
   useLayoutEffect(() => {
+    // Keep the tab underlay on the screen that opened the stack (e.g. Start →
+    // nowy kurs). Syncing from path would flash Kursy/Koszty under the sheet.
+    if (stacked) return
     setActive(pathTab)
-  }, [pathTab])
+  }, [pathTab, stacked])
 
   const panes = useMemo(
     () => [
@@ -100,7 +103,14 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
         detail={stacked ? children : null}
         list={list}
         onClosed={() => {
-          if (isStackPath(pathname)) router.back()
+          if (!isStackPath(pathname)) return
+          // Views opened from Start keep underlay tab 0 — return straight to Start
+          // (avoid flashing / landing on Kursy or Koszty).
+          if (active === 0) {
+            router.replace('/app')
+            return
+          }
+          router.back()
         }}
       />
       {!stacked ? <div className="hidden" aria-hidden>{children}</div> : null}
