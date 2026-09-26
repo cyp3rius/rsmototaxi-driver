@@ -57,6 +57,32 @@ function formatShiftDate(raw: unknown) {
   return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
+function addDaysKey(dateKey: string, delta: number) {
+  const d = new Date(`${dateKey}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return ''
+  d.setDate(d.getDate() + delta)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/** Section header: Dziś / Jutro / Wczoraj, otherwise full weekday date. */
+function shiftDaySectionTitle(dateKey: string, todayKey: string) {
+  if (!dateKey) return 'Bez daty'
+  if (dateKey === todayKey) return 'Dziś'
+  if (dateKey === addDaysKey(todayKey, 1)) return 'Jutro'
+  if (dateKey === addDaysKey(todayKey, -1)) return 'Wczoraj'
+  return formatShiftDate(dateKey)
+}
+
+function shiftSortInstant(item: Assignment) {
+  const raw =
+    item.plannedShiftStart || item.shiftStart || item.assignmentDate || item.plannedShiftEnd || ''
+  const t = new Date(String(raw)).getTime()
+  return Number.isFinite(t) ? t : 0
+}
+
 function vehicleLine(item: Assignment) {
   const plate = typeof item.resourcePlate === 'string' ? item.resourcePlate.trim() : ''
   const name = String(item.resourceName || item.resourceLabel || '').trim()
@@ -187,29 +213,34 @@ function ShiftsScreenInner() {
   const todayKey = me?.today || toDateKey(new Date().toISOString())
 
   const groups = useMemo(() => {
-    const today: Assignment[] = []
-    const upcoming: Assignment[] = []
-    const earlier: Assignment[] = []
+    const byDay = new Map<string, Assignment[]>()
     for (const item of items) {
-      const key = toDateKey(item.assignmentDate || item.shiftStart || item.plannedShiftStart)
-      const active = Boolean(item.shiftStart && !item.shiftEnd)
-      if (active || key === todayKey) today.push(item)
-      else if (key > todayKey) upcoming.push(item)
-      else earlier.push(item)
+      const key =
+        toDateKey(item.assignmentDate || item.plannedShiftStart || item.shiftStart) || 'unknown'
+      const list = byDay.get(key) || []
+      list.push(item)
+      byDay.set(key, list)
     }
-    today.sort((a, b) => {
-      const aActive = a.shiftStart && !a.shiftEnd ? 0 : 1
-      const bActive = b.shiftStart && !b.shiftEnd ? 0 : 1
-      return aActive - bActive
+
+    const dayKeys = Array.from(byDay.keys()).sort((a, b) => {
+      // Future → past (descending calendar day). Unknown dates last.
+      if (a === 'unknown') return 1
+      if (b === 'unknown') return -1
+      return b.localeCompare(a)
     })
-    upcoming.sort((a, b) =>
-      toDateKey(a.assignmentDate).localeCompare(toDateKey(b.assignmentDate)),
-    )
-    const out: Array<{ title: string; items: Assignment[] }> = []
-    if (today.length) out.push({ title: 'Dziś', items: today })
-    if (upcoming.length) out.push({ title: 'Nadchodzące', items: upcoming })
-    if (earlier.length) out.push({ title: 'Wcześniej', items: earlier })
-    return out
+
+    return dayKeys.map((key) => {
+      const dayItems = [...(byDay.get(key) || [])].sort((a, b) => {
+        const aActive = a.shiftStart && !a.shiftEnd ? 0 : 1
+        const bActive = b.shiftStart && !b.shiftEnd ? 0 : 1
+        if (aActive !== bActive) return aActive - bActive
+        return shiftSortInstant(a) - shiftSortInstant(b)
+      })
+      return {
+        title: key === 'unknown' ? 'Bez daty' : shiftDaySectionTitle(key, todayKey),
+        items: dayItems,
+      }
+    })
   }, [items, todayKey])
 
   async function openEndShift() {
