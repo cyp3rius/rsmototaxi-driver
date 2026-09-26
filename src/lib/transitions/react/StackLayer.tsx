@@ -100,6 +100,7 @@ export function StackLayer({
     if (open) {
       // After animated close we call router.back(); ignore stale open=true until URL updates.
       if (closingRef.current) return
+      // Always replace shown so a new detail key remounts create forms.
       setShown(detail)
       if (!openRef.current) {
         openRef.current = true
@@ -116,6 +117,8 @@ export function StackLayer({
         closingRef.current = false
         setShown(null)
       })
+    } else {
+      setShown(null)
     }
   }, [open, detail, els])
 

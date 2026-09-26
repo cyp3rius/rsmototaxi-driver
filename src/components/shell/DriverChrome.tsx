@@ -1,6 +1,6 @@
 'use client'
 
-import { useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AppShell } from '@/components/shell/AppShell'
 import { BottomNav, bottomNavContentClearanceCss } from '@/components/shell/BottomNav'
@@ -43,6 +43,9 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
   const [active, setActive] = useState<TabIndex>(pathTab)
   const onReselect = useReselectScrollTop(active)
   const runTabRefresh = useRunTabRefresh()
+  /** Bumps each time a stack sheet opens so create forms remount with empty state. */
+  const [stackEpoch, setStackEpoch] = useState(0)
+  const wasStackedRef = useRef(false)
 
   useLayoutEffect(() => {
     // Keep the tab underlay on the screen that opened the stack (e.g. Start →
@@ -50,6 +53,13 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
     if (stacked) return
     setActive(pathTab)
   }, [pathTab, stacked])
+
+  useLayoutEffect(() => {
+    if (stacked && !wasStackedRef.current) {
+      setStackEpoch((n) => n + 1)
+    }
+    wasStackedRef.current = stacked
+  }, [stacked])
 
   const panes = useMemo(
     () => [
@@ -96,11 +106,15 @@ function DriverChromeInner({ children }: { children: ReactNode }) {
     </div>
   )
 
+  const stackDetail = stacked ? (
+    <Fragment key={`${pathname}:${stackEpoch}`}>{children}</Fragment>
+  ) : null
+
   return (
     <AppShell hideNav>
       <StackLayer
         open={stacked}
-        detail={stacked ? children : null}
+        detail={stackDetail}
         list={list}
         onClosed={() => {
           if (!isStackPath(pathname)) return
