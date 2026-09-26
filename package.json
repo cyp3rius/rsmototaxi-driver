@@ -1,6 +1,6 @@
 {
   "name": "rsmototaxi-driver",
-  "version": "2.0.0-beta.86e3469",
+  "version": "2.0.0-beta.a508c22",
   "private": true,
   "scripts": {
     "dev": "next dev",
