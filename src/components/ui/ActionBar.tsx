@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
  * Form footer for stack screens.
  * Default `docked` sits in the page flex column (never `position:fixed`) so it
  * cannot slide under the home indicator / below the visual viewport on iOS PWA.
- * Bottom inset is light (≈¾ of the lg button height) so the CTA sits lower.
+ * Full safe-area padding — bar background fills to the physical bottom (native pattern).
  */
 export function ActionBar({
   children,
@@ -26,7 +26,7 @@ export function ActionBar({
       style={{
         paddingBottom: withNav
           ? 'calc(env(safe-area-inset-bottom, 0px) + 72px)'
-          : 'max(2px, calc(env(safe-area-inset-bottom, 0px) - 48px))',
+          : 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
       }}
     >
       <div className="mx-auto flex w-full max-w-lg flex-col gap-2">{children}</div>

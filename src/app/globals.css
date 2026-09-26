@@ -123,10 +123,9 @@ body {
 }
 
 /*
- * Driver chrome height:
- * - Safari tab: prefer large viewport (closes phantom gap above toolbar).
- * - PWA / standalone: 100dvh / --app-height only — NOT -webkit-fill-available
- *   (fill-available often excludes the home-indicator band → double gap under nav).
+ * Driver chrome — full-bleed fixed shell.
+ * Standalone: top+bottom 0 so the frame includes the home-indicator band;
+ * tab bar paints into that band via padding-bottom: env(safe-area-inset-bottom).
  */
 .rs-driver-chrome {
   position: fixed;
@@ -138,9 +137,8 @@ body {
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
-  height: 100dvh;
-  height: 100lvh;
-  height: var(--app-height, 100dvh);
+  height: auto;
+  min-height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg-base);
@@ -149,17 +147,19 @@ body {
 
 @media (display-mode: standalone), (display-mode: fullscreen) {
   .rs-driver-chrome {
-    height: 100dvh;
-    height: var(--app-height, 100dvh);
+    top: 0;
     bottom: 0;
+    height: auto;
+    min-height: 100dvh;
   }
 }
 
 html[data-display-mode='standalone'] .rs-driver-chrome,
 html[data-display-mode='fullscreen'] .rs-driver-chrome {
-  height: 100dvh;
-  height: var(--app-height, 100dvh);
+  top: 0;
   bottom: 0;
+  height: auto;
+  min-height: 100dvh;
 }
 
 /* Freeze document rubber-band while the fixed driver chrome is mounted */

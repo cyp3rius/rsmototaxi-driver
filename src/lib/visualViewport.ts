@@ -159,7 +159,9 @@ export function unlockAppViewport() {
 
 /**
  * Pin a fullscreen fixed chrome shell to the real screen frame.
- * PWA: stretch top/bottom (no browser chrome). Safari tab: explicit max frame height.
+ * Standalone PWA: stretch top+bottom to the layout viewport edges (home indicator
+ * lives inside the chrome; nav paints into safe-area). Never undersize with a short
+ * visualViewport height — that leaves an empty body strip under the tab bar.
  */
 export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512) {
   const vv = window.visualViewport
@@ -185,13 +187,9 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
   }
 
   if (isStandaloneDisplay()) {
-    // Exact visual frame — never screen.height (oversizes chrome and clips fixed footers).
-    const h = Math.round(
-      Math.max(window.innerHeight, vv?.height ?? 0, readCssViewportHeight('dvh')),
-    )
-    el.style.top = vv ? `${Math.max(0, vv.offsetTop)}px` : '0px'
-    el.style.bottom = 'auto'
-    el.style.height = `${h}px`
+    el.style.top = '0px'
+    el.style.bottom = '0px'
+    el.style.height = 'auto'
     return
   }
 

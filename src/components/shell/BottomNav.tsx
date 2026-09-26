@@ -22,25 +22,26 @@ export const BOTTOM_NAV_TABS = [
   { href: '/app/shifts', label: 'Zmiany', icon: CalendarDays },
 ] as const
 
-/** Icon row + labels; keep in sync with DriverChrome content bottom padding. */
+/** Icon + label row (above the home-indicator band). */
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
-/**
- * Sink nav below the chrome bottom so icons sit lower against the home indicator.
- * Started at ¾, nudged up twice by ⅛ bar → back to ½.
- */
-export const BOTTOM_NAV_SINK_PX = Math.round(BOTTOM_NAV_BAR_HEIGHT_PX * 0.5)
 /** Soft gradient above the nav that overlays list content — include in clearance. */
 export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
-/** Visible nav height contributing to content clearance (bar − sink + fade + safe-area). */
+
+/**
+ * Space the tab scroller must leave for nav + home indicator + fade.
+ * Native pattern: bar height + safe-area (bar bg paints into the inset) + fade.
+ */
 export function bottomNavContentClearanceCss() {
-  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`
+  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
- * Bottom nav — docked to the bottom of the driver chrome (labels + safe-area).
- * Fade softens the cut against scrolling content; z stays below portaled sheets.
+ * Bottom nav — flush to the physical screen bottom.
+ * Background fills `safe-area-inset-bottom` (home indicator sits ON the bar, like iOS Tab Bar).
+ * Do not use negative `bottom` / sink hacks — they clip under overflow:hidden chrome
+ * and leave an empty body strip under the bar.
  */
 export function BottomNav({
   activeIndex,
@@ -129,9 +130,8 @@ export function BottomNav({
       ref={navRef}
       className={cn(
         'rs-bottom-nav z-20',
-        docked ? 'absolute inset-x-0 flex-none' : 'fixed inset-x-0',
+        docked ? 'absolute inset-x-0 bottom-0 flex-none' : 'fixed inset-x-0 bottom-0',
       )}
-      style={{ bottom: `-${BOTTOM_NAV_SINK_PX}px` }}
     >
       <div
         aria-hidden
@@ -143,10 +143,9 @@ export function BottomNav({
         }}
       />
       <div
-        className="relative"
+        className="relative bg-[var(--bg-base)]"
         style={{
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          background: 'var(--bg-base)',
         }}
       >
         <ul
