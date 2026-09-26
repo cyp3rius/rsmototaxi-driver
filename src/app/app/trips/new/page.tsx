@@ -762,7 +762,7 @@ function TimeShortcut({ label, onClick }: { label: string; onClick: () => void }
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-9 items-center rounded-[10px] bg-[var(--bg-surface-raised)] px-3.5 text-[15px] font-medium"
+      className="inline-flex h-9 touch-manipulation items-center rounded-[10px] bg-[var(--bg-surface-raised)] px-3.5 text-[15px] font-medium transition-[transform,background-color,opacity] duration-100 ease-out active:scale-[0.96] active:bg-[color-mix(in_srgb,var(--text-primary)_14%,var(--bg-surface-raised))] active:opacity-90"
     >
       {label}
     </button>
