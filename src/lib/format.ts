@@ -66,6 +66,63 @@ export function todayIsoDate() {
   return `${y}-${m}-${day}`
 }
 
+/** Local calendar day key YYYY-MM-DD from ISO / date string / Date. */
+export function toLocalDateKey(raw: unknown) {
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) {
+    const y = raw.getFullYear()
+    const m = String(raw.getMonth() + 1).padStart(2, '0')
+    const day = String(raw.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+  const s = String(raw || '')
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    // Prefer local parts when timezone present; for plain date keep as-is.
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s.slice(0, 10)) && s.length === 10) return s.slice(0, 10)
+    const d = new Date(s)
+    if (!Number.isNaN(d.getTime())) {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+    return s.slice(0, 10)
+  }
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return ''
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function addDaysToDateKey(dateKey: string, delta: number) {
+  const d = new Date(`${dateKey}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return ''
+  d.setDate(d.getDate() + delta)
+  return toLocalDateKey(d)
+}
+
+export function formatWeekdayLongDate(dateKey: string) {
+  if (!dateKey) return '—'
+  const d = new Date(`${dateKey}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return dateKey
+  const label = d.toLocaleDateString('pl-PL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+  return label.charAt(0).toUpperCase() + label.slice(1)
+}
+
+/** Section header: Dziś / Jutro / Wczoraj, otherwise full weekday date. */
+export function relativeDaySectionTitle(dateKey: string, todayKey = todayIsoDate()) {
+  if (!dateKey) return 'Bez daty'
+  if (dateKey === todayKey) return 'Dziś'
+  if (dateKey === addDaysToDateKey(todayKey, 1)) return 'Jutro'
+  if (dateKey === addDaysToDateKey(todayKey, -1)) return 'Wczoraj'
+  return formatWeekdayLongDate(dateKey)
+}
+
 export function startOfDayIso(date = new Date()) {
   const d = new Date(date)
   d.setHours(0, 0, 0, 0)

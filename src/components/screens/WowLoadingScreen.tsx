@@ -10,6 +10,7 @@ import { getActiveLiveTripDraft } from '@/lib/offline/liveTripDraft'
 import {
   driverFirstName,
   isAppScopedTrip,
+  isMissingReceiptTrip,
   polishCourseWord,
   tripDropoffLabel,
   tripPickupLabel,
@@ -255,7 +256,7 @@ export function WowLoadingScreen() {
         if (!payload) throw new Error('empty')
 
         if (missing) {
-          setMissingCount(missing.items.filter(isAppScopedTrip).length)
+          setMissingCount(missing.items.filter(isMissingReceiptTrip).length)
         }
         if (trips) {
           const next = trips.items.find(

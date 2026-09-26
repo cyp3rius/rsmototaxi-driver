@@ -13,11 +13,20 @@ import { SurfaceCard } from '@/components/ui/SurfaceCard'
 import { receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { omClient } from '@/lib/om/client'
-import { endOfDayIso, formatMoneyShort, formatTime, startOfDayIso } from '@/lib/format'
+import {
+  endOfDayIso,
+  formatMoneyShort,
+  formatTime,
+  relativeDaySectionTitle,
+  startOfDayIso,
+  toLocalDateKey,
+  todayIsoDate,
+} from '@/lib/format'
 import { useListSearchParams } from '@/lib/useListSearchParams'
 import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   isAppScopedTrip,
+  isMissingReceiptTrip,
   readTripMeta,
   tripPaymentLabel,
   tripRouteLabel,
@@ -147,7 +156,9 @@ function TripsScreenInner() {
             ? omClient.getTrips({ pageSize: 100, missingReceipt: true })
             : Promise.resolve(null),
         ])
-        const scopedItems = list.items.filter(isAppScopedTrip)
+        const scopedItems = list.items.filter(
+          missingOnly ? isMissingReceiptTrip : isAppScopedTrip,
+        )
         const reachedEnd = scopedItems.length < pageSize
         setItems((prev) => {
           const next = append ? [...prev, ...scopedItems] : scopedItems
@@ -159,7 +170,7 @@ function TripsScreenInner() {
         })
         setPage(pageNum)
         if (missing) {
-          setMissingCount(missing.items.filter(isAppScopedTrip).length)
+          setMissingCount(missing.items.filter(isMissingReceiptTrip).length)
         } else if (missingOnly && pageNum === 1) {
           setMissingCount(scopedItems.length)
         }
@@ -198,20 +209,23 @@ function TripsScreenInner() {
     })
 
     if (missingOnly || scope === 'all') {
-      const map = new Map<string, Record<string, unknown>[]>()
+      const todayKey = todayIsoDate()
+      const byDay = new Map<string, Record<string, unknown>[]>()
       for (const trip of sorted) {
-        const key = trip.startedAt
-          ? new Date(String(trip.startedAt)).toLocaleDateString('pl-PL', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            })
-          : 'Bez daty'
-        const list = map.get(key) || []
+        const key = toLocalDateKey(trip.startedAt) || 'unknown'
+        const list = byDay.get(key) || []
         list.push(trip)
-        map.set(key, list)
+        byDay.set(key, list)
       }
-      return Array.from(map.entries()).map(([title, groupItems]) => ({ title, items: groupItems }))
+      const dayKeys = Array.from(byDay.keys()).sort((a, b) => {
+        if (a === 'unknown') return 1
+        if (b === 'unknown') return -1
+        return b.localeCompare(a)
+      })
+      return dayKeys.map((key) => ({
+        title: key === 'unknown' ? 'Bez daty' : relativeDaySectionTitle(key, todayKey),
+        items: byDay.get(key) || [],
+      }))
     }
     const live = sorted.filter((t) => t.status === 'in_progress')
     const scheduled = sorted.filter((t) => t.status === 'scheduled')

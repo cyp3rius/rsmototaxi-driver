@@ -353,6 +353,25 @@ export function isAppScopedTrip(trip: Record<string, unknown> | null | undefined
   return Boolean(trip) && !isPlatformTrip(trip)
 }
 
+/** Finished trips that can still be missing a required receipt (not scheduled / in progress). */
+export function isFinishedTripForReceipt(status: unknown) {
+  const s = String(status || '')
+  return s === 'completed' || s === 'pending_authorization'
+}
+
+/**
+ * Trip counts toward „Brak paragonu” filter / badges.
+ * Client-side guard so scheduled trips never inflate the count even if API is stale.
+ */
+export function isMissingReceiptTrip(trip: Record<string, unknown> | null | undefined) {
+  if (!isAppScopedTrip(trip) || !trip) return false
+  if (!isFinishedTripForReceipt(trip.status)) return false
+  if (trip.receiptAttachmentId) return false
+  const type = String(trip.tripType || '')
+  if (!tripTypeRequiresReceipt(type)) return false
+  return true
+}
+
 export function isTripPrepaid(trip: Record<string, unknown> | null | undefined) {
   if (!trip) return false
   const meta = readTripMeta(trip)
@@ -369,9 +388,8 @@ export function receiptStatusLabel(trip: Record<string, unknown>) {
     return 'Paragon'
   }
   const type = String(trip.tripType || '')
-  if (type === 'internal') return null
-  const status = String(trip.status || '')
-  if (status !== 'completed' && status !== 'pending_authorization') return null
+  if (!tripTypeRequiresReceipt(type)) return null
+  if (!isFinishedTripForReceipt(trip.status)) return null
   return 'Brak paragonu'
 }
 

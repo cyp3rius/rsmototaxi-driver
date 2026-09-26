@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/cn'
 import { omClient } from '@/lib/om/client'
 import { useAuth } from '@/lib/om/AuthProvider'
-import { isAppScopedTrip } from '@/lib/tripMeta'
+import { isMissingReceiptTrip } from '@/lib/tripMeta'
 import {
   forceFixedBottomReflow,
   pinFixedBottomElement,
@@ -76,7 +76,7 @@ export function BottomNav({
       .getTrips({ pageSize: 100, missingReceipt: true })
       .then((res) => {
         if (cancelled) return
-        setMissingReceipts(res.items.filter(isAppScopedTrip).length)
+        setMissingReceipts(res.items.filter(isMissingReceiptTrip).length)
       })
       .catch(() => {
         if (!cancelled) setMissingReceipts(0)

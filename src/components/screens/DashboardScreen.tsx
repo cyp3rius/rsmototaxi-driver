@@ -19,7 +19,7 @@ import { formatElapsedHms, formatMoneyShort } from '@/lib/format'
 import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   driverFirstName,
-  isAppScopedTrip,
+  isMissingReceiptTrip,
   polishCourseWord,
   resolveVehicleColor,
   tripDropoffLabel,
@@ -181,7 +181,7 @@ export function DashboardScreen() {
     try {
       const missing = await omClient.getTrips({ pageSize: 50, missingReceipt: true })
       setMissingTrips(
-        missing.items.filter(isAppScopedTrip).map((trip) => ({
+        missing.items.filter(isMissingReceiptTrip).map((trip) => ({
           id: String(trip.id),
           label: tripRouteLabel(trip),
         })),

@@ -13,10 +13,10 @@ import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { useAuth } from '@/lib/om/AuthProvider'
-import { formatTime, endOfDayIso, startOfDayIso } from '@/lib/format'
+import { endOfDayIso, formatTime, formatWeekdayLongDate, startOfDayIso, toLocalDateKey, relativeDaySectionTitle, todayIsoDate } from '@/lib/format'
 import { useListSearchParams } from '@/lib/useListSearchParams'
 import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
-import { isAppScopedTrip, tripRouteLabel } from '@/lib/tripMeta'
+import { isMissingReceiptTrip, tripRouteLabel } from '@/lib/tripMeta'
 
 type Assignment = Record<string, unknown>
 
@@ -31,49 +31,6 @@ function startOfWeek(d = new Date()) {
 function endOfWeek(d = new Date()) {
   const s = startOfWeek(d)
   return new Date(s.getFullYear(), s.getMonth(), s.getDate() + 6, 23, 59, 59, 999)
-}
-
-function toDateKey(raw: unknown) {
-  const s = String(raw || '')
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10)
-  const d = new Date(s)
-  if (Number.isNaN(d.getTime())) return ''
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-function formatShiftDate(raw: unknown) {
-  const key = toDateKey(raw)
-  if (!key) return '—'
-  const d = new Date(`${key}T12:00:00`)
-  if (Number.isNaN(d.getTime())) return key
-  const label = d.toLocaleDateString('pl-PL', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
-  return label.charAt(0).toUpperCase() + label.slice(1)
-}
-
-function addDaysKey(dateKey: string, delta: number) {
-  const d = new Date(`${dateKey}T12:00:00`)
-  if (Number.isNaN(d.getTime())) return ''
-  d.setDate(d.getDate() + delta)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
-}
-
-/** Section header: Dziś / Jutro / Wczoraj, otherwise full weekday date. */
-function shiftDaySectionTitle(dateKey: string, todayKey: string) {
-  if (!dateKey) return 'Bez daty'
-  if (dateKey === todayKey) return 'Dziś'
-  if (dateKey === addDaysKey(todayKey, 1)) return 'Jutro'
-  if (dateKey === addDaysKey(todayKey, -1)) return 'Wczoraj'
-  return formatShiftDate(dateKey)
 }
 
 function shiftSortInstant(item: Assignment) {
@@ -173,8 +130,8 @@ function ShiftsScreenInner() {
           dateTo?: string
         } = { page: nextPage, pageSize }
         if (scope === 'week') {
-          params.dateFrom = toDateKey(startOfWeek().toISOString())
-          params.dateTo = toDateKey(endOfWeek().toISOString())
+          params.dateFrom = toLocalDateKey(startOfWeek().toISOString())
+          params.dateTo = toLocalDateKey(endOfWeek().toISOString())
         }
         const res = await omClient.getAssignments(params)
         const payload = res as { items?: Assignment[]; total?: number }
@@ -210,13 +167,13 @@ function ShiftsScreenInner() {
     }
   }, [search, openStartShift, patch])
 
-  const todayKey = me?.today || toDateKey(new Date().toISOString())
+  const todayKey = me?.today || todayIsoDate()
 
   const groups = useMemo(() => {
     const byDay = new Map<string, Assignment[]>()
     for (const item of items) {
       const key =
-        toDateKey(item.assignmentDate || item.plannedShiftStart || item.shiftStart) || 'unknown'
+        toLocalDateKey(item.assignmentDate || item.plannedShiftStart || item.shiftStart) || 'unknown'
       const list = byDay.get(key) || []
       list.push(item)
       byDay.set(key, list)
@@ -237,7 +194,7 @@ function ShiftsScreenInner() {
         return shiftSortInstant(a) - shiftSortInstant(b)
       })
       return {
-        title: key === 'unknown' ? 'Bez daty' : shiftDaySectionTitle(key, todayKey),
+        title: key === 'unknown' ? 'Bez daty' : relativeDaySectionTitle(key, todayKey),
         items: dayItems,
       }
     })
@@ -252,7 +209,7 @@ function ShiftsScreenInner() {
         startedTo: endOfDayIso(),
       })
       setMissingTrips(
-        res.items.filter(isAppScopedTrip).map((t) => ({
+        res.items.filter(isMissingReceiptTrip).map((t) => ({
           id: String(t.id),
           label: tripRouteLabel(t) || 'Kurs',
         })),
@@ -330,7 +287,7 @@ function ShiftsScreenInner() {
                           >
                             <div className="flex items-center justify-between gap-2">
                               <span className="text-[17px] font-[600]">
-                                {formatShiftDate(item.assignmentDate)}
+                                {formatWeekdayLongDate(toLocalDateKey(item.assignmentDate))}
                               </span>
                               <StatusChip tone={chip.tone === 'success' ? 'success' : chip.tone === 'accent' ? 'accent' : 'neutral'}>
                                 {chip.label}

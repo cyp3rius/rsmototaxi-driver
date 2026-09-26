@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, startOfDayIso } from '@/lib/format'
-import { isAppScopedTrip } from '@/lib/tripMeta'
+import { isAppScopedTrip, isMissingReceiptTrip } from '@/lib/tripMeta'
 
 const STAGE_MS = 200
 
@@ -41,7 +41,7 @@ async function fetchSecondary(needsPlannedFetch: boolean) {
     : []
   return {
     todayStats: { trips: scopedToday.length, revenue },
-    missingCount: missingRes.items.filter(isAppScopedTrip).length,
+    missingCount: missingRes.items.filter(isMissingReceiptTrip).length,
     plannedTrips: planned,
   }
 }
