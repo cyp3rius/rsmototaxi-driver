@@ -5,9 +5,11 @@ import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import {
   Building2,
   Calendar,
+  Camera,
   ChevronRight,
   CreditCard,
   Ellipsis,
+  File,
   History,
   Landmark,
   Lock,
@@ -18,9 +20,10 @@ import {
   Trash2,
   User,
   Wallet,
+  X,
   Zap,
 } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { AddressField } from '@/components/ui/AddressField'
 import { ActionBar, actionBarContentPadCss } from '@/components/ui/ActionBar'
 import { Button } from '@/components/ui/Button'
@@ -33,9 +36,10 @@ import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
+import { translateApiError } from '@/lib/om/errors'
 import { formatEndedAtCaption, resolveAutoEndedAtLocal } from '@/lib/route/endedAt'
 import { translateRouteError } from '@/lib/route/errors'
-import { PAYMENT_OPTIONS, TRIP_TYPE_OPTIONS } from '@/lib/tripMeta'
+import { PAYMENT_OPTIONS, TRIP_TYPE_OPTIONS, tripTypeRequiresReceipt } from '@/lib/tripMeta'
 import {
   nowLocalInput,
   shiftWindowBounds,
@@ -94,6 +98,12 @@ export default function NewTripPage() {
   const [customer, setCustomer] = useState<SelectedCustomer | null>(null)
   const [busy, setBusy] = useState(false)
   const [fieldError, setFieldError] = useState<string | null>(null)
+  const [receiptFile, setReceiptFile] = useState<File | null>(null)
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null)
+  const cameraRef = useRef<HTMLInputElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
+
+  const needsReceipt = mode === 'past' && tripTypeRequiresReceipt(tripType)
 
   const title = useMemo(() => {
     if (mode === 'live') return 'Kurs live'
@@ -252,6 +262,18 @@ export default function NewTripPage() {
     setStep(2)
   }
 
+  function pickReceipt(next: File | null) {
+    if (!next) return
+    setReceiptFile(next)
+    if (next.type.startsWith('image/')) setReceiptPreview(URL.createObjectURL(next))
+    else setReceiptPreview(null)
+  }
+
+  function clearReceipt() {
+    setReceiptFile(null)
+    setReceiptPreview(null)
+  }
+
   async function save() {
     if (mode === 'choose') return
     const resolvedEnd =
@@ -271,8 +293,22 @@ export default function NewTripPage() {
       toast.warning('Wybierz lub dodaj klienta')
       return
     }
+    if (needsReceipt && !receiptFile) {
+      toast.warning('Paragon jest wymagany dla kursu przeszłego')
+      return
+    }
     setBusy(true)
     try {
+      let receiptAttachmentId: string | null = null
+      if (needsReceipt && receiptFile) {
+        const form = new FormData()
+        form.set('file', receiptFile)
+        const uploaded = (await omClient.uploadAttachment(form)) as { id?: string }
+        receiptAttachmentId = uploaded.id || null
+        if (!receiptAttachmentId) {
+          throw new Error('Could not upload receipt photo.')
+        }
+      }
       const startIso = startedAt ? new Date(startedAt).toISOString() : new Date().toISOString()
       const endIso = resolvedEnd ? new Date(resolvedEnd).toISOString() : null
       const status =
@@ -286,6 +322,7 @@ export default function NewTripPage() {
         revenueAmount: amount ? Number(amount.replace(',', '.')) : null,
         distanceKm: distanceKm,
         customerEntityId: customer?.id || null,
+        ...(receiptAttachmentId ? { receiptAttachmentId } : {}),
         metadata: {
           paymentMethod: tripType === 'internal' || tripType === 'private' ? null : payment,
           tripRequest: {
@@ -316,7 +353,7 @@ export default function NewTripPage() {
         router.replace(result.id ? `/app/trips/${result.id}` : '/app/trips')
       }, 700)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Nie udało się zapisać kursu')
+      toast.error(translateApiError(err instanceof Error ? err.message : null))
       setBusy(false)
     }
   }
@@ -560,7 +597,10 @@ export default function NewTripPage() {
                     <SelectTile
                       key={opt.id}
                       selected={tripType === opt.id}
-                      onClick={() => setTripType(opt.id)}
+                      onClick={() => {
+                        setTripType(opt.id)
+                        if (!tripTypeRequiresReceipt(opt.id)) clearReceipt()
+                      }}
                       label={opt.label}
                       icon={<Icon size={22} strokeWidth={1.8} />}
                     />
@@ -612,6 +652,67 @@ export default function NewTripPage() {
                 >
                   Przelicz sugerowaną kwotę
                 </Button>
+              </div>
+            ) : null}
+            {needsReceipt ? (
+              <div>
+                <p className="mb-2 text-[15px] font-[500]">
+                  Paragon <span className="font-[400] text-[var(--text-secondary)]">(wymagany)</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => cameraRef.current?.click()}
+                    className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
+                  >
+                    <Camera size={20} strokeWidth={1.9} />
+                    Zrób zdjęcie
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    className="flex h-14 items-center justify-center gap-2 rounded-[14px] border border-[var(--separator)] bg-[var(--bg-surface)] text-[16px] font-[600]"
+                  >
+                    <File size={20} strokeWidth={1.9} />
+                    Wybierz plik
+                  </button>
+                </div>
+                <input
+                  ref={cameraRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  className="hidden"
+                  onChange={(e) => pickReceipt(e.target.files?.[0] ?? null)}
+                />
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  className="hidden"
+                  onChange={(e) => pickReceipt(e.target.files?.[0] ?? null)}
+                />
+                {receiptPreview ? (
+                  <div className="relative mt-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={receiptPreview}
+                      alt=""
+                      className="max-h-40 w-full rounded-[14px] object-cover"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-black/50 text-white"
+                      onClick={clearReceipt}
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : receiptFile ? (
+                  <p className="mt-3 rounded-[14px] bg-[var(--bg-surface-raised)] px-4 py-3 text-[15px]">
+                    {receiptFile.name}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </div>

@@ -228,6 +228,11 @@ export function tripTypeLabel(type: unknown) {
   return found?.label || String(type || 'Kurs')
 }
 
+/** Matches CRM `tripTypeRequiresReceipt` for driver commercial types. */
+export function tripTypeRequiresReceipt(type: string): boolean {
+  return type !== 'internal'
+}
+
 export function paymentMethodLabel(method: unknown) {
   if (!method || typeof method !== 'string') return null
   return PAYMENT_LABELS[method] || null

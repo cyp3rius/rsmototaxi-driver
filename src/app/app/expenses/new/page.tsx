@@ -10,6 +10,7 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { SelectTile } from '@/components/ui/SelectTile'
 import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
+import { translateApiError } from '@/lib/om/errors'
 import { formatTime } from '@/lib/format'
 import { useStackBack } from '@/lib/transitions/react/StackLayer'
 import { COST_TYPE_OPTIONS } from '@/lib/tripMeta'
@@ -70,7 +71,7 @@ export default function NewExpensePage() {
       toast.success('Koszt zapisany')
       window.setTimeout(() => router.replace('/app/expenses'), 600)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Nie udało się zapisać')
+      toast.error(translateApiError(err instanceof Error ? err.message : null))
       setBusy(false)
     }
   }

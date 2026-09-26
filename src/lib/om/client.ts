@@ -322,7 +322,10 @@ class OmClient {
   }
 
   private async requestJson<T>(path: string, options: RequestOptions = {}): Promise<T> {
-    const headers: Record<string, string> = { Accept: 'application/json' }
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'Accept-Language': 'pl',
+    }
     if (!options.formData) headers['Content-Type'] = 'application/json'
 
     const url = options.absolute ? path : `/api/om/${path.replace(/^\//, '')}`

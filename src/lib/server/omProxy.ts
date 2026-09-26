@@ -43,6 +43,8 @@ export async function proxyToOm(init: ProxyInit): Promise<NextResponse> {
   const doFetch = async (accessToken: string | null, retried: boolean): Promise<NextResponse> => {
     const headers = new Headers()
     headers.set('Accept', 'application/json')
+    headers.set('Accept-Language', 'pl')
+    headers.set('Cookie', 'locale=pl')
     if (init.contentType) headers.set('Content-Type', init.contentType)
     if (init.auth !== false && accessToken) {
       headers.set('Authorization', `Bearer ${accessToken}`)
