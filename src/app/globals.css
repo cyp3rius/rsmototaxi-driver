@@ -78,21 +78,22 @@ body {
 /*
  * Driver chrome height:
  * - Safari tab: prefer large viewport (closes phantom gap above toolbar).
- * - PWA / standalone: dvh + fill-available only (no lvh inflate — no browser bar).
+ * - PWA / standalone: 100dvh / --app-height only — NOT -webkit-fill-available
+ *   (fill-available often excludes the home-indicator band → double gap under nav).
  */
 .rs-driver-chrome {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
+  bottom: 0;
   width: 100%;
   max-width: 32rem;
   margin-left: auto;
   margin-right: auto;
   height: 100dvh;
   height: 100lvh;
-  height: -webkit-fill-available;
-  height: var(--app-height, 100lvh);
+  height: var(--app-height, 100dvh);
   overflow: hidden;
   overscroll-behavior: none;
   background: var(--bg-base);
@@ -102,15 +103,15 @@ body {
 @media (display-mode: standalone), (display-mode: fullscreen) {
   .rs-driver-chrome {
     height: 100dvh;
-    height: -webkit-fill-available;
     height: var(--app-height, 100dvh);
+    bottom: 0;
   }
 }
 
 html[data-display-mode='standalone'] .rs-driver-chrome {
   height: 100dvh;
-  height: -webkit-fill-available;
   height: var(--app-height, 100dvh);
+  bottom: 0;
 }
 
 /* Freeze document rubber-band while the fixed driver chrome is mounted */
@@ -118,7 +119,7 @@ html.rs-app-lock {
   overflow: hidden !important;
   overscroll-behavior: none !important;
   height: 100% !important;
-  height: -webkit-fill-available !important;
+  height: 100dvh !important;
 }
 
 html.rs-app-lock body {
@@ -130,7 +131,7 @@ html.rs-app-lock body {
   overflow: hidden !important;
   overscroll-behavior: none !important;
   height: 100% !important;
-  height: -webkit-fill-available !important;
+  height: 100dvh !important;
   min-height: 0 !important;
 }
 

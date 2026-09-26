@@ -56,7 +56,7 @@ function PayoutsScreenInner() {
   return (
     <>
       <PageHeader title="Wypłaty" />
-      <div className="px-5 pb-6">
+      <div className="px-5 pb-6 pt-1">
           <SegmentedControl
             value={tab}
             onChange={(v) => {

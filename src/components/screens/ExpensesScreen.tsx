@@ -143,7 +143,7 @@ function ExpensesScreenInner() {
           </Link>
         }
       />
-      <div className="px-5 pb-6">
+      <div className="px-5 pb-6 pt-1">
           <div className="flex items-center justify-between gap-3">
             <p className="min-w-0 text-[15px] text-[var(--text-secondary)]">
               Ten tydzień · {weekItems.length} kosztów ·{' '}
@@ -173,7 +173,7 @@ function ExpensesScreenInner() {
           ) : items.length === 0 ? (
             <p className="mt-6 text-[var(--text-secondary)]">Brak kosztów.</p>
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-5 space-y-3">
               {sortedItems.map((item) => {
                 const type = String(item.costType || item.type || 'other')
                 const amount = expenseAmountValue(item)

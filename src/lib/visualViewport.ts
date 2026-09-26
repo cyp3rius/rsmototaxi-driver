@@ -23,8 +23,8 @@ export function isStandaloneDisplay(): boolean {
 
 /**
  * Frame height for the driver chrome.
- * - PWA: live layout/dvh only — do NOT inflate with `lvh` (that leaves a phantom
- *   gap the size of the missing browser chrome).
+ * - PWA: full-bleed screen height (never `-webkit-fill-available` — it often excludes
+ *   the home-indicator band and doubles with nav `safe-area` padding).
  * - Safari tab: max(layout, visual, lvh) closes post-morph phantoms above the toolbar.
  */
 export function readFrameHeight(): number {
@@ -35,9 +35,9 @@ export function readFrameHeight(): number {
     return Math.round(
       Math.max(
         window.innerHeight,
-        vv && vv.offsetTop < 1 ? vv.height : 0,
+        vv?.height ?? 0,
         readCssViewportHeight('dvh'),
-        readCssViewportHeight('svh'),
+        typeof screen !== 'undefined' ? screen.height : 0,
       ),
     )
   }
@@ -185,11 +185,11 @@ export function pinFixedChromeToVisualViewport(el: HTMLElement, maxWidthPx = 512
   }
 
   if (isStandaloneDisplay()) {
-    // Stretch to the locked screen edges — no lvh inflate (that matches Safari’s
-    // “above toolbar” frame and leaves a dead band where the browser bar was).
+    // Full-bleed pixel height so nav safe-area padding is applied only once.
+    const h = readFrameHeight()
     el.style.top = '0px'
     el.style.bottom = '0px'
-    el.style.height = ''
+    el.style.height = `${h}px`
     return
   }
 

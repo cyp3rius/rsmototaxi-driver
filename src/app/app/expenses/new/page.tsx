@@ -78,12 +78,12 @@ export default function NewExpensePage() {
   return (
     <>
       <PageHeader title="Zarejestruj koszt" onClose={stackBack} />
-      <p className="px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
+      <p className="mt-1 px-5 text-[15px] leading-5 text-[var(--text-secondary)]">
         Koszt wejdzie do rozliczenia tygodniowego. Paragon jest wymagany, VAT możesz pominąć, uzupełni go rozpoznanie
         paragonu.
       </p>
 
-      <div className="space-y-4 px-5 pb-36 pt-4">
+      <div className="space-y-5 px-5 pb-36 pt-5">
         <div className="grid grid-cols-3 gap-2">
           {COST_TYPE_OPTIONS.map((opt) => (
             <SelectTile

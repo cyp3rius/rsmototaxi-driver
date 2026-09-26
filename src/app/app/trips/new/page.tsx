@@ -325,10 +325,10 @@ export default function NewTripPage() {
     return (
       <>
         <PageHeader title="Nowy kurs" onClose={stackBack} />
-        <div className="space-y-3 px-5 pb-10">
+        <div className="space-y-3.5 px-5 pb-10 pt-2">
           {onShift ? (
             <>
-              <div className="flex items-center justify-between px-1">
+              <div className="mb-1 flex items-center justify-between px-1">
                 <span className="text-[15px] text-[var(--text-secondary)]">Pojazd na zmianie</span>
                 {plate ? <PlateBadge plate={plate} /> : null}
               </div>
@@ -400,8 +400,8 @@ export default function NewTripPage() {
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-36 pt-4">
-          <div className={step === 1 ? 'space-y-4' : 'hidden'} aria-hidden={step !== 1}>
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-5 pb-36 pt-5">
+          <div className={step === 1 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 1}>
             <AddressField label="Skąd" value={from} onChange={setFrom} placeholder="Adres startu" allowMyLocation />
             {stops.map((stop, index) => (
               <div key={`stop-${index}`} className="relative min-w-0">
@@ -534,7 +534,7 @@ export default function NewTripPage() {
             )}
           </div>
 
-          <div className={step === 2 ? 'space-y-4' : 'hidden'} aria-hidden={step !== 2}>
+          <div className={step === 2 ? 'space-y-5' : 'hidden'} aria-hidden={step !== 2}>
             <div>
               <p className="mb-2 text-[15px] font-medium">Typ kursu</p>
               <div className="grid grid-cols-3 gap-2">

@@ -236,7 +236,7 @@ function TripsScreenInner() {
           </Link>
         }
       />
-      <div className="px-5 pb-6 max-[390px]:px-5 sm:px-6">
+      <div className="px-5 pb-6 pt-1 max-[390px]:px-5 sm:px-6">
           <SegmentedControl
             value={scope}
             onChange={(v) => {
@@ -249,7 +249,7 @@ function TripsScreenInner() {
               { id: 'all', label: 'Wszystkie' },
             ]}
           />
-          <div className="mt-4 flex gap-2">
+          <div className="mt-5 flex gap-2">
             <FilterChip
               tone="warning"
               active={missingOnly}
@@ -276,7 +276,7 @@ function TripsScreenInner() {
                   : 'Brak kursów.'}
             </p>
           ) : (
-            <div className="mt-4 flex flex-col gap-3">
+            <div className="mt-5 flex flex-col gap-3">
               {groups.map((group) => (
                 <div key={group.title}>
                   <p className="px-1 pb-2 pt-3 text-[15px] font-semibold text-[var(--text-secondary)] first-letter:uppercase">

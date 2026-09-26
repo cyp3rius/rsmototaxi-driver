@@ -203,7 +203,7 @@ export function DashboardScreen() {
       className="flex min-h-full flex-col px-5 pb-6"
       style={{ paddingTop: 'calc(var(--safe-top) + 4px)' }}
     >
-      <header className="flex items-start justify-between gap-3 px-0 pt-2 pb-2.5">
+      <header className="flex items-start justify-between gap-3 px-0 pb-4 pt-2">
         <div className="min-w-0 flex-1">
           <button
             type="button"
@@ -220,7 +220,7 @@ export function DashboardScreen() {
               className="mt-1 flex-none text-[var(--text-secondary)]"
             />
           </button>
-          <p className="mt-0.5 capitalize text-[15px] leading-5 text-[var(--text-secondary)]">
+          <p className="mt-1 capitalize text-[15px] leading-5 text-[var(--text-secondary)]">
             {dateLabel}
           </p>
         </div>
@@ -235,7 +235,7 @@ export function DashboardScreen() {
 
       <SystemBannerChips />
 
-      <div className="flex flex-1 flex-col gap-3 pt-0.5">
+      <div className="flex flex-1 flex-col gap-4 pt-1">
         <SystemBannerPrimary />
 
         {state === 'C' && nextTrip ? (

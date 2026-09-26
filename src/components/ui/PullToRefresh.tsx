@@ -272,7 +272,10 @@ export function PullToRefresh({
         onTouchCancel={onTouchEnd}
       >
         {pill ? (
-          <div className="pointer-events-none absolute inset-x-0 top-1 z-30 flex justify-center px-5">
+          <div
+            className="pointer-events-none absolute inset-x-0 z-30 flex justify-center px-5"
+            style={{ top: 'calc(var(--safe-top) + 6px)' }}
+          >
             <div className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5 shadow-[var(--sheet-shadow)]">
               {pill.offline ? null : (
                 <Check size={16} strokeWidth={2.4} className="text-[var(--success)]" aria-hidden />
@@ -288,8 +291,11 @@ export function PullToRefresh({
 
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden pb-1"
-          style={{ height: offset > 0 ? offset : 0 }}
+          className="pointer-events-none absolute inset-x-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden pb-1"
+          style={{
+            top: 'var(--safe-top)',
+            height: offset > 0 ? offset : 0,
+          }}
         >
           {offset > 10 ? (
             <>

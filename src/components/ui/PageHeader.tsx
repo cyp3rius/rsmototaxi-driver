@@ -38,7 +38,7 @@ export function PageHeader({
       ) : null}
 
       {hasNav && onClose && !onBack ? (
-        <div className="flex h-[52px] items-center gap-1.5 pr-0 pl-0">
+        <div className="flex h-[52px] items-center gap-1.5 pb-3 pr-0 pl-0">
           <h1
             className="flex-1 font-[family-name:var(--font-display)] text-[26px] font-semibold leading-8"
             style={{ fontStretch: '115%' }}
@@ -75,7 +75,7 @@ export function PageHeader({
       ) : null}
 
       {!hasNav ? (
-        <div className="flex items-center justify-between gap-3 py-1.5 pb-3">
+        <div className="flex items-center justify-between gap-3 pb-5 pt-1.5">
           <div className="min-w-0">
             <h1
               className="truncate font-[family-name:var(--font-display)] text-[30px] font-semibold leading-9"
@@ -83,14 +83,14 @@ export function PageHeader({
             >
               {title}
             </h1>
-            {subtitle ? <p className="mt-0.5 text-[15px] text-[var(--text-secondary)]">{subtitle}</p> : null}
+            {subtitle ? <p className="mt-1 text-[15px] text-[var(--text-secondary)]">{subtitle}</p> : null}
           </div>
           {action}
         </div>
       ) : null}
 
       {hasNav && subtitle ? (
-        <p className="pb-2 text-[15px] text-[var(--text-secondary)]">{subtitle}</p>
+        <p className="pb-4 text-[15px] text-[var(--text-secondary)]">{subtitle}</p>
       ) : null}
     </div>
   )
