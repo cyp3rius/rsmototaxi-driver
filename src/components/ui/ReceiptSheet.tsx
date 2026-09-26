@@ -32,14 +32,9 @@ export function ReceiptStatusBadge({ status }: { status: ReceiptUiStatus }) {
   }
   if (status === 'needs_review') {
     return (
-      <div className="space-y-1">
-        <StatusChip tone="danger" pulse={false}>
-          Do sprawdzenia
-        </StatusChip>
-        <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
-          Sprawdź wynik rozpoznania
-        </p>
-      </div>
+      <StatusChip tone="danger" pulse={false}>
+        Do sprawdzenia
+      </StatusChip>
     )
   }
   if (status === 'verified') {
@@ -82,6 +77,14 @@ export function isReceiptChangeLocked(
   return receiptUiStatusFromRecord(record) === 'verified'
 }
 
+function attachmentImageUrl(attachmentId: string) {
+  return `/api/om/attachments/image/${encodeURIComponent(attachmentId)}?width=720`
+}
+
+function attachmentFileUrl(attachmentId: string) {
+  return `/api/om/attachments/file/${encodeURIComponent(attachmentId)}`
+}
+
 /**
  * Design 5.9 receipt sheet — shared by trip detail and expense flows.
  * Pick state: two full-width entries (camera + file). Preview: image, OCR status, document number.
@@ -95,6 +98,7 @@ export function ReceiptSheet({
   initialDocumentNumber = '',
   status = null,
   reviewHint,
+  attachmentId = null,
 }: {
   open: boolean
   onClose: () => void
@@ -103,12 +107,15 @@ export function ReceiptSheet({
   subtitle?: string
   initialDocumentNumber?: string
   status?: ReceiptUiStatus
-  /** Optional OCR mismatch / review copy under the number field. */
+  /** Optional OCR mismatch / review copy (shown as top alert in review state). */
   reviewHint?: string | null
+  /** Existing server attachment to preview (review / processing / verified). */
+  attachmentId?: string | null
 }) {
   const [docNumber, setDocNumber] = useState(initialDocumentNumber)
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [remotePreviewBroken, setRemotePreviewBroken] = useState(false)
   const cameraRef = useRef<HTMLInputElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -121,12 +128,16 @@ export function ReceiptSheet({
         })
         setFile(null)
         setDocNumber('')
+        setRemotePreviewBroken(false)
         if (cameraRef.current) cameraRef.current.value = ''
         if (fileRef.current) fileRef.current.value = ''
       })
       return
     }
-    queueMicrotask(() => setDocNumber(initialDocumentNumber))
+    queueMicrotask(() => {
+      setDocNumber(initialDocumentNumber)
+      setRemotePreviewBroken(false)
+    })
   }, [open, initialDocumentNumber])
 
   function pick(next: File | null) {
@@ -161,6 +172,13 @@ export function ReceiptSheet({
   const isLocked = status === 'verified'
   const showPreviewChrome = hasFile || (status && status !== 'missing')
   const ctaLabel = isReview ? 'Zatwierdź paragon' : 'Zapisz paragon'
+  const remotePreviewUrl =
+    !hasFile && attachmentId && !remotePreviewBroken ? attachmentImageUrl(attachmentId) : null
+  // Add flow or OCR review: allow camera/file. Hide while processing an existing attachment.
+  const showPickButtons = !isLocked && !hasFile && (isReview || !attachmentId)
+  const reviewAlert =
+    reviewHint?.trim() ||
+    (isReview ? 'Sprawdź wynik rozpoznania: porównaj kwotę na paragonie z kwotą kursu.' : null)
 
   return (
     <BottomSheet
@@ -208,7 +226,40 @@ export function ReceiptSheet({
           </p>
         ) : null}
 
-        {!hasFile && !isLocked ? (
+        {isReview && reviewAlert ? (
+          <div className="rounded-[14px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] tint-danger px-4 py-3 text-[15px] leading-5 text-[var(--danger)]">
+            {reviewAlert}
+          </div>
+        ) : null}
+
+        {remotePreviewUrl ? (
+          <a
+            href={attachmentFileUrl(attachmentId!)}
+            target="_blank"
+            rel="noreferrer"
+            className="relative block overflow-hidden rounded-[18px] border border-[var(--separator)]"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={remotePreviewUrl}
+              alt="Podgląd paragonu"
+              className="max-h-[200px] w-full object-cover"
+              onError={() => setRemotePreviewBroken(true)}
+            />
+          </a>
+        ) : !hasFile && attachmentId && remotePreviewBroken ? (
+          <a
+            href={attachmentFileUrl(attachmentId)}
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-[120px] items-center justify-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface-raised)] px-4"
+          >
+            <FileText size={28} className="text-[var(--text-secondary)]" strokeWidth={1.8} />
+            <p className="min-w-0 truncate text-[15px] font-medium">Otwórz plik paragonu</p>
+          </a>
+        ) : null}
+
+        {showPickButtons ? (
           <div className="flex flex-col gap-2">
             <button
               type="button"
@@ -281,9 +332,11 @@ export function ReceiptSheet({
               placeholder={
                 isLocked
                   ? '—'
-                  : isProcessing || (!docNumber && hasFile)
-                    ? 'Uzupełni się po rozpoznaniu'
-                    : 'OCR uzupełni — możesz poprawić'
+                  : isReview
+                    ? 'Błędny odczyt OCR, wprowadź lub wgraj nowy paragon'
+                    : isProcessing || (!docNumber && hasFile)
+                      ? 'Uzupełni się po rozpoznaniu'
+                      : 'OCR uzupełni — możesz poprawić'
               }
               className={cn(
                 'h-14 w-full rounded-[14px] border bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none transition',
@@ -295,11 +348,7 @@ export function ReceiptSheet({
                 !docNumber ? 'placeholder:text-[var(--text-tertiary)]' : '',
               )}
             />
-            {isLocked ? null : isReview && reviewHint ? (
-              <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
-                {reviewHint}
-              </span>
-            ) : hasFile && (isProcessing || !docNumber) ? (
+            {isLocked ? null : hasFile && (isProcessing || !docNumber) && !isReview ? (
               <span className="mt-2 block text-[15px] leading-5 text-[var(--text-secondary)]">
                 Numer uzupełni się po rozpoznaniu. Możesz zamknąć, kurs zapisze się już teraz.
               </span>
@@ -307,7 +356,7 @@ export function ReceiptSheet({
           </label>
         ) : null}
 
-        {!hasFile && !isLocked && typeof navigator !== 'undefined' && !navigator.onLine ? (
+        {!hasFile && !isLocked && !isReview && typeof navigator !== 'undefined' && !navigator.onLine ? (
           <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
             Bez sieci paragon zapisze się w telefonie i wyśle po połączeniu.
           </p>

@@ -30,6 +30,32 @@ export function MissingReceiptBanner({
   )
 }
 
+/** Same layout as missing-receipt banner, danger tone — OCR needs review. */
+export function NeedsReviewReceiptBanner({
+  onCheck,
+  label = 'Paragon wymaga sprawdzenia',
+  actionLabel = 'Sprawdź',
+}: {
+  onCheck: () => void
+  label?: string
+  actionLabel?: string
+}) {
+  return (
+    <div className="flex min-h-16 items-center gap-3 rounded-[18px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] tint-danger px-2 py-2 pl-4">
+      <Receipt size={22} className="shrink-0 text-[var(--danger)]" strokeWidth={1.8} />
+      <span className="flex-1 text-[16px] font-semibold text-[var(--danger)]">{label}</span>
+      <Button
+        size="md"
+        variant="danger"
+        className="!h-12 !w-auto shrink-0 px-4"
+        onClick={onCheck}
+      >
+        {actionLabel}
+      </Button>
+    </div>
+  )
+}
+
 /**
  * Form control: same 5.7 banner opens ReceiptSheet (5.9). Used on past-trip create and new expense.
  */

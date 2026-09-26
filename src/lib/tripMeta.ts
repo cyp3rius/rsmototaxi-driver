@@ -317,7 +317,7 @@ export function expenseReceiptChip(item: Record<string, unknown>): ExpenseReceip
   if (ocr === 'pending' || ocr === 'processing') {
     return { label: 'Przetwarzanie', tone: 'accent', pulse: true }
   }
-  if (hasWarnings) return { label: 'Do sprawdzenia', tone: 'danger' }
+  if (hasWarnings) return { label: 'Do sprawdzenia', tone: 'danger', pulse: false }
   if (ocr === 'applied' || ocr === 'extracted') {
     return { label: 'Zweryfikowany', tone: 'success' }
   }

@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { PlateBadge } from '@/components/ui/PlateBadge'
-import { MissingReceiptBanner } from '@/components/ui/AddReceiptControl'
+import { MissingReceiptBanner, NeedsReviewReceiptBanner } from '@/components/ui/AddReceiptControl'
 import {
   ReceiptSheet,
   receiptUiStatusFromRecord,
@@ -275,7 +275,7 @@ export default function TripDetailPage() {
               <div className="flex items-center justify-between gap-2">
                 <StatusChip
                   tone={statusTone === 'success' ? 'success' : statusTone === 'accent' ? 'accent' : 'neutral'}
-                  pulse={isInProgress ? true : undefined}
+                  pulse={isInProgress ? true : isCompleted ? false : undefined}
                   className={
                     isScheduled
                       ? '!bg-[var(--bg-surface-raised)] !text-[var(--text-primary)]'
@@ -420,7 +420,15 @@ export default function TripDetailPage() {
             <MissingReceiptBanner onAdd={() => setReceiptOpen(true)} />
           ) : null}
 
-          {receiptStatus && receiptStatus !== 'missing' && isCompleted && !platform ? (
+          {receiptStatus === 'needs_review' && isCompleted && !platform ? (
+            <NeedsReviewReceiptBanner onCheck={() => setReceiptOpen(true)} />
+          ) : null}
+
+          {receiptStatus &&
+          receiptStatus !== 'missing' &&
+          receiptStatus !== 'needs_review' &&
+          isCompleted &&
+          !platform ? (
             isReceiptChangeLocked(trip) ? (
               <div className="space-y-2">
                 <ReceiptStatusBadge status={receiptStatus} />
@@ -523,6 +531,9 @@ export default function TripDetailPage() {
         busy={busy}
         onUpload={uploadReceipt}
         status={receiptStatus === 'missing' ? null : receiptStatus}
+        attachmentId={
+          typeof trip?.receiptAttachmentId === 'string' ? trip.receiptAttachmentId : null
+        }
         initialDocumentNumber={
           typeof trip?.receiptDocumentNumber === 'string'
             ? trip.receiptDocumentNumber
@@ -541,7 +552,9 @@ export default function TripDetailPage() {
         reviewHint={
           Array.isArray(trip?.warnings) && trip.warnings.length
             ? 'Sprawdź wynik rozpoznania: porównaj kwotę na paragonie z kwotą kursu.'
-            : null
+            : receiptStatus === 'needs_review'
+              ? 'Sprawdź wynik rozpoznania: porównaj kwotę na paragonie z kwotą kursu.'
+              : null
         }
       />
     </div>

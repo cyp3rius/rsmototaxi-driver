@@ -23,14 +23,22 @@ export function StatusChip({
 
   const dot =
     pulse === true
-      ? 'bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]'
+      ? tone === 'danger'
+        ? 'bg-[var(--danger)] animate-[rsPulse_1.6s_ease-out_infinite]'
+        : tone === 'accent'
+          ? 'bg-[var(--accent)] animate-[rsPulse_1.6s_ease-out_infinite]'
+          : tone === 'warning'
+            ? 'bg-[var(--warning)] animate-[rsPulse_1.6s_ease-out_infinite]'
+            : 'bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]'
       : tone === 'success'
-        ? 'border-[1.5px] border-[var(--success)]'
+        ? 'bg-[var(--success)]'
         : tone === 'warning'
-          ? 'border-[1.5px] border-[var(--warning)]'
-          : tone === 'accent'
-            ? 'border-[1.5px] border-[var(--accent)] bg-[var(--accent)]'
-            : 'border-[1.5px] border-[var(--text-tertiary)]'
+          ? 'bg-[var(--warning)]'
+          : tone === 'danger'
+            ? 'bg-[var(--danger)]'
+            : tone === 'accent'
+              ? 'bg-[var(--accent)]'
+              : 'border-[1.5px] border-[var(--text-tertiary)]'
 
   return (
     <span

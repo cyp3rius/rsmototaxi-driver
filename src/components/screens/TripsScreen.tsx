@@ -58,7 +58,9 @@ function TripListCard({ trip }: { trip: Record<string, unknown> }) {
           </p>
           <div className="mt-0.5 flex flex-wrap gap-1.5">
             {showCompletedChip ? (
-              <StatusChip tone="success">{statusLabel}</StatusChip>
+              <StatusChip tone="success" pulse={false}>
+                {statusLabel}
+              </StatusChip>
             ) : null}
             {String(trip.status) === 'in_progress' ? (
               <StatusChip tone="accent" pulse>
