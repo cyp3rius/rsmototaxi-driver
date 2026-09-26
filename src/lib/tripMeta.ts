@@ -324,6 +324,15 @@ export function expenseReceiptChip(item: Record<string, unknown>): ExpenseReceip
   return { label: 'Paragon', tone: 'neutral' }
 }
 
+export function isExpenseReceiptVerified(item: Record<string, unknown>): boolean {
+  if (!item.receiptAttachmentId) return false
+  const ocr = String(item.ocrStatus || '')
+  const warnings = Array.isArray(item.warnings) ? item.warnings : []
+  if (ocr === 'pending' || ocr === 'processing') return false
+  if (warnings.length > 0 || ocr === 'needs_review' || ocr === 'failed') return false
+  return ocr === 'applied' || ocr === 'extracted' || ocr === 'verified'
+}
+
 export function expenseOcrErrorNote(item: Record<string, unknown>) {
   const ocr = String(item.ocrStatus || '')
   const warnings = Array.isArray(item.warnings) ? item.warnings : []

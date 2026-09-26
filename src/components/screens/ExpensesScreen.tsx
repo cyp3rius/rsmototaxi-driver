@@ -22,6 +22,7 @@ import {
   expenseMetaLine,
   expenseOcrErrorNote,
   expenseReceiptChip,
+  isExpenseReceiptVerified,
 } from '@/lib/tripMeta'
 
 type SortMode = 'occurred_desc' | 'occurred_asc' | 'created_desc' | 'created_asc'
@@ -213,6 +214,10 @@ function ExpensesScreenInner() {
                         {errorNote ? (
                           <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
                             {errorNote}
+                          </span>
+                        ) : isExpenseReceiptVerified(item) ? (
+                          <span className="mt-2 block text-[15px] leading-5 text-[var(--text-secondary)]">
+                            Paragon został zweryfikowany i nie można go już zmienić.
                           </span>
                         ) : null}
                       </span>

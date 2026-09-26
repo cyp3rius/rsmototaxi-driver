@@ -8,6 +8,10 @@ const API_ERROR_MAP: Record<string, string> = {
   'Receipt photo is required for this trip.': 'Zdjęcie paragonu jest wymagane dla tego kursu.',
   'Receipt photo is required.': 'Zdjęcie paragonu jest wymagane.',
   'This trip already has a receipt.': 'Ten kurs ma już paragon.',
+  'Receipt was verified and can no longer be changed.':
+    'Paragon został zweryfikowany i nie można go już zmienić.',
+  'Only duplicate or flagged costs can be deleted.':
+    'Można usunąć tylko koszty zduplikowane lub z błędem rozpoznania. Zweryfikowanego paragonu nie da się zmienić.',
   'Only image or PDF receipts are allowed.': 'Dozwolone są tylko zdjęcia lub PDF.',
   'Start a live trip only while your shift is open.':
     'Kurs bieżący możesz dodać tylko podczas otwartej zmiany.',

@@ -11,7 +11,12 @@ import { PageHeader } from '@/components/ui/PageHeader'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { MissingReceiptBanner } from '@/components/ui/AddReceiptControl'
-import { ReceiptSheet, receiptUiStatusFromRecord, ReceiptStatusBadge } from '@/components/ui/ReceiptSheet'
+import {
+  ReceiptSheet,
+  receiptUiStatusFromRecord,
+  ReceiptStatusBadge,
+  isReceiptChangeLocked,
+} from '@/components/ui/ReceiptSheet'
 import { SlideToConfirm } from '@/components/ui/SlideToConfirm'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -407,9 +412,18 @@ export default function TripDetailPage() {
           ) : null}
 
           {receiptStatus && receiptStatus !== 'missing' && isCompleted && !platform ? (
-            <button type="button" onClick={() => setReceiptOpen(true)} className="text-left">
-              <ReceiptStatusBadge status={receiptStatus} />
-            </button>
+            isReceiptChangeLocked(trip) ? (
+              <div className="space-y-2">
+                <ReceiptStatusBadge status={receiptStatus} />
+                <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
+                  Paragon został zweryfikowany i nie można go już zmienić.
+                </p>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setReceiptOpen(true)} className="text-left">
+                <ReceiptStatusBadge status={receiptStatus} />
+              </button>
+            )
           ) : null}
 
           {!platform && (isScheduled || isInProgress) ? (

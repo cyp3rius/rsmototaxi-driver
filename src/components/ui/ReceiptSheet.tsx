@@ -63,14 +63,23 @@ export function receiptUiStatusFromRecord(
   if (record._pendingSync) return 'offline'
   if (record.receiptAttachmentId) {
     const ocr = String(record.ocrStatus || '')
+    const warnings = Array.isArray(record.warnings) ? record.warnings : []
     if (ocr === 'pending' || ocr === 'processing') return 'processing'
-    if (ocr === 'needs_review' || ocr === 'failed') return 'needs_review'
+    if (ocr === 'needs_review' || ocr === 'failed' || warnings.length > 0) return 'needs_review'
     if (ocr === 'applied' || ocr === 'extracted' || ocr === 'verified') return 'verified'
-    return 'verified'
+    // Attachment present but OCR not finished yet
+    return 'processing'
   }
   const type = String(record.tripType || '')
   if (record.platform || type === 'internal' || type === 'platform') return null
   return 'missing'
+}
+
+/** Successful OCR — receipt must not be replaced (trips + expenses). */
+export function isReceiptChangeLocked(
+  record: Record<string, unknown> | null | undefined,
+): boolean {
+  return receiptUiStatusFromRecord(record) === 'verified'
 }
 
 /**
@@ -149,6 +158,7 @@ export function ReceiptSheet({
   const hasFile = Boolean(file)
   const isReview = status === 'needs_review'
   const isProcessing = status === 'processing'
+  const isLocked = status === 'verified'
   const showPreviewChrome = hasFile || (status && status !== 'missing')
   const ctaLabel = isReview ? 'Zatwierdź paragon' : 'Zapisz paragon'
 
@@ -192,7 +202,13 @@ export function ReceiptSheet({
           </div>
         ) : null}
 
-        {!hasFile ? (
+        {isLocked ? (
+          <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
+            Paragon został zweryfikowany i nie można go już zmienić.
+          </p>
+        ) : null}
+
+        {!hasFile && !isLocked ? (
           <div className="flex flex-col gap-2">
             <button
               type="button"
@@ -216,21 +232,25 @@ export function ReceiptSheet({
           </div>
         ) : null}
 
-        <input
-          ref={cameraRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={(e) => pick(e.target.files?.[0] ?? null)}
-        />
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*,.pdf,application/pdf"
-          className="hidden"
-          onChange={(e) => pick(e.target.files?.[0] ?? null)}
-        />
+        {!isLocked ? (
+          <>
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => pick(e.target.files?.[0] ?? null)}
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*,.pdf,application/pdf"
+              className="hidden"
+              onChange={(e) => pick(e.target.files?.[0] ?? null)}
+            />
+          </>
+        ) : null}
 
         {preview ? (
           <div className="relative overflow-hidden rounded-[18px] border border-[var(--separator)]">
@@ -257,20 +277,25 @@ export function ReceiptSheet({
               type="text"
               value={docNumber}
               onChange={(e) => setDocNumber(e.target.value)}
+              readOnly={isLocked}
               placeholder={
-                isProcessing || (!docNumber && hasFile)
-                  ? 'Uzupełni się po rozpoznaniu'
-                  : 'OCR uzupełni — możesz poprawić'
+                isLocked
+                  ? '—'
+                  : isProcessing || (!docNumber && hasFile)
+                    ? 'Uzupełni się po rozpoznaniu'
+                    : 'OCR uzupełni — możesz poprawić'
               }
               className={cn(
                 'h-14 w-full rounded-[14px] border bg-[var(--bg-surface-raised)] px-4 text-[17px] outline-none transition',
-                isReview
-                  ? 'border-[var(--danger)] text-[var(--text-primary)]'
-                  : 'border-transparent focus:border-[var(--accent)]',
+                isLocked
+                  ? 'border-transparent text-[var(--text-secondary)]'
+                  : isReview
+                    ? 'border-[var(--danger)] text-[var(--text-primary)]'
+                    : 'border-transparent focus:border-[var(--accent)]',
                 !docNumber ? 'placeholder:text-[var(--text-tertiary)]' : '',
               )}
             />
-            {isReview && reviewHint ? (
+            {isLocked ? null : isReview && reviewHint ? (
               <span className="mt-2 block text-[15px] leading-5 text-[var(--danger)]">
                 {reviewHint}
               </span>
@@ -282,13 +307,13 @@ export function ReceiptSheet({
           </label>
         ) : null}
 
-        {!hasFile && typeof navigator !== 'undefined' && !navigator.onLine ? (
+        {!hasFile && !isLocked && typeof navigator !== 'undefined' && !navigator.onLine ? (
           <p className="text-[15px] leading-5 text-[var(--text-secondary)]">
             Bez sieci paragon zapisze się w telefonie i wyśle po połączeniu.
           </p>
         ) : null}
 
-        {hasFile ? (
+        {hasFile && !isLocked ? (
           <div className="mt-2 flex flex-col gap-1">
             <Button size="lg" loading={busy} disabled={!file} onClick={() => void submit()}>
               {ctaLabel}
@@ -302,6 +327,12 @@ export function ReceiptSheet({
               Usuń zdjęcie
             </button>
           </div>
+        ) : null}
+
+        {isLocked ? (
+          <Button size="lg" variant="secondary" onClick={onClose}>
+            Zamknij
+          </Button>
         ) : null}
       </div>
     </BottomSheet>
