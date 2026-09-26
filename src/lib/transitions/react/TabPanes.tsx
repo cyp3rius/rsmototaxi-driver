@@ -29,7 +29,7 @@ export function TabPanes({
   }, [active])
 
   return (
-    <div className={className} style={{ position: 'relative', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+    <div className={className} style={{ position: 'relative', flex: 1, minHeight: 0, height: '100%', overflow: 'hidden' }}>
       {panes.map((pane, i) => (
         <div
           key={i}

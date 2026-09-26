@@ -9,7 +9,6 @@ import { DriverProfileSheet } from '@/components/ui/DriverProfileSheet'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PlateBadge } from '@/components/ui/PlateBadge'
 import { CrossfadeReveal, ExpandReveal } from '@/components/ui/Skeleton'
-import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { useStartShift } from '@/components/ui/StartShiftProvider'
 import { useToast } from '@/components/ui/toast/ToastProvider'
@@ -17,6 +16,7 @@ import { SystemBannerChips, SystemBannerPrimary } from '@/components/shell/Syste
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
 import { formatMoneyShort } from '@/lib/format'
+import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   driverFirstName,
   isAppScopedTrip,
@@ -98,6 +98,12 @@ export function DashboardScreen() {
     state,
     hasMeTrip: Boolean(nextTrip || liveTrip),
     refreshToken: ptrTick,
+  })
+
+  useRegisterTabRefresh(0, async () => {
+    const next = await refreshMe()
+    if (!next) throw new Error('refresh failed')
+    setPtrTick((n) => n + 1)
   })
 
   useEffect(() => {
@@ -194,7 +200,7 @@ export function DashboardScreen() {
 
   return (
     <div
-      className="flex min-h-dvh flex-col px-5 pb-28"
+      className="flex min-h-full flex-col px-5 pb-6"
       style={{ paddingTop: 'calc(var(--safe-top) + 4px)' }}
     >
       <header className="flex items-start justify-between gap-3 px-0 pt-2 pb-2.5">
@@ -229,16 +235,6 @@ export function DashboardScreen() {
 
       <SystemBannerChips />
 
-      <PullToRefresh
-        onRefresh={async () => {
-          if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-            throw new Error('offline')
-          }
-          const next = await refreshMe()
-          if (!next) throw new Error('refresh failed')
-          setPtrTick((n) => n + 1)
-        }}
-      >
       <div className="flex flex-1 flex-col gap-3 pt-0.5">
         <SystemBannerPrimary />
 
@@ -524,7 +520,6 @@ export function DashboardScreen() {
           ) : null}
         </div>
       </div>
-      </PullToRefresh>
 
       <EndShiftSheet
         open={endOpen}

@@ -4,7 +4,6 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { EndShiftSheet } from '@/components/ui/EndShiftSheet'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { InfiniteScrollSentinel, INFINITE_PAGE_SIZE } from '@/components/ui/InfiniteScrollSentinel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
@@ -16,6 +15,7 @@ import { omClient } from '@/lib/om/client'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { formatTime, endOfDayIso, startOfDayIso } from '@/lib/format'
 import { useListSearchParams } from '@/lib/useListSearchParams'
+import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import { isAppScopedTrip, tripRouteLabel } from '@/lib/tripMeta'
 
 type Assignment = Record<string, unknown>
@@ -253,6 +253,10 @@ function ShiftsScreenInner() {
 
   const hasMore = items.length < total
 
+  useRegisterTabRefresh(4, async () => {
+    await Promise.all([refreshMe(), load(1, true)])
+  })
+
   return (
     <>
       <PageHeader title="Zmiany" />
@@ -270,12 +274,7 @@ function ShiftsScreenInner() {
         />
       </div>
 
-      <PullToRefresh
-        onRefresh={async () => {
-          await Promise.all([refreshMe(), load(1, true)])
-        }}
-      >
-        <div className="px-5 pb-28 pt-4">
+      <div className="px-5 pb-6 pt-4">
           {loading && items.length === 0 ? (
             <LoadingBlock className="py-16" />
           ) : groups.length === 0 ? (
@@ -351,7 +350,6 @@ function ShiftsScreenInner() {
             }}
           />
         </div>
-      </PullToRefresh>
 
       <EndShiftSheet
         open={endOpen}

@@ -8,7 +8,6 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
 import { CostTypeIcon } from '@/components/ui/CostTypeIcon'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { StatusChip } from '@/components/ui/StatusChip'
 import { SurfaceCard } from '@/components/ui/SurfaceCard'
@@ -16,6 +15,7 @@ import { useToast } from '@/components/ui/toast/ToastProvider'
 import { omClient } from '@/lib/om/client'
 import { formatMoney } from '@/lib/format'
 import { useListSearchParams } from '@/lib/useListSearchParams'
+import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   costTypeLabel,
   expenseAmountValue,
@@ -84,6 +84,10 @@ function ExpensesScreenInner() {
     })
   }, [])
 
+  useRegisterTabRefresh(2, async () => {
+    await reload()
+  })
+
   const weekItems = useMemo(() => {
     const from = startOfWeek().getTime()
     return items.filter((item) => {
@@ -139,12 +143,7 @@ function ExpensesScreenInner() {
           </Link>
         }
       />
-      <PullToRefresh
-        onRefresh={async () => {
-          await reload()
-        }}
-      >
-        <div className="px-5 pb-28">
+      <div className="px-5 pb-6">
           <div className="flex items-center justify-between gap-3">
             <p className="min-w-0 text-[15px] text-[var(--text-secondary)]">
               Ten tydzień · {weekItems.length} kosztów ·{' '}
@@ -224,7 +223,6 @@ function ExpensesScreenInner() {
             </ul>
           )}
         </div>
-      </PullToRefresh>
 
       <BottomSheet
         open={Boolean(deleteId)}

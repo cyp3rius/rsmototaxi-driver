@@ -114,19 +114,27 @@ function ProgressRing({
   )
 }
 
+function readActiveScroller(root: HTMLElement | null): HTMLElement | null {
+  if (!root) return null
+  const pane = root.querySelector<HTMLElement>('[data-tab-pane]:not([hidden])')
+  if (pane) return pane
+  return root.querySelector<HTMLElement>('[data-scroll]')
+}
+
 /**
- * Pull-to-refresh matching design 5.5:
- * resistance 0.5, threshold 72, hold 64 with spinner, success/offline pill ~1.2s.
- * Header must stay outside this component so it does not move.
+ * Shell-level pull-to-refresh (design 5.5).
+ * Wraps the tab panes once — do not nest inside individual screens (avoids 2× scroll).
  */
 export function PullToRefresh({
   onRefresh,
   children,
   className,
+  disabled = false,
 }: {
   onRefresh: () => Promise<void>
   children: ReactNode
   className?: string
+  disabled?: boolean
 }) {
   const rootRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
@@ -157,23 +165,22 @@ export function PullToRefresh({
   }, [])
 
   const canStartPull = useCallback(() => {
+    if (disabled) return false
     if (phaseRef.current === 'refreshing') return false
     if (typeof window === 'undefined') return false
     if (window.scrollY > 1) return false
-    const scroller = rootRef.current?.closest('[data-scroll-root]') as HTMLElement | null
+    const scroller = readActiveScroller(rootRef.current)
     if (scroller && scroller.scrollTop > 1) return false
     return true
-  }, [])
+  }, [disabled])
 
   const finishRefresh = useCallback(async () => {
     setPhase('refreshing')
     setPullBoth(HOLD)
     const offline = typeof navigator !== 'undefined' && navigator.onLine === false
-    let ok = false
     try {
       if (offline) throw new Error('offline')
       await onRefresh()
-      ok = true
       const now = new Date()
       writeLastOk(now)
       setLastOk(now)
@@ -187,31 +194,12 @@ export function PullToRefresh({
       tracking.current = false
       startY.current = 0
       window.setTimeout(() => setPill(null), PILL_MS)
-      void ok
     }
   }, [lastOk, onRefresh, setPullBoth])
 
-  // Lock document rubber-band while pulling so header/nav stay put (iOS).
-  useEffect(() => {
-    if (phase !== 'pulling' && phase !== 'refreshing') return
-    const html = document.documentElement
-    const body = document.body
-    const prevHtml = html.style.overflow
-    const prevBody = body.style.overflow
-    const prevOverscroll = html.style.overscrollBehaviorY
-    html.style.overflow = 'hidden'
-    body.style.overflow = 'hidden'
-    html.style.overscrollBehaviorY = 'none'
-    return () => {
-      html.style.overflow = prevHtml
-      body.style.overflow = prevBody
-      html.style.overscrollBehaviorY = prevOverscroll
-    }
-  }, [phase])
-
   const onTouchStart = useCallback(
     (e: ReactTouchEvent) => {
-      if (!canStartPull()) {
+      if (disabled || !canStartPull()) {
         tracking.current = false
         return
       }
@@ -219,7 +207,7 @@ export function PullToRefresh({
       startY.current = e.touches[0]?.clientY ?? 0
       setPhase('pulling')
     },
-    [canStartPull],
+    [canStartPull, disabled],
   )
 
   const onTouchEnd = useCallback(() => {
@@ -235,10 +223,9 @@ export function PullToRefresh({
     setPhase('idle')
   }, [finishRefresh, setPullBoth])
 
-  // Non-passive touchmove so we can prevent Safari page rubber-band while pulling.
   useEffect(() => {
     const el = rootRef.current
-    if (!el) return
+    if (!el || disabled) return
 
     const onMove = (e: TouchEvent) => {
       if (!tracking.current || phaseRef.current === 'refreshing') return
@@ -254,14 +241,19 @@ export function PullToRefresh({
       }
       const next = Math.min(MAX_PULL, dy * RESISTANCE)
       setPullBoth(next)
-      // Block native overscroll as soon as pull starts — otherwise iOS rubber-bands
-      // the whole page (header + fixed nav) along with our transform.
       if (next > 0) e.preventDefault()
     }
 
     el.addEventListener('touchmove', onMove, { passive: false })
     return () => el.removeEventListener('touchmove', onMove)
-  }, [canStartPull, setPullBoth])
+  }, [canStartPull, disabled, setPullBoth])
+
+  useEffect(() => {
+    if (!disabled) return
+    tracking.current = false
+    setPullBoth(0)
+    setPhase('idle')
+  }, [disabled, setPullBoth])
 
   const offset = phase === 'refreshing' ? HOLD : pull
   const progress = Math.min(1, pull / THRESHOLD)
@@ -271,61 +263,61 @@ export function PullToRefresh({
 
   return (
     <PtrRefreshingContext.Provider value={refreshing}>
-    <div
-      ref={rootRef}
-      className={cn('relative', className)}
-      style={{ overscrollBehaviorY: 'contain' }}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchEnd}
-    >
-      {pill ? (
-        <div className="pointer-events-none absolute inset-x-0 top-1 z-30 flex justify-center px-5">
-          <div className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5 shadow-[var(--sheet-shadow)]">
-            {pill.offline ? null : (
-              <Check size={16} strokeWidth={2.4} className="text-[var(--success)]" aria-hidden />
-            )}
-            <span className="text-[15px] font-medium text-[var(--text-primary)]">
-              {pill.offline
-                ? `Ostatnie dane · ${formatPillTime(pill.at)}`
-                : `Zaktualizowano · ${formatPillTime(pill.at)}`}
-            </span>
-          </div>
-        </div>
-      ) : null}
-
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden pb-1"
-        style={{ height: offset > 0 ? offset : 0 }}
+        ref={rootRef}
+        className={cn('relative flex min-h-0 flex-1 flex-col', className)}
+        style={{ overscrollBehaviorY: 'none' }}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchEnd}
       >
-        {offset > 10 ? (
-          <>
-            <ProgressRing
-              progress={refreshing ? 1 : progress}
-              armed={armed || refreshing}
-              refreshing={refreshing}
-            />
-            {showHint ? (
-              <span className="pb-1 text-[13px] font-medium text-[var(--text-secondary)]">
-                Puść, aby odświeżyć
+        {pill ? (
+          <div className="pointer-events-none absolute inset-x-0 top-1 z-30 flex justify-center px-5">
+            <div className="inline-flex h-9 items-center gap-2 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5 shadow-[var(--sheet-shadow)]">
+              {pill.offline ? null : (
+                <Check size={16} strokeWidth={2.4} className="text-[var(--success)]" aria-hidden />
+              )}
+              <span className="text-[15px] font-medium text-[var(--text-primary)]">
+                {pill.offline
+                  ? `Ostatnie dane · ${formatPillTime(pill.at)}`
+                  : `Zaktualizowano · ${formatPillTime(pill.at)}`}
               </span>
-            ) : null}
-          </>
+            </div>
+          </div>
         ) : null}
-      </div>
 
-      <div
-        style={{
-          transform:
-            offset > 0 ? `translate3d(0, ${offset + CONTENT_GAP}px, 0)` : undefined,
-          transition: phase === 'pulling' ? 'none' : 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)',
-          willChange: offset > 0 ? 'transform' : undefined,
-        }}
-      >
-        {children}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-20 flex flex-col items-center justify-end gap-1.5 overflow-hidden pb-1"
+          style={{ height: offset > 0 ? offset : 0 }}
+        >
+          {offset > 10 ? (
+            <>
+              <ProgressRing
+                progress={refreshing ? 1 : progress}
+                armed={armed || refreshing}
+                refreshing={refreshing}
+              />
+              {showHint ? (
+                <span className="pb-1 text-[13px] font-medium text-[var(--text-secondary)]">
+                  Puść, aby odświeżyć
+                </span>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+
+        <div
+          className="flex min-h-0 flex-1 flex-col"
+          style={{
+            transform: offset > 0 ? `translate3d(0, ${offset + CONTENT_GAP}px, 0)` : undefined,
+            transition: phase === 'pulling' ? 'none' : 'transform 280ms cubic-bezier(0.22, 1, 0.36, 1)',
+            willChange: offset > 0 ? 'transform' : undefined,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
     </PtrRefreshingContext.Provider>
   )
 }

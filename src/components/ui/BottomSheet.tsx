@@ -7,6 +7,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/cn'
 
 const ENTER_MS = 360
@@ -37,6 +38,7 @@ export function BottomSheet({
 }) {
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
+  const [portalReady, setPortalReady] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
   const startY = useRef(0)
   const dragActive = useRef(false)
@@ -52,6 +54,10 @@ export function BottomSheet({
     dragYRef.current = y
     setDragY(y)
   }
+
+  useEffect(() => {
+    setPortalReady(true)
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -157,7 +163,7 @@ export function BottomSheet({
     endDrag()
   }
 
-  if (!mounted) return null
+  if (!mounted || !portalReady) return null
 
   const usingPx = closingByDrag || dragY > 0 || dragging
   const panelTransform = usingPx
@@ -172,7 +178,8 @@ export function BottomSheet({
       ? Math.max(0, 1 - dragY / 320)
       : 1
 
-  return (
+  // Portal to body so overflow/transform on tab chrome cannot clip or bury the sheet under the nav.
+  return createPortal(
     <div className={cn('fixed inset-0', zClassName)}>
       <button
         type="button"
@@ -232,6 +239,7 @@ export function BottomSheet({
         ) : null}
         <div className={title || subtitle ? 'mt-4' : undefined}>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

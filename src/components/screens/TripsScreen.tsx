@@ -5,7 +5,6 @@ import { Plus, Receipt, RefreshCw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, Suspense } from 'react'
 import { usePathname } from 'next/navigation'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { InfiniteScrollSentinel, INFINITE_PAGE_SIZE } from '@/components/ui/InfiniteScrollSentinel'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
@@ -16,6 +15,7 @@ import { StatusChip } from '@/components/ui/StatusChip'
 import { omClient } from '@/lib/om/client'
 import { endOfDayIso, formatMoneyShort, formatTime, startOfDayIso } from '@/lib/format'
 import { useListSearchParams } from '@/lib/useListSearchParams'
+import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   isAppScopedTrip,
   readTripMeta,
@@ -175,6 +175,10 @@ function TripsScreenInner() {
     })
   }, [load])
 
+  useRegisterTabRefresh(1, async () => {
+    await load(1, false, true)
+  })
+
   const hasMore = items.length < total
 
   const groups = useMemo(() => {
@@ -232,8 +236,7 @@ function TripsScreenInner() {
           </Link>
         }
       />
-      <PullToRefresh onRefresh={() => load(1, false, true)}>
-        <div className="px-5 pb-28 max-[390px]:px-5 sm:px-6">
+      <div className="px-5 pb-6 max-[390px]:px-5 sm:px-6">
           <SegmentedControl
             value={scope}
             onChange={(v) => {
@@ -299,7 +302,6 @@ function TripsScreenInner() {
             }}
           />
         </div>
-      </PullToRefresh>
     </>
   )
 }

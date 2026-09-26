@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/cn'
 
 const ENTER_MS = 220
@@ -25,6 +26,11 @@ export function ConfirmDialog({
 }) {
   const [mounted, setMounted] = useState(open)
   const [entered, setEntered] = useState(false)
+  const [portalReady, setPortalReady] = useState(false)
+
+  useEffect(() => {
+    setPortalReady(true)
+  }, [])
 
   useEffect(() => {
     if (open) {
@@ -46,9 +52,9 @@ export function ConfirmDialog({
     return () => window.clearTimeout(t)
   }, [open])
 
-  if (!mounted) return null
+  if (!mounted || !portalReady) return null
 
-  return (
+  return createPortal(
     <div className={cn('fixed inset-0', zClassName)}>
       <button
         type="button"
@@ -60,7 +66,7 @@ export function ConfirmDialog({
         }}
         onClick={onClose}
       />
-      <div className="absolute inset-0 flex items-center justify-center px-6 pointer-events-none">
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-6">
         <div
           role="dialog"
           aria-modal="true"
@@ -84,6 +90,7 @@ export function ConfirmDialog({
           <div className="mt-3">{children}</div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

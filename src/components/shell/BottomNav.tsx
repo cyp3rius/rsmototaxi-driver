@@ -26,9 +26,9 @@ const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
  * Bottom nav.
- * - `docked` (default in DriverChrome): sits in the list column so 1c parallax moves it with the list.
- * - `fixed`: legacy viewport pin (unused when chrome owns tabs).
- * Highlight updates immediately via `activeIndex` + `onNavigate` (1a).
+ * - `docked` (default in DriverChrome): sits under the tab scroller (not over content).
+ * - `fixed`: legacy viewport pin (AppShell without DriverChrome).
+ * Fade to `--bg-base` removes the hard cut-off; z stays below sheets/dialogs (portal ≥50).
  */
 export function BottomNav({
   activeIndex,
@@ -116,51 +116,62 @@ export function BottomNav({
     <nav
       ref={navRef}
       className={cn(
-        'rs-bottom-nav z-40 border-t border-[var(--separator)]',
-        docked ? 'relative mt-auto flex-none' : 'fixed inset-x-0 bottom-0',
+        'rs-bottom-nav relative z-20',
+        docked ? 'mt-auto flex-none' : 'fixed inset-x-0 bottom-0',
       )}
-      style={{
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        background: 'var(--bg-surface)',
-        borderTopColor: 'var(--separator)',
-      }}
     >
-      <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
-        {BOTTOM_NAV_TABS.map((tab, index) => {
-          const active = index === resolvedActive
-          const Icon = tab.icon
-          const showBadge =
-            'badgeKey' in tab && tab.badgeKey === 'receipts' && missingReceipts > 0
-          return (
-            <li key={tab.href} className="min-w-0">
-              <button
-                type="button"
-                aria-current={active ? 'page' : undefined}
-                data-active={active ? 'true' : undefined}
-                onClick={() => {
-                  if (onNavigate) onNavigate(index, tab.href)
-                }}
-                className={cn(
-                  'relative flex h-full w-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5',
-                  active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
-                )}
-                style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
-              >
-                <span className="relative">
-                  <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
-                  {showBadge ? (
-                    <span
-                      className="absolute -right-1.5 top-0 size-[9px] rounded-full border-2 border-[var(--bg-surface)] bg-[var(--warning)]"
-                      aria-label={`${missingReceipts} bez paragonu`}
-                    />
-                  ) : null}
-                </span>
-                {tab.label}
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      {/* Soft fade into page background — no hard “odcięcie” */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-full h-12"
+        style={{
+          background: 'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
+        }}
+      />
+      <div
+        className="relative"
+        style={{
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          background: 'var(--bg-base)',
+        }}
+      >
+        <ul className="mx-auto grid h-16 max-w-lg grid-cols-5">
+          {BOTTOM_NAV_TABS.map((tab, index) => {
+            const active = index === resolvedActive
+            const Icon = tab.icon
+            const showBadge =
+              'badgeKey' in tab && tab.badgeKey === 'receipts' && missingReceipts > 0
+            return (
+              <li key={tab.href} className="min-w-0">
+                <button
+                  type="button"
+                  aria-current={active ? 'page' : undefined}
+                  data-active={active ? 'true' : undefined}
+                  onClick={() => {
+                    if (onNavigate) onNavigate(index, tab.href)
+                  }}
+                  className={cn(
+                    'relative flex h-full w-full flex-col items-center justify-center gap-[3px] text-[15px] leading-5',
+                    active ? 'rs-nav-active font-semibold' : 'rs-nav-idle font-medium',
+                  )}
+                  style={{ color: active ? 'var(--accent)' : 'var(--text-secondary)' }}
+                >
+                  <span className="relative">
+                    <Icon size={24} strokeWidth={active ? 2.1 : 1.8} aria-hidden />
+                    {showBadge ? (
+                      <span
+                        className="absolute -right-1.5 top-0 size-[9px] rounded-full border-2 border-[var(--bg-base)] bg-[var(--warning)]"
+                        aria-label={`${missingReceipts} bez paragonu`}
+                      />
+                    ) : null}
+                  </span>
+                  {tab.label}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      </div>
     </nav>
   )
 }

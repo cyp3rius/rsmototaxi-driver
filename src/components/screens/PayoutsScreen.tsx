@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { Suspense, useCallback, useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { PageHeader } from '@/components/ui/PageHeader'
-import { PullToRefresh } from '@/components/ui/PullToRefresh'
 import { LoadingBlock } from '@/components/ui/Spinner'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { StatusChip } from '@/components/ui/StatusChip'
@@ -13,6 +12,7 @@ import { omClient } from '@/lib/om/client'
 import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/cn'
 import { useListSearchParams } from '@/lib/useListSearchParams'
+import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   formatMonthTitle,
   formatWeekTitle,
@@ -47,17 +47,16 @@ function PayoutsScreenInner() {
     void reload().finally(() => setLoading(false))
   }, [reload])
 
+  useRegisterTabRefresh(3, async () => {
+    await reload()
+  })
+
   const items = tab === 'monthly' ? monthly : weekly
 
   return (
     <>
       <PageHeader title="Wypłaty" />
-      <PullToRefresh
-        onRefresh={async () => {
-          await reload()
-        }}
-      >
-        <div className="px-5 pb-28">
+      <div className="px-5 pb-6">
           <SegmentedControl
             value={tab}
             onChange={(v) => {
@@ -131,7 +130,6 @@ function PayoutsScreenInner() {
             </ul>
           )}
         </div>
-      </PullToRefresh>
     </>
   )
 }
