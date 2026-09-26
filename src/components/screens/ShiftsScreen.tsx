@@ -322,14 +322,28 @@ function ShiftsScreenInner() {
                               </p>
                             )}
                             {active ? (
-                              <button
-                                type="button"
-                                disabled={busy || Boolean(me?.impersonation?.active)}
-                                onClick={() => void openEndShift()}
-                                className="mt-1 flex h-14 items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--danger)_40%,transparent)] text-[17px] font-[600] text-[var(--danger)] disabled:opacity-[0.38]"
-                              >
-                                Zakończ zmianę
-                              </button>
+                              <div className="mt-1">
+                                <button
+                                  type="button"
+                                  disabled={
+                                    busy ||
+                                    Boolean(me?.impersonation?.active) ||
+                                    Boolean(me?.liveTrip)
+                                  }
+                                  onClick={() => {
+                                    if (me?.liveTrip) return
+                                    void openEndShift()
+                                  }}
+                                  className="flex h-14 w-full items-center justify-center rounded-full border border-[color-mix(in_srgb,var(--danger)_40%,transparent)] text-[17px] font-[600] text-[var(--danger)] disabled:opacity-[0.38]"
+                                >
+                                  Zakończ zmianę
+                                </button>
+                                {me?.liveTrip ? (
+                                  <p className="mt-2 text-center text-[15px] leading-5 text-[var(--text-secondary)]">
+                                    Masz kurs w trakcie, zakończ go żeby zakończyć zmianę.
+                                  </p>
+                                ) : null}
+                              </div>
                             ) : null}
                           </SurfaceCard>
                         </li>

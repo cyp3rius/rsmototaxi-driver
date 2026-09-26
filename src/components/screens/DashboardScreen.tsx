@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown, Zap } from 'lucide-react'
+import { Fuel, Plane, Plus, Phone, Receipt, ChevronDown } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { DriverProfileSheet } from '@/components/ui/DriverProfileSheet'
@@ -15,7 +15,7 @@ import { useToast } from '@/components/ui/toast/ToastProvider'
 import { SystemBannerChips, SystemBannerPrimary } from '@/components/shell/SystemBanners'
 import { useAuth } from '@/lib/om/AuthProvider'
 import { omClient } from '@/lib/om/client'
-import { formatMoneyShort } from '@/lib/format'
+import { formatElapsedHms, formatMoneyShort } from '@/lib/format'
 import { useRegisterTabRefresh } from '@/lib/transitions/react/TabRefresh'
 import {
   driverFirstName,
@@ -118,6 +118,15 @@ export function DashboardScreen() {
     const end = assignment.shiftEnd ? new Date(assignment.shiftEnd).getTime() : now
     return formatElapsed(end - start)
   })()
+
+  const shiftTimerLive = (() => {
+    if (!assignment?.shiftStart) return '0:00:00'
+    const start = new Date(assignment.shiftStart).getTime()
+    const end = assignment.shiftEnd ? new Date(assignment.shiftEnd).getTime() : now
+    return formatElapsedHms(end - start)
+  })()
+
+  const hasLiveTrip = Boolean(liveTrip)
 
   const shiftDurationLabel =
     assignment?.shiftStart && assignment?.shiftEnd
@@ -236,9 +245,21 @@ export function DashboardScreen() {
       <SystemBannerChips />
 
       <div className="flex flex-1 flex-col gap-[11px] pt-1">
+        {state === 'C' && hasLiveTrip ? (
+          <div className="flex h-[52px] items-center gap-2.5 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
+            <span className="size-2 rounded-full bg-[var(--success)] animate-[rsPulse_1.6s_ease-out_infinite]" />
+            <span className="text-[15px] font-semibold text-[var(--success)]">Na zmianie</span>
+            <span className="text-[17px] font-semibold tabular-nums">{shiftTimerLive}</span>
+            <span className="flex-1" />
+            <CrossfadeReveal ready={enrichment.vehicleReady} skeleton={<SkelPlateSm />}>
+              {plate ? <PlateBadge plate={plate} size="sm" /> : <span />}
+            </CrossfadeReveal>
+          </div>
+        ) : null}
+
         <SystemBannerPrimary />
 
-        {state === 'C' && nextTrip ? (
+        {state === 'C' && nextTrip && !hasLiveTrip ? (
           <>
             <div className="flex h-14 items-center gap-3 rounded-[18px] border border-[var(--separator)] bg-[var(--bg-surface)] px-3.5">
               <span className="text-[15px] text-[var(--text-secondary)]">Zmiana</span>
@@ -267,7 +288,7 @@ export function DashboardScreen() {
           </>
         ) : null}
 
-        {state === 'C' && !nextTrip && !liveTrip ? (
+        {state === 'C' && !nextTrip && !hasLiveTrip ? (
           <section className="rounded-[22px] border border-[var(--separator)] bg-[var(--bg-surface)] p-5">
             <div className="flex justify-between text-[15px] leading-5 text-[var(--text-secondary)]">
               <span>Czas zmiany</span>
@@ -418,18 +439,11 @@ export function DashboardScreen() {
 
         {/* Primary CTA — immediate from /me */}
         <div className="pt-0.5">
-          {state === 'C' ? (
-            liveTrip ? (
-              <Button onClick={() => router.push('/app/trips/live')}>
-                <Zap size={22} strokeWidth={2.3} />
-                Wznów kurs live
-              </Button>
-            ) : (
-              <Button onClick={() => router.push('/app/trips/new')}>
-                <Plus size={22} strokeWidth={2.3} />
-                Dodaj kurs
-              </Button>
-            )
+          {state === 'C' && !hasLiveTrip ? (
+            <Button onClick={() => router.push('/app/trips/new')}>
+              <Plus size={22} strokeWidth={2.3} />
+              Dodaj kurs
+            </Button>
           ) : null}
           {state === 'B' ? (
             <Button onClick={() => openStartShift()}>Rozpocznij zmianę</Button>
@@ -509,8 +523,11 @@ export function DashboardScreen() {
           {state === 'C' ? (
             <button
               type="button"
-              disabled={busy || !!me?.impersonation?.active}
-              onClick={() => void openEndShift()}
+              disabled={busy || !!me?.impersonation?.active || hasLiveTrip}
+              onClick={() => {
+                if (hasLiveTrip) return
+                void openEndShift()
+              }}
               className="flex h-14 items-center justify-center text-[17px] font-semibold text-[var(--danger)] disabled:opacity-[0.38]"
             >
               Zakończ zmianę
