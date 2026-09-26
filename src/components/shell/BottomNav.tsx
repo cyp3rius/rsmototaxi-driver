@@ -29,9 +29,11 @@ export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
  * Started at ¾, nudged up twice by ⅛ bar → back to ½.
  */
 export const BOTTOM_NAV_SINK_PX = Math.round(BOTTOM_NAV_BAR_HEIGHT_PX * 0.5)
-/** Visible nav height contributing to content clearance (bar − sink + safe-area). */
+/** Soft gradient above the nav that overlays list content — include in clearance. */
+export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
+/** Visible nav height contributing to content clearance (bar − sink + fade + safe-area). */
 export function bottomNavContentClearanceCss() {
-  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX}px + env(safe-area-inset-bottom, 0px))`
+  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX - BOTTOM_NAV_SINK_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + env(safe-area-inset-bottom, 0px))`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
@@ -133,8 +135,9 @@ export function BottomNav({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-full h-12"
+        className="pointer-events-none absolute inset-x-0 bottom-full"
         style={{
+          height: BOTTOM_NAV_FADE_HEIGHT_PX,
           background:
             'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
         }}
