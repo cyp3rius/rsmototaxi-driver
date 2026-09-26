@@ -20,10 +20,10 @@
   --success: #4cc38a;
   --warning: #f0a93b;
   --danger: #ff6b61;
-  /* Overwritten at runtime by syncVisualViewportCssVars() — env() alone can stick at 0 on iOS. */
+  /* Bottom chrome reclaims the home-indicator band (no gesture inset). Top stays real. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-bottom: 0px;
   --safe-left: env(safe-area-inset-left, 0px);
   --vv-bottom: 0px;
   --radius-sheet: 32px;
@@ -190,28 +190,29 @@ html.rs-app-lock body {
 }
 
 /*
- * PWA tab bar — textbook standalone pattern:
- * content-box height stays 64px; safe-area padding ADDS below (does not crush icons).
- * See: padding-bottom: env(safe-area-inset-bottom) + box-sizing: content-box.
+ * PWA tab bar — pinned to the physical bottom.
+ * We intentionally do NOT pad for safe-area-inset-bottom: this app uses that
+ * band for the tab bar itself (labels sit near the home indicator).
+ * Small 8px breath only so icons are not flush against the bezel.
  */
 .rs-bottom-nav-inner {
   box-sizing: content-box;
   height: 64px;
-  padding-bottom: var(--safe-bottom, env(safe-area-inset-bottom, 0px));
+  padding-bottom: 8px;
   border-top: 1px solid var(--separator);
   background: var(--bg-base);
 }
 
 /*
- * Form ActionBar — same additive safe-area (12px breath + inset).
+ * Form ActionBar — same: sit low, no gesture-band padding.
  * --with-nav only when a tab bar is also visible under the form.
  */
 .rs-action-bar {
   box-sizing: content-box;
-  padding-bottom: calc(12px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
+  padding-bottom: 12px;
 }
 .rs-action-bar.rs-action-bar--with-nav {
-  padding-bottom: calc(72px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)));
+  padding-bottom: 72px;
 }
 
 /*

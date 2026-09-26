@@ -28,19 +28,18 @@ export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
 export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
 
 /**
- * Space content must leave so it clears the fixed/docked tab bar.
- * = bar height + safe-area (additive) + fade overlay.
+ * Space content must leave so it clears the docked tab bar.
+ * = bar height + small edge breath + fade (no safe-area — chrome owns that band).
  */
 export function bottomNavContentClearanceCss() {
-  return `calc(${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX}px + var(--safe-bottom, env(safe-area-inset-bottom, 0px)))`
+  return `${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX + 8}px`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
 
 /**
- * Bottom nav — textbook PWA standalone pattern:
- * `bottom: 0` + content-box height + `padding-bottom: env(safe-area-inset-bottom)`
- * so the home-indicator band grows the bar downward instead of crushing icons/labels.
+ * Bottom nav — flush to the screen bottom.
+ * Home-indicator band is part of the bar (8px breath only), not an empty gap.
  */
 export function BottomNav({
   activeIndex,

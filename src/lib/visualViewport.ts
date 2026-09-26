@@ -116,29 +116,24 @@ export function syncVisualViewportCssVars() {
   const inset = isVisualViewportMeaningfullyShortened() ? readVisualViewportBottomInset() : 0
   let safe = readSafeAreaInsets()
 
-  // iOS display:fullscreen (and some standalone installs) report env() = 0 while
-  // black-translucent still draws under the status bar / home indicator.
-  // Without a fallback, titles collide with the clock and the tab bar floats.
+  // Top inset still needed (status bar / Dynamic Island under black-translucent).
+  // Bottom inset is intentionally unused for chrome — this app draws tab bar / form
+  // footers into the home-indicator band (no system gesture chrome in our PWA).
   if (
     isStandaloneDisplay() &&
     safe.top === 0 &&
-    safe.bottom === 0 &&
     typeof window !== 'undefined' &&
     Math.min(window.screen?.width ?? 0, window.screen?.height ?? 0) >= 375 &&
     Math.max(window.screen?.width ?? 0, window.screen?.height ?? 0) >= 812
   ) {
     const tall = Math.max(window.screen.width, window.screen.height)
-    safe = {
-      ...safe,
-      top: tall >= 852 ? 59 : 47,
-      bottom: 34,
-    }
+    safe = { ...safe, top: tall >= 852 ? 59 : 47 }
   }
 
   document.documentElement.style.setProperty('--vv-bottom', `${inset}px`)
   document.documentElement.style.setProperty('--app-height', `${readFrameHeight()}px`)
   document.documentElement.style.setProperty('--safe-top', `${safe.top}px`)
-  document.documentElement.style.setProperty('--safe-bottom', `${safe.bottom}px`)
+  document.documentElement.style.setProperty('--safe-bottom', '0px')
   document.documentElement.style.setProperty('--safe-left', `${safe.left}px`)
   document.documentElement.style.setProperty('--safe-right', `${safe.right}px`)
   const mode = isStandaloneDisplay()

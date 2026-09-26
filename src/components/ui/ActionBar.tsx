@@ -2,9 +2,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 
 /**
- * Form footer — same PWA pattern as the tab bar:
- * content stays full size; `padding-bottom: env(safe-area-inset-bottom)` is additive
- * (content-box) so the CTA is never crushed into / under the home indicator.
+ * Form footer — docked low; no safe-area-inset-bottom (chrome owns that band).
  */
 export function ActionBar({
   children,

@@ -105,7 +105,7 @@ function ToastViewport({
   return (
     <div
       className="pointer-events-none fixed inset-x-0 z-[70] mx-auto flex max-w-lg justify-center px-5"
-      style={{ bottom: 'calc(64px + var(--safe-bottom) + var(--vv-bottom, 0px) + 16px)' }}
+      style={{ bottom: 'calc(64px + 8px + var(--vv-bottom, 0px) + 16px)' }}
     >
       <button
         type="button"
