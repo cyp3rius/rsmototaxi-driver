@@ -126,11 +126,13 @@ function ReceiptPreviewFrame({
 /**
  * Design 5.9 receipt sheet — shared by trip detail and expense flows.
  * Pick state: two full-width entries (camera + file). Preview: image, OCR status, document number.
+ * Review (needs_review): Zapisz (gold) + Zamknij — save doc number and/or replace photo.
  */
 export function ReceiptSheet({
   open,
   onClose,
   onUpload,
+  onConfirmReview,
   busy,
   subtitle = 'Zrób zdjęcie lub wybierz plik (obraz albo PDF).',
   initialDocumentNumber = '',
@@ -141,6 +143,8 @@ export function ReceiptSheet({
   open: boolean
   onClose: () => void
   onUpload: (file: File, documentNumber: string) => Promise<void>
+  /** Review on completed trip: save document number without replacing the photo. */
+  onConfirmReview?: (documentNumber: string) => Promise<void>
   busy?: boolean
   subtitle?: string
   initialDocumentNumber?: string
@@ -198,10 +202,15 @@ export function ReceiptSheet({
   }
 
   async function submit() {
-    if (!file) return
-    await onUpload(file, docNumber.trim())
-    clearFile()
-    setDocNumber('')
+    if (file) {
+      await onUpload(file, docNumber.trim())
+      clearFile()
+      setDocNumber('')
+      return
+    }
+    if (isReview && onConfirmReview) {
+      await onConfirmReview(docNumber.trim())
+    }
   }
 
   const hasFile = Boolean(file)
@@ -209,11 +218,11 @@ export function ReceiptSheet({
   const isProcessing = status === 'processing'
   const isLocked = status === 'verified'
   const showPreviewChrome = hasFile || (status && status !== 'missing')
-  const ctaLabel = isReview ? 'Zatwierdź paragon' : 'Zapisz paragon'
   const remotePreviewUrl =
     !hasFile && attachmentId && !remotePreviewBroken ? attachmentImageUrl(attachmentId) : null
   // Add flow or OCR review: allow camera/file. Hide while processing an existing attachment.
   const showPickButtons = !isLocked && !hasFile && (isReview || !attachmentId)
+  const showSaveActions = !isLocked && (hasFile || (isReview && Boolean(onConfirmReview)))
   const reviewAlert =
     reviewHint?.trim() ||
     (isReview ? 'Sprawdź wynik rozpoznania: porównaj kwotę na paragonie z kwotą kursu.' : null)
@@ -374,18 +383,27 @@ export function ReceiptSheet({
           </p>
         ) : null}
 
-        {hasFile && !isLocked ? (
+        {showSaveActions ? (
           <div className="mt-2 flex flex-col gap-1">
-            <Button size="lg" loading={busy} disabled={!file} onClick={() => void submit()}>
-              {ctaLabel}
+            <Button size="lg" loading={busy} onClick={() => void submit()}>
+              Zapisz
             </Button>
+            {hasFile ? (
+              <button
+                type="button"
+                onClick={clearFile}
+                className="flex h-[52px] items-center justify-center gap-2 text-[16px] font-semibold text-[var(--danger)]"
+              >
+                <Trash2 size={18} strokeWidth={2} />
+                Usuń zdjęcie
+              </button>
+            ) : null}
             <button
               type="button"
-              onClick={clearFile}
-              className="flex h-[52px] items-center justify-center gap-2 text-[16px] font-semibold text-[var(--danger)]"
+              onClick={onClose}
+              className="flex h-[52px] items-center justify-center text-[16px] font-medium text-[var(--text-secondary)]"
             >
-              <Trash2 size={18} strokeWidth={2} />
-              Usuń zdjęcie
+              Zamknij
             </button>
           </div>
         ) : null}

@@ -188,6 +188,28 @@ export default function TripDetailPage() {
     }
   }
 
+  async function confirmReceiptReview(documentNumber: string) {
+    const attachmentId =
+      typeof trip?.receiptAttachmentId === 'string' ? trip.receiptAttachmentId : null
+    if (!attachmentId) return
+    setBusy(true)
+    try {
+      await omClient.updateTrip({
+        id: params.id,
+        receiptAttachmentId: attachmentId,
+        receiptDocumentNumber: documentNumber || null,
+      })
+      const res = await omClient.getTrips({ id: params.id })
+      setTrip(res.items[0] ?? null)
+      setReceiptOpen(false)
+      toast.success('Paragon zapisany')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Nie udało się zapisać')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const receiptStatus = trip ? receiptUiStatusFromRecord(trip) : null
   const detailTitle = tripDetailTitle(trip)
   const statusLabel = tripStatusChipLabel(status)
@@ -550,6 +572,9 @@ export default function TripDetailPage() {
         onClose={() => setReceiptOpen(false)}
         busy={busy}
         onUpload={uploadReceipt}
+        onConfirmReview={
+          receiptStatus === 'needs_review' ? confirmReceiptReview : undefined
+        }
         status={receiptStatus === 'missing' ? null : receiptStatus}
         attachmentId={
           typeof trip?.receiptAttachmentId === 'string' ? trip.receiptAttachmentId : null
