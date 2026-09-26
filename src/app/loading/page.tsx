@@ -1,9 +1,9 @@
 import { WowLoadingScreen } from '@/components/screens/WowLoadingScreen'
 
-/** Boot wrapper stays brand-black so splash → 5.3–5.4 never flashes theme bg. */
+/** 5.3–5.4 follows the active theme (light/dark). Splash stays brand-black until this paints. */
 export default function LoadingPage() {
   return (
-    <div className="min-h-dvh bg-[#020407]">
+    <div className="min-h-dvh bg-[var(--bg-base)]">
       <WowLoadingScreen />
     </div>
   )

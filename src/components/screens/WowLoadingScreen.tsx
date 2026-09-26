@@ -376,7 +376,7 @@ export function WowLoadingScreen() {
   if (error) {
     return (
       <main
-        className="flex min-h-dvh flex-col justify-center px-5 pb-16"
+        className="flex min-h-dvh flex-col justify-center bg-[var(--bg-base)] px-5 pb-16"
         style={{ paddingTop: 'var(--safe-top)' }}
       >
         <span className="flex size-16 items-center justify-center rounded-[20px] tint-warning text-[var(--warning)]">
@@ -413,7 +413,7 @@ export function WowLoadingScreen() {
   return (
     <main
       ref={rootRef}
-      className="relative min-h-dvh overflow-hidden bg-[#020407]"
+      className="relative min-h-dvh overflow-hidden bg-[var(--bg-base)]"
       onClick={() => {
         if (t >= helloAt) setSkip(true)
       }}

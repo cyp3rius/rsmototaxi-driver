@@ -6,9 +6,9 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/om/AuthProvider'
 
 /**
- * Native-feeling boot splash: always #020407 + centered logo.
- * Held until auth hydrate + destination (5.1 / 5.3–5.4) can paint the same black,
- * so we never fade onto a light --bg-base and flash black html underneath.
+ * Native-feeling boot splash: always brand #020407 + centered logo.
+ * Held until auth hydrate + destination paints (5.1 welcome or themed 5.3–5.4).
+ * Splash stays black; wow/dashboard then use the active theme tokens.
  */
 export function SplashGate({ children }: { children: React.ReactNode }) {
   const { ready, session } = useAuth()
@@ -36,7 +36,7 @@ export function SplashGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!destinationReady || gone) return
-    // One frame for /loading (or welcome) to paint black under the splash, then drop.
+    // One frame for /loading (or welcome) to paint under the splash, then drop.
     let cancelled = false
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
