@@ -295,7 +295,11 @@ export function ReceiptSheet({
             <button
               type="button"
               onClick={() => cameraRef.current?.click()}
-              className="rs-accent-fill flex h-16 w-full items-center justify-center gap-2.5 rounded-full text-[18px] font-semibold active:scale-[0.98]"
+              className={
+                isReview
+                  ? 'flex h-16 w-full items-center justify-center gap-2.5 rounded-full border border-[var(--separator)] bg-[var(--bg-surface)] text-[18px] font-semibold active:scale-[0.98]'
+                  : 'rs-accent-fill flex h-16 w-full items-center justify-center gap-2.5 rounded-full text-[18px] font-semibold active:scale-[0.98]'
+              }
             >
               <Camera size={22} strokeWidth={2} />
               Zrób zdjęcie
