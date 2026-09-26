@@ -1,9 +1,9 @@
 'use client'
 
+import { ChevronRight } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Button } from '@/components/ui/Button'
-import { PlateBadge } from '@/components/ui/PlateBadge'
 import { formatElapsed, formatTime } from '@/lib/format'
 
 export function EndShiftSheet({
@@ -15,6 +15,7 @@ export function EndShiftSheet({
   shiftEnd,
   plate,
   gpsKm,
+  tripCount,
   missingReceiptTrips,
 }: {
   open: boolean
@@ -25,7 +26,9 @@ export function EndShiftSheet({
   shiftEnd?: string | null
   plate?: string | null
   gpsKm?: number | string | null
-  missingReceiptTrips: Array<{ id: string; label: string }>
+  /** Total trips on this shift (for Paragony X z Y). */
+  tripCount?: number | null
+  missingReceiptTrips: Array<{ id: string; label: string; meta?: string }>
 }) {
   const [now, setNow] = useState(() => Date.now())
 
@@ -34,66 +37,90 @@ export function EndShiftSheet({
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [open, shiftEnd])
-  const duration =
+
+  const durationMs =
     shiftStart != null
-      ? formatElapsed((shiftEnd ? new Date(shiftEnd).getTime() : now) - new Date(shiftStart).getTime())
+      ? (shiftEnd ? new Date(shiftEnd).getTime() : now) - new Date(shiftStart).getTime()
+      : null
+  const duration = durationMs != null ? formatElapsed(durationMs) : '—'
+  const gpsLabel =
+    gpsKm != null
+      ? `${Number(gpsKm).toLocaleString('pl-PL', { maximumFractionDigits: 1 })} km`
       : '—'
+  const totalTrips = tripCount ?? Math.max(missingReceiptTrips.length, 0)
+  const withReceipt = Math.max(0, totalTrips - missingReceiptTrips.length)
+  const receiptsLabel =
+    totalTrips > 0 ? `${withReceipt} z ${totalTrips}` : missingReceiptTrips.length > 0 ? '—' : '—'
+  const receiptsWarn = missingReceiptTrips.length > 0
 
   return (
-    <BottomSheet open={open} onClose={onClose} title="Zakończ zmianę" subtitle="Podsumowanie przed zamknięciem.">
-      <div className="space-y-4">
-        <div className="rounded-[18px] bg-[var(--bg-surface-raised)] p-4">
-          <p className="text-[15px] text-[var(--text-secondary)]">Czas zmiany</p>
-          <p
-            className="mt-1 font-[family-name:var(--font-display)] text-[32px] font-semibold tabular-nums"
-            style={{ fontStretch: '112%' }}
-          >
-            {duration}
-          </p>
-          <p className="mt-2 text-[15px] text-[var(--text-secondary)]">
-            {formatTime(shiftStart)}–{shiftEnd ? formatTime(shiftEnd) : 'teraz'}
-            {plate ? ` · ${plate}` : ''}
-          </p>
-          {gpsKm != null ? (
-            <p className="mt-1 text-[15px] text-[var(--text-secondary)]">
-              GPS {Number(gpsKm).toLocaleString('pl-PL', { maximumFractionDigits: 1 })} km
-            </p>
-          ) : null}
-          {plate ? (
-            <div className="mt-3">
-              <PlateBadge plate={plate} />
+    <BottomSheet open={open} onClose={onClose}>
+      <div className="pb-2">
+        <h2
+          className="mt-2 font-[family-name:var(--font-display)] text-[26px] font-semibold leading-8"
+          style={{ fontStretch: '115%' }}
+        >
+          Zakończyć zmianę?
+        </h2>
+        <p className="mt-1.5 text-[16px] text-[var(--text-secondary)]">
+          Od {formatTime(shiftStart)}, trwa {duration}
+          {plate ? ` · ${plate}` : ''}
+        </p>
+
+        <div className="mt-4 grid grid-cols-3 gap-2 rounded-[18px] bg-[var(--bg-surface-raised)] px-5 py-4">
+          <div>
+            <div className="text-[15px] text-[var(--text-secondary)]">Kursy</div>
+            <div className="text-[20px] font-semibold tabular-nums">{totalTrips}</div>
+          </div>
+          <div>
+            <div className="text-[15px] text-[var(--text-secondary)]">GPS</div>
+            <div className="text-[20px] font-semibold tabular-nums">{gpsLabel}</div>
+          </div>
+          <div>
+            <div className="text-[15px] text-[var(--text-secondary)]">Paragony</div>
+            <div
+              className={`text-[20px] font-semibold tabular-nums ${receiptsWarn ? 'text-[var(--warning)]' : ''}`}
+            >
+              {receiptsLabel}
             </div>
-          ) : null}
+          </div>
         </div>
 
         {missingReceiptTrips.length > 0 ? (
-          <div>
-            <p className="text-[15px] font-semibold">{missingReceiptTrips.length} kursy czekają na paragon.</p>
-            <p className="mt-1 text-[15px] text-[var(--text-secondary)]">
-              To informacja — nie blokuje zakończenia zmiany.
+          <>
+            <p className="mt-4 text-[15px] font-medium leading-5 text-[var(--warning)]">
+              Bez paragonu. Możesz dodać go teraz albo później.
             </p>
-            <ul className="mt-3 space-y-2">
+            <div className="mt-2 overflow-hidden rounded-[18px] border border-[var(--separator)]">
               {missingReceiptTrips.map((trip) => (
-                <li key={trip.id}>
-                  <a
-                    href={`/app/trips/${trip.id}`}
-                    className="flex min-h-14 items-center justify-between rounded-[14px] border border-[var(--separator)] px-4 text-[15px] font-medium"
-                  >
-                    <span>{trip.label}</span>
-                    <span className="text-[var(--accent)]">Dodaj paragon</span>
-                  </a>
-                </li>
+                <a
+                  key={trip.id}
+                  href={`/app/trips/${trip.id}`}
+                  className="flex min-h-16 items-center gap-3 bg-[var(--bg-surface)] px-3.5"
+                >
+                  <span className="min-w-0 flex-1 truncate text-[15px] text-[var(--text-primary)]">
+                    {trip.label}
+                  </span>
+                  <span className="flex flex-none items-center gap-1 text-[15px] font-semibold text-[var(--accent)]">
+                    Dodaj paragon
+                    <ChevronRight size={16} strokeWidth={2.2} aria-hidden />
+                  </span>
+                </a>
               ))}
-            </ul>
-          </div>
+            </div>
+          </>
         ) : null}
 
-        <Button loading={busy} onClick={() => void onConfirm()}>
+        <Button className="mt-6" loading={busy} onClick={() => void onConfirm()}>
           Zakończ zmianę
         </Button>
-        <Button variant="secondary" onClick={onClose}>
+        <button
+          type="button"
+          className="flex h-[52px] w-full items-center justify-center text-[16px] font-medium text-[var(--text-secondary)]"
+          onClick={onClose}
+        >
           Wróć do zmiany
-        </Button>
+        </button>
       </div>
     </BottomSheet>
   )

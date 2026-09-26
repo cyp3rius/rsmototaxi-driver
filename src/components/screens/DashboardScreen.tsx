@@ -529,6 +529,7 @@ export function DashboardScreen() {
         shiftStart={assignment?.shiftStart}
         plate={plate}
         gpsKm={assignment?.gpsDistanceKm}
+        tripCount={enrichment.todayStats.trips}
         missingReceiptTrips={missingTrips}
       />
       <DriverProfileSheet open={profileOpen} onClose={() => setProfileOpen(false)} />
