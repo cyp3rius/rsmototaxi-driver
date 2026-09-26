@@ -22,17 +22,20 @@ export const BOTTOM_NAV_TABS = [
   { href: '/app/shifts', label: 'Zmiany', icon: CalendarDays },
 ] as const
 
-/** Icon + label row (content-box height — safe-area padding is additive below). */
+/** Icon + label row (content-box height — edge breath is additive below). */
 export const BOTTOM_NAV_BAR_HEIGHT_PX = 64
-/** Soft gradient above the nav that overlays list content. */
-export const BOTTOM_NAV_FADE_HEIGHT_PX = 48
+/** Soft gradient above the nav — overlays list content (not empty padding). */
+export const BOTTOM_NAV_FADE_HEIGHT_PX = 56
+/** Breath under the icon row (part of .rs-bottom-nav-inner padding). */
+export const BOTTOM_NAV_EDGE_BREATH_PX = 8
 
 /**
- * Space content must leave so it clears the docked tab bar.
- * = bar height + small edge breath + fade (no safe-area — chrome owns that band).
+ * Space content must leave for the opaque tab bar only.
+ * Fade height is NOT included — the gradient overlays real list rows so it
+ * reads as transparent→bg instead of a solid empty strip.
  */
 export function bottomNavContentClearanceCss() {
-  return `${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_FADE_HEIGHT_PX + 8}px`
+  return `${BOTTOM_NAV_BAR_HEIGHT_PX + BOTTOM_NAV_EDGE_BREATH_PX}px`
 }
 
 const SETTLE_MS = [0, 32, 80, 160, 320, 640, 1200, 2000] as const
@@ -137,7 +140,7 @@ export function BottomNav({
         style={{
           height: BOTTOM_NAV_FADE_HEIGHT_PX,
           background:
-            'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 45%, transparent 100%)',
+            'linear-gradient(to top, var(--bg-base) 0%, color-mix(in srgb, var(--bg-base) 55%, transparent) 28%, color-mix(in srgb, var(--bg-base) 18%, transparent) 62%, transparent 100%)',
         }}
       />
       <div className="rs-bottom-nav-inner">
